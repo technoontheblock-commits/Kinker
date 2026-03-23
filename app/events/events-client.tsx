@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
 import { Event } from '@/lib/database.types'
+import { useLanguage } from '@/components/language-provider'
 
 type EventType = 'all' | 'clubnight' | 'festival' | 'special'
 
@@ -15,6 +16,7 @@ interface EventsClientProps {
 }
 
 export function EventsClient({ events }: EventsClientProps) {
+  const { t } = useLanguage()
   const [activeFilter, setActiveFilter] = useState<EventType>('all')
 
   const filteredEvents = events.filter((event) =>
@@ -27,7 +29,7 @@ export function EventsClient({ events }: EventsClientProps) {
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
         <div>
           <span className="text-red-500 font-semibold tracking-widest uppercase text-sm mb-4 block">
-            What&apos;s On
+            {t.events.whatsOn}
           </span>
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter font-display text-white">
             EVENTS
@@ -40,16 +42,16 @@ export function EventsClient({ events }: EventsClientProps) {
         <div className="flex flex-wrap items-center gap-3">
           <Filter className="w-5 h-5 text-white/60 mr-2" />
           <FilterButton type="all" active={activeFilter} onClick={setActiveFilter}>
-            All Events
+            {t.events.filters.all}
           </FilterButton>
           <FilterButton type="clubnight" active={activeFilter} onClick={setActiveFilter}>
-            Club Nights
+            {t.events.filters.clubnight}
           </FilterButton>
           <FilterButton type="special" active={activeFilter} onClick={setActiveFilter}>
-            Special Events
+            {t.events.filters.special}
           </FilterButton>
           <FilterButton type="festival" active={activeFilter} onClick={setActiveFilter}>
-            Festivals
+            {t.events.filters.festival}
           </FilterButton>
         </div>
       </section>
@@ -65,7 +67,7 @@ export function EventsClient({ events }: EventsClientProps) {
         {filteredEvents.length === 0 && (
           <div className="text-center py-24">
             <p className="text-white/60 text-lg">
-              No events found for this filter.
+              {t.events.noEvents}
             </p>
           </div>
         )}
@@ -102,6 +104,7 @@ function FilterButton({
 }
 
 function EventCard({ event }: { event: Event }) {
+  const { t } = useLanguage()
   // Parse timetable from JSON
   const timetable = event.timetable as Array<{ time: string; artist: string }> | null
   
@@ -166,7 +169,7 @@ function EventCard({ event }: { event: Event }) {
                 ))}
                 {event.lineup.length > 3 && (
                   <span className="text-xs text-white/40 px-2 py-1">
-                    +{event.lineup.length - 3} more
+                    +{event.lineup.length - 3} {t.events.more}
                   </span>
                 )}
               </div>
@@ -174,11 +177,11 @@ function EventCard({ event }: { event: Event }) {
 
             <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
               <Button variant="ghost" size="sm" className="text-white/60 hover:text-white group/btn">
-                View Details
+                {t.events.viewDetails}
                 <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
               </Button>
               <Button variant="glitch" size="sm">
-                Tickets
+                {t.events.tickets}
               </Button>
             </div>
           </div>

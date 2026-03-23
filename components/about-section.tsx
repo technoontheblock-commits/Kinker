@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Heart, Shield, Users, Volume2 } from 'lucide-react'
 import { clubInfo } from '@/lib/data'
+import { useLanguage } from './language-provider'
 
 const iconMap: { [key: string]: React.ReactNode } = {
   'SAFE SPACE': <Shield className="w-8 h-8" />,
@@ -12,6 +13,8 @@ const iconMap: { [key: string]: React.ReactNode } = {
 }
 
 export function AboutSection() {
+  const { t, language } = useLanguage()
+
   return (
     <section className="py-24 lg:py-32 bg-neutral-950 relative overflow-hidden">
       {/* Background Pattern */}
@@ -33,16 +36,16 @@ export function AboutSection() {
           <motion.span
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6 }}
             className="text-red-500 font-semibold tracking-widest uppercase text-sm mb-4 block"
           >
-            Our Philosophy
+            {t.home.about.subtitle}
           </motion.span>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter font-display text-white mb-8"
           >
@@ -53,13 +56,11 @@ export function AboutSection() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-white/70 leading-relaxed"
           >
-            KINKER is a sanctuary for those who seek the raw energy of underground techno. 
-            We believe in the power of music to unite, to liberate, and to transform. 
-            Our space is built on respect, inclusivity, and the shared love of hard beats.
+            {t.home.about.description}
           </motion.p>
         </div>
 
@@ -70,7 +71,7 @@ export function AboutSection() {
               key={value.title}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               className="group p-6 lg:p-8 bg-black/50 border border-white/10 rounded-lg hover:border-red-500/50 transition-colors duration-300"
             >
@@ -91,7 +92,7 @@ export function AboutSection() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-16 lg:mt-24 text-center"
         >

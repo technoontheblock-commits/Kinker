@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Mail, Check, AlertCircle } from 'lucide-react'
+import { useLanguage } from './language-provider'
 
 export function NewsletterSection() {
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
@@ -14,7 +16,7 @@ export function NewsletterSection() {
     
     if (!email || !email.includes('@')) {
       setStatus('error')
-      setMessage('Please enter a valid email address')
+      setMessage(t.newsletter.errorInvalid || 'Please enter a valid email address')
       return
     }
 
@@ -37,11 +39,11 @@ export function NewsletterSection() {
         setEmail('')
       } else {
         setStatus('error')
-        setMessage(data.error || 'Something went wrong')
+        setMessage(data.error || t.common.error)
       }
     } catch {
       setStatus('error')
-      setMessage('Failed to subscribe. Please try again.')
+      setMessage(t.newsletter.errorMessage || 'Failed to subscribe. Please try again.')
     }
   }
 
@@ -70,7 +72,7 @@ export function NewsletterSection() {
             STAY IN THE LOOP
           </h2>
           <p className="text-white/60 text-lg mb-8">
-            Subscribe to our newsletter for exclusive events, ticket pre-sales, and underground news.
+            {t.home.newsletter.description}
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
@@ -79,7 +81,7 @@ export function NewsletterSection() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder={t.home.newsletter.placeholder}
                 className="w-full px-4 py-3 bg-black border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors"
                 disabled={status === 'loading'}
               />
@@ -90,7 +92,7 @@ export function NewsletterSection() {
               size="lg"
               disabled={status === 'loading'}
             >
-              {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+              {status === 'loading' ? t.home.newsletter.subscribing : t.home.newsletter.subscribe}
             </Button>
           </form>
 
@@ -109,7 +111,7 @@ export function NewsletterSection() {
           )}
 
           <p className="text-white/40 text-sm mt-6">
-            No spam. Unsubscribe anytime. We respect your privacy.
+            {t.home.newsletter.privacy}
           </p>
         </div>
       </div>

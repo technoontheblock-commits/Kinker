@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
-import { Calendar, Clock, MapPin, ArrowLeft, ExternalLink } from 'lucide-react'
+import { Calendar, Clock, MapPin, ArrowLeft, ExternalLink, Music } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getEventById, getEvents } from '@/lib/events'
@@ -31,6 +31,18 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
+// Types for the floor-based lineup structure
+interface DJ {
+  name: string
+  type: 'main' | 'support'
+}
+
+interface Floor {
+  name: string
+  djs: DJ[]
+  active?: boolean
+}
+
 export default async function EventDetailPage({ params }: { params: { id: string } }) {
   const event = await getEventById(params.id)
   
@@ -38,8 +50,9 @@ export default async function EventDetailPage({ params }: { params: { id: string
     notFound()
   }
 
-  // Parse timetable from JSON
-  const timetable = event.timetable as Array<{ time: string; artist: string }> | null
+  // Parse floor-based lineup from timetable, filter only active floors
+  const allFloors = event.timetable as Floor[] | null
+  const floors = allFloors?.filter(f => f.active !== false) || null
 
   return (
     <div className="min-h-screen bg-black pt-24 lg:pt-32">
@@ -102,53 +115,95 @@ export default async function EventDetailPage({ params }: { params: { id: string
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Description */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4 font-display">
-                About the Event
-              </h2>
-              <p className="text-white/70 text-lg leading-relaxed">
-                {event.full_description}
-              </p>
-            </div>
-
-            {/* Lineup */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4 font-display">
-                Lineup
-              </h2>
-              <div className="flex flex-wrap gap-3">
-                {event.lineup.map((artist) => (
-                  <span
-                    key={artist}
-                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white font-medium hover:border-red-500/50 hover:text-red-500 transition-colors cursor-default"
-                  >
-                    {artist}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Timetable */}
-            {timetable && timetable.length > 0 && (
+            {event.full_description && (
               <div>
                 <h2 className="text-2xl font-bold text-white mb-4 font-display">
-                  Timetable
+                  About the Event
                 </h2>
-                <div className="space-y-2">
-                  {timetable.map((slot) => (
-                    <div
-                      key={`${slot.time}-${slot.artist}`}
-                      className="flex items-center gap-4 p-3 bg-white/5 rounded-lg border border-white/10"
-                    >
-                      <span className="text-red-500 font-mono font-semibold w-16">
-                        {slot.time}
-                      </span>
-                      <span className="text-white">{slot.artist}</span>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-white/70 text-lg leading-relaxed">
+                  {event.full_description}
+                </p>
               </div>
             )}
+
+            {/* Lineup by Floor */}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-6 font-display flex items-center gap-3">
+                <Music className="w-6 h-6 text-red-500" />
+                Lineup
+              </h2>
+              
+              {floors && floors.length > 0 ? (
+                <div className="space-y-6">
+                  {floors.map((floor) => {
+                    const mainActs = floor.djs.filter(dj => dj.type === 'main')
+                    const supportActs = floor.djs.filter(dj => dj.type === 'support')
+                    
+                    return (
+                      <div 
+                        key={floor.name} 
+                        className="bg-neutral-900/50 rounded-xl p-6 border border-white/10"
+                      >
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                          {floor.name}
+                        </h3>
+                        
+                        {mainActs.length > 0 && (
+                          <div className="mb-4">
+                            <span className="text-xs uppercase tracking-wider text-red-500 mb-2 block">Main Act</span>
+                            <div className="flex flex-wrap gap-3">
+                              {mainActs.map((dj) => (
+                                <span
+                                  key={dj.name}
+                                  className="px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-white font-semibold hover:bg-red-500/30 transition-colors cursor-default"
+                                >
+                                  {dj.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {supportActs.length > 0 && (
+                          <div>
+                            <span className="text-xs uppercase tracking-wider text-white/50 mb-2 block">Support</span>
+                            <div className="flex flex-wrap gap-3">
+                              {supportActs.map((dj) => (
+                                <span
+                                  key={dj.name}
+                                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white/70 text-sm hover:border-white/30 hover:text-white transition-colors cursor-default"
+                                >
+                                  {dj.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {floor.djs.length === 0 && (
+                          <p className="text-white/40 text-sm italic">No lineup announced yet</p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : event.lineup && event.lineup.length > 0 ? (
+                // Fallback for old format
+                <div className="flex flex-wrap gap-3">
+                  {event.lineup.map((artist) => (
+                    <span
+                      key={artist}
+                      className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white font-medium hover:border-red-500/50 hover:text-red-500 transition-colors cursor-default"
+                    >
+                      {artist}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/40 italic">Lineup to be announced</p>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -183,7 +238,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
               <div className="flex items-start gap-3 text-white/70 mb-4">
                 <MapPin className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p>Klybeckstrasse 99</p>
+                  <p>Barcelona-Strasse 4</p>
                   <p>4057 Basel</p>
                   <p>Switzerland</p>
                 </div>

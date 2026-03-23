@@ -1,12 +1,26 @@
+'use client'
+
 import Link from 'next/link'
 import { Calendar, Clock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getUpcomingEvents } from '@/lib/events'
 import { formatDate } from '@/lib/utils'
+import { useLanguage } from './language-provider'
+import { useEffect, useState } from 'react'
+import { Event } from '@/lib/database.types'
 
-export async function EventsSection() {
-  const upcomingEvents = await getUpcomingEvents(4)
+export function EventsSection() {
+  const { t } = useLanguage()
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      const events = await getUpcomingEvents(4)
+      setUpcomingEvents(events)
+    }
+    loadEvents()
+  }, [])
 
   return (
     <section id="events" className="py-24 lg:py-32 bg-black relative overflow-hidden">
@@ -22,7 +36,7 @@ export async function EventsSection() {
               <span className="text-red-500">.</span>
             </h2>
             <p className="text-white/60 text-lg">
-              Experience the underground. Book your tickets now.
+              {t.home.events.subtitle}
             </p>
           </div>
           <Button
@@ -31,7 +45,7 @@ export async function EventsSection() {
             asChild
           >
             <Link href="/events">
-              View All Events
+              {t.home.events.viewAll}
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
@@ -102,7 +116,7 @@ export async function EventsSection() {
         {/* Mobile CTA */}
         <div className="mt-12 text-center md:hidden">
           <Button variant="glitch" size="lg" asChild className="w-full">
-            <Link href="/events">View All Events</Link>
+            <Link href="/events">{t.home.events.viewAll}</Link>
           </Button>
         </div>
       </div>

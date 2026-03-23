@@ -3,21 +3,20 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Menu, X, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { LogoIcon } from './logo'
+import { useLanguage } from './language-provider'
 
-const navItems = [
-  { name: 'Events', href: '/events' },
-  { name: 'Club', href: '/club' },
-  { name: 'Location', href: '/location' },
+const adminNavItems = [
+  { name: 'Admin', href: '/admin' },
 ]
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const { language, setLanguage, t } = useLanguage()
   const pathname = usePathname()
 
   useEffect(() => {
@@ -28,26 +27,32 @@ export function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const toggleLanguage = () => {
+    const newLang = language === 'EN' ? 'DE' : 'EN'
+    setLanguage(newLang)
+  }
+
+  const navItems = [
+    { name: t.nav.home, href: '/' },
+    { name: t.nav.events, href: '/events' },
+    { name: t.nav.club, href: '/club' },
+    { name: t.nav.location, href: '/location' },
+    { name: t.nav.rental, href: '/rental' },
+    { name: t.nav.career, href: '/career' },
+  ]
+
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        isScrolled ? 'bg-black/90 backdrop-blur-md' : 'bg-transparent'
+        'fixed top-0 left-0 right-0 z-50',
+        isScrolled ? 'bg-black/90' : 'bg-transparent'
       )}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto pl-2 pr-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <Link href="/" className="relative z-50 flex items-center gap-3">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            >
-              <LogoIcon className="h-10 w-auto text-white" />
-            </motion.div>
-            <span className="text-2xl lg:text-3xl font-bold tracking-tighter font-display text-white">
-              KINKER
-            </span>
+          <Link href="/" className="relative z-50 flex items-center">
+            <LogoIcon className="h-[50px] w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -64,13 +69,37 @@ export function Navigation() {
                 {item.name}
               </Link>
             ))}
+            <span className="w-px h-4 bg-white/20" />
+            {adminNavItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'text-sm font-medium tracking-wide uppercase transition-colors hover:text-red-500',
+                  pathname === item.href ? 'text-red-500' : 'text-white/60'
+                )}
+              >
+                {item.name}
+              </Link>
+            ))}
+            
+            {/* Language Toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white transition-colors"
+              title="Switch language"
+            >
+              <Globe className="w-4 h-4" />
+              <span>{language}</span>
+            </button>
+            
             <Button
               variant="glitch"
               size="sm"
               className="ml-4"
               asChild
             >
-              <Link href="/events">Get Tickets</Link>
+              <Link href="/events">{t.nav.getTickets}</Link>
             </Button>
           </nav>
 
@@ -86,53 +115,49 @@ export function Navigation() {
       </div>
 
       {/* Mobile Navigation */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black md:hidden"
-          >
-            <div className="flex flex-col items-center justify-center h-full space-y-8">
-              {navItems.map((item, index) => (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      'text-3xl font-bold tracking-wide uppercase transition-colors hover:text-red-500',
-                      pathname === item.href ? 'text-red-500' : 'text-white'
-                    )}
-                  >
-                    {item.name}
-                  </Link>
-                </motion.div>
-              ))}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Button
-                  variant="glitch"
-                  size="lg"
+      {isOpen && (
+        <div className="fixed inset-0 z-40 bg-black md:hidden">
+          <div className="flex flex-col items-center justify-center h-full space-y-8">
+            {navItems.map((item) => (
+              <div key={item.name}>
+                <Link
+                  href={item.href}
                   onClick={() => setIsOpen(false)}
-                  asChild
+                  className={cn(
+                    'text-3xl font-bold tracking-wide uppercase transition-colors hover:text-red-500',
+                    pathname === item.href ? 'text-red-500' : 'text-white'
+                  )}
                 >
-                  <Link href="/events">Get Tickets</Link>
-                </Button>
-              </motion.div>
+                  {item.name}
+                </Link>
+              </div>
+            ))}
+            
+            {/* Mobile Language Toggle */}
+            <button
+              onClick={() => {
+                toggleLanguage()
+                setIsOpen(false)
+              }}
+              className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+            >
+              <Globe className="w-5 h-5" />
+              <span className="text-lg font-medium">{language === 'EN' ? 'English' : 'Deutsch'}</span>
+            </button>
+            
+            <div>
+              <Button
+                variant="glitch"
+                size="lg"
+                onClick={() => setIsOpen(false)}
+                asChild
+              >
+                <Link href="/events">{t.nav.getTickets}</Link>
+              </Button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </header>
   )
 }

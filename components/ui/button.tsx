@@ -14,7 +14,7 @@ const buttonVariants = cva(
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
-        glitch: 'relative bg-transparent border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300 before:absolute before:inset-0 before:bg-red-500/20 before:translate-x-1 before:-translate-y-1 before:-z-10 after:absolute after:inset-0 after:bg-cyan-500/20 after:-translate-x-1 after:translate-y-1 after:-z-10 hover:before:translate-x-2 hover:before:-translate-y-2 hover:after:-translate-x-2 hover:after:translate-y-2',
+        glitch: 'bg-transparent border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300',
       },
       size: {
         default: 'h-10 px-4 py-2',

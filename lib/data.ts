@@ -133,15 +133,15 @@ export const clubInfo = {
   address: 'Barcelona-Strasse 4',
   city: '4142 Münchenstein',
   country: 'Switzerland',
-  coordinates: { lat: 47.5653, lng: 7.5853 },
+  coordinates: { lat: 47.5306, lng: 7.6072 },
   openingHours: {
     friday: '23:00 - 07:00',
     saturday: '23:00 - 07:00',
   },
   entryRules: [
-    'Age 20+',
+    'Age limit varies by event (16+ or 18+)',
     'Valid ID required',
-    'No photo/video policy',
+    'Photo/video policy varies by event',
     'Respect the space & each other',
     'Zero tolerance for discrimination',
   ],
@@ -152,7 +152,7 @@ export const clubInfo = {
     },
     {
       question: 'Can I take photos or videos?',
-      answer: 'No. We have a strict no-photo and no-video policy to protect the privacy and freedom of our guests. Phones must be kept in your pocket.',
+      answer: 'The photo/video policy varies by event. Some events allow photos, others have a strict no-photo policy. Please check the specific event details and respect the rules at the door.',
     },
     {
       question: 'Is there a dress code?',
@@ -189,4 +189,117 @@ export const clubInfo = {
       description: 'We preserve the spirit of underground techno - authentic, raw, and community-driven.',
     },
   ],
+};
+
+export const rentalInfo = {
+  title: 'Event Venue Rental',
+  description: "Looking for the perfect venue for your event? Whether it's a concert, birthday party, or corporate event - our spaces offer everything you need for a seamless event. Thanks to our ideal location in the heart of the Dreispitz area and state-of-the-art lighting and sound technology, we have everything you need for your event.",
+  rooms: [
+    {
+      name: 'Wohnzimmer',
+      description: 'Large room with living room atmosphere in the basement',
+      features: [
+        'Professional lighting system & high-end Funktion-One sound system',
+        'Unique DJ booth with modern sound technology',
+        'Open bar with competent and trained staff',
+        'Adjustable room size with curtains',
+      ],
+    },
+    {
+      name: 'Bunker',
+      description: 'Large and dark room in the basement',
+      features: [
+        'Professional lighting system & high-end Kling&Freitag sound system',
+        'DJ booth and stage possibilities',
+        'Bar with competent and trained staff',
+      ],
+    },
+    {
+      name: 'Aussenbereich',
+      description: '20m² small covered outdoor area',
+      features: [
+        'Can be used as smoking area',
+        'Covered',
+      ],
+    },
+  ],
+  included: [
+    'Electricity',
+    'Restroom usage',
+    'Lighting & PA',
+    'Use of chairs and tables',
+  ],
+  extras: [
+    'Catering',
+    'Lounge and theater seating',
+    'Stage for concerts',
+    'Banquet furniture',
+    'Lighting technician',
+    'Sound technician',
+    'DJ',
+    'Bar service',
+  ],
+  contact: {
+    email: 'backoffice@kinker.de',
+    phone: '+41 61 123 45 67',
+  },
+};
+
+export const careerInfo = {
+  title: 'Werde Teil des Teams',
+  description: 'Du bist leidenschaftlich, engagiert und liebst die Event- und Clubkultur? Dann bist du bei uns genau richtig! Wir suchen ständig nach talentierten Menschen, die unser Team verstärken wollen.',
+  benefits: [
+    'Attraktive Vergütung',
+    'Flexibles Arbeitsmodell',
+    'Kreatives Arbeitsumfeld',
+    'Weiterbildungsmöglichkeiten',
+    'Team-Events',
+    'Kostenlose Getränke während der Schicht',
+  ],
+  jobs: [
+    {
+      id: 1,
+      title: 'Barkeeper',
+      department: 'Bar',
+      type: 'Part-time',
+      location: 'Basel',
+      description: 'Du bist verantwortlich für die Zubereitung von Getränken, den Umgang mit Gästen und die Aufrechterhaltung einer sauberen Bar.',
+      requirements: [
+        'Erfahrung in der Gastronomie',
+        'Gute Deutsch- und Englischkenntnisse',
+        'Teamfähigkeit',
+        'Flexibilität (Wochenende & Nachtschicht)',
+      ],
+    },
+    {
+      id: 2,
+      title: 'Security',
+      department: 'Security',
+      type: 'Part-time',
+      location: 'Basel',
+      description: 'Du sorgst für die Sicherheit unserer Gäste und des Personals und gewährleistest einen reibungslosen Einlass.',
+      requirements: [
+        'Bewachungsbewilligung (von Vorteil)',
+        'Gute Deutsch- und Englischkenntnisse',
+        'Hohe Sozialkompetenz',
+        'Flexibilität (Wochenende & Nachtschicht)',
+      ],
+    },
+    {
+      id: 3,
+      title: 'Lichttechniker',
+      department: 'Technik',
+      type: 'Freelance',
+      location: 'Basel',
+      description: 'Du bist verantwortlich für das Lichtdesign und die technische Umsetzung bei unseren Events.',
+      requirements: [
+        'Erfahrung mit Lichtanlagen (MA Lighting, Avolites)',
+        'Eigenes Equipment (von Vorteil)',
+        'Flexibilität',
+      ],
+    },
+  ],
+  contact: {
+    email: 'jobs@kinker.de',
+  },
 };

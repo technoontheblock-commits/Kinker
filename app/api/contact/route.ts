@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     // Send email to club
     await resend.emails.send({
       from: 'KINKER Website <noreply@kinker.ch>',
-      to: 'info@kinker.ch',
+      to: 'backoffice@kinker.de',
       subject: `Contact Form: ${subject}`,
       replyTo: email,
       html: `
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
     // Send confirmation to user
     await resend.emails.send({
-      from: 'KINKER Basel <info@kinker.ch>',
+      from: 'KINKER Basel <backoffice@kinker.de>',
       to: email,
       subject: 'We received your message',
       html: `
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
           </div>
           <div style="border-top: 1px solid #333; padding-top: 20px; margin-top: 30px;">
             <p style="font-size: 12px; color: #666;">
-              KINKER Basel | Klybeckstrasse 99, 4057 Basel<br>
+              KINKER Basel | Barcelona-Strasse 4, 4142 Münchenstein<br>
               <a href="https://kinker.ch" style="color: #ef4444;">kinker.ch</a>
             </p>
           </div>

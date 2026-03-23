@@ -1,19 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
 import { Button } from '@/components/ui/button'
-import { LogoIcon } from './logo'
+import { useLanguage } from './language-provider'
 
 export function HeroSection() {
-  const [isLoaded, setIsLoaded] = useState(false)
-
-  useEffect(() => {
-    setIsLoaded(true)
-  }, [])
-
+  const { t } = useLanguage()
+  
   const scrollToEvents = () => {
     const eventsSection = document.getElementById('events')
     if (eventsSection) {
@@ -23,61 +18,47 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay */}
+      {/* Static Background Image - Club Interior */}
       <div className="absolute inset-0 z-0">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
           style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?q=80&w=2070&auto=format&fit=crop')`,
+            backgroundImage: `url('/images/hero-bg.jpg')`,
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80" />
-      </div>
-
-      {/* Animated Noise Texture */}
-      <div className="absolute inset-0 z-10 opacity-20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjc1IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMSIvPjwvc3ZnPg==')] animate-pulse" />
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black" />
       </div>
 
       {/* Content */}
       <div className="relative z-20 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="mb-8"
-        >
-          <LogoIcon className="h-24 w-auto mx-auto text-white" />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
         >
           <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter font-display mb-6">
-            <span className="block text-white glitch" data-text="HARD TECHNO">
-              HARD TECHNO
+            <span className="block text-white glitch" data-text="KINKER">
+              KINKER
             </span>
-            <span className="block text-white/90">IN BASEL</span>
+            <span className="block text-white/90">BASEL</span>
           </h1>
         </motion.div>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.5 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
           className="text-lg sm:text-xl md:text-2xl text-white/70 font-medium tracking-widest uppercase mb-12"
         >
           No Racism. No Hate. Just Music.
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8, ease: 'easeOut' }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
           <Button
@@ -86,7 +67,7 @@ export function HeroSection() {
             onClick={scrollToEvents}
             className="text-base px-8 py-6"
           >
-            View Events
+            {t.home.hero.viewEvents}
           </Button>
           <Button
             variant="outline"
@@ -94,7 +75,7 @@ export function HeroSection() {
             asChild
             className="text-base px-8 py-6 border-white/30 text-white hover:bg-white hover:text-black"
           >
-            <Link href="/club">About Club</Link>
+            <Link href="/club">{t.home.hero.aboutClub}</Link>
           </Button>
         </motion.div>
       </div>
