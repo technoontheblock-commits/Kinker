@@ -106,6 +106,7 @@ export async function getEventsByType(type: Event['type']): Promise<Event[]> {
 
 export async function getUpcomingEvents(limit: number = 4): Promise<Event[]> {
   if (!supabase) {
+    console.warn('Supabase not configured, using fallback events')
     return fallbackEvents.slice(0, limit)
   }
 

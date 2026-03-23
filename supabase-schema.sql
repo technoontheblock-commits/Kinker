@@ -20,6 +20,17 @@ CREATE TABLE events (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Users Table
+CREATE TABLE users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Newsletter Subscribers Table
 CREATE TABLE newsletter_subscribers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -145,9 +156,18 @@ INSERT INTO events (id, name, date, time, end_time, description, full_descriptio
 
 -- Enable Row Level Security
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for public read access
 CREATE POLICY "Allow public read access" ON events FOR SELECT USING (true);
+
+-- Users policies (admin only - for now allow all for development)
+CREATE POLICY "Allow public read users" ON users FOR SELECT USING (true);
+CREATE POLICY "Allow public insert users" ON users FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update users" ON users FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete users" ON users FOR DELETE USING (true);
+
+-- Newsletter policies
 CREATE POLICY "Allow public insert" ON newsletter_subscribers FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public read own subscription" ON newsletter_subscribers FOR SELECT USING (true);

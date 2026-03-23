@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 const resendApiKey = process.env.RESEND_API_KEY
+const DUMMY_EMAIL = 'technoontheblock@gmail.com'
 
 export async function POST(request: Request) {
   // Check if Resend is configured
@@ -34,8 +35,8 @@ export async function POST(request: Request) {
 
     // Send email to club
     await resend.emails.send({
-      from: 'KINKER Website <noreply@kinker.ch>',
-      to: 'backoffice@kinker.de',
+      from: 'onboarding@resend.dev',
+      to: DUMMY_EMAIL,
       subject: `Contact Form: ${subject}`,
       replyTo: email,
       html: `
@@ -65,8 +66,8 @@ export async function POST(request: Request) {
 
     // Send confirmation to user
     await resend.emails.send({
-      from: 'KINKER Basel <backoffice@kinker.de>',
-      to: email,
+      from: 'onboarding@resend.dev',
+      to: DUMMY_EMAIL,
       subject: 'We received your message',
       html: `
         <div style="background: #000; color: #fff; font-family: system-ui, sans-serif; padding: 40px; max-width: 600px;">

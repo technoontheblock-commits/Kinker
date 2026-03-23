@@ -12,8 +12,10 @@ import {
   Phone, 
   Calendar,
   Users,
-  MessageSquare
+  MessageSquare,
+  ArrowLeft
 } from 'lucide-react'
+import Link from 'next/link'
 import { useLanguage } from '@/components/language-provider'
 
 const roomIcons: { [key: string]: React.ReactNode } = {
@@ -90,9 +92,16 @@ export default function RentalPage() {
             <Check className="w-10 h-10 text-green-500" />
           </div>
           <h2 className="text-4xl font-bold text-white mb-4 font-display">{t.rental.success.title}</h2>
-          <p className="text-white/70 text-lg max-w-md mx-auto">
+          <p className="text-white/70 text-lg max-w-md mx-auto mb-8">
             {t.rental.success.message}
           </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Home
+          </Link>
         </motion.div>
       </div>
     )

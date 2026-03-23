@@ -56,6 +56,23 @@ export default function AdminDashboard() {
   const [showAddEvent, setShowAddEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  // New user form state
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    role: 'user',
+    status: 'active'
+  })
+  
+  // New job form state
+  const [newJob, setNewJob] = useState({
+    title: '',
+    department: '',
+    type: 'Full-time',
+    location: 'Basel',
+    description: ''
+  })
 
   useEffect(() => {
     loadEvents()
@@ -111,6 +128,47 @@ export default function AdminDashboard() {
 
   const toggleJobStatus = (id: number) => {
     setJobs(jobs.map(j => j.id === id ? { ...j, status: j.status === 'Active' ? 'Inactive' : 'Active' } : j))
+  }
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      })
+      
+      if (response.ok) {
+        await loadUsers()
+        setShowAddUser(false)
+        setNewUser({ name: '', email: '', role: 'user', status: 'active' })
+      } else {
+        const error = await response.json()
+        alert('Error adding user: ' + (error.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error adding user:', error)
+      alert('Error adding user')
+    }
+  }
+
+  const handleAddJob = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const jobToAdd = {
+        ...newJob,
+        id: jobs.length + 1,
+        status: 'Active',
+        applicants: 0
+      }
+      setJobs([...jobs, jobToAdd])
+      setShowAddJob(false)
+      setNewJob({ title: '', department: '', type: 'Full-time', location: 'Basel', description: '' })
+    } catch (error) {
+      console.error('Error adding job:', error)
+      alert('Error adding job')
+    }
   }
 
   const deleteUser = async (id: string) => {
@@ -591,6 +649,181 @@ export default function AdminDashboard() {
                     setEditingEvent(null)
                   }}
                 />
+              </motion.div>
+            </div>
+          )}
+
+          {/* Add User Modal */}
+          {showAddUser && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-neutral-900 rounded-2xl p-8 max-w-md w-full border border-white/10"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Add New User</h2>
+                  <button
+                    onClick={() => setShowAddUser(false)}
+                    className="p-2 text-white/60 hover:text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <form onSubmit={handleAddUser} className="space-y-4">
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Name</label>
+                    <input
+                      type="text"
+                      value={newUser.name}
+                      onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="Enter name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="Enter email"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Role</label>
+                    <select
+                      value={newUser.role}
+                      onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Status</label>
+                    <select
+                      value={newUser.status}
+                      onChange={(e) => setNewUser({ ...newUser, status: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddUser(false)}
+                      className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                    >
+                      Add User
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Add Job Modal */}
+          {showAddJob && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-neutral-900 rounded-2xl p-8 max-w-md w-full border border-white/10"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Add New Job</h2>
+                  <button
+                    onClick={() => setShowAddJob(false)}
+                    className="p-2 text-white/60 hover:text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <form onSubmit={handleAddJob} className="space-y-4">
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Job Title</label>
+                    <input
+                      type="text"
+                      value={newJob.title}
+                      onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="e.g. Barkeeper"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Department</label>
+                    <input
+                      type="text"
+                      value={newJob.department}
+                      onChange={(e) => setNewJob({ ...newJob, department: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="e.g. Bar"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Type</label>
+                    <select
+                      value={newJob.type}
+                      onChange={(e) => setNewJob({ ...newJob, type: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="Full-time">Full-time</option>
+                      <option value="Part-time">Part-time</option>
+                      <option value="Freelance">Freelance</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Location</label>
+                    <input
+                      type="text"
+                      value={newJob.location}
+                      onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="e.g. Basel"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Description</label>
+                    <textarea
+                      value={newJob.description}
+                      onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 resize-none"
+                      placeholder="Job description..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddJob(false)}
+                      className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                    >
+                      Add Job
+                    </button>
+                  </div>
+                </form>
               </motion.div>
             </div>
           )}

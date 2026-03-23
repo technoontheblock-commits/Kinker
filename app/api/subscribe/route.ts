@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 
 const resendApiKey = process.env.RESEND_API_KEY
+const DUMMY_EMAIL = 'technoontheblock@gmail.com'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -60,8 +61,8 @@ export async function POST(request: Request) {
       const resend = new Resend(resendApiKey)
       
       await resend.emails.send({
-        from: 'KINKER Basel <newsletter@kinker.ch>',
-        to: email,
+        from: 'onboarding@resend.dev',
+        to: DUMMY_EMAIL,
         subject: 'Welcome to KINKER Basel Newsletter',
         html: `
           <div style="background: #000; color: #fff; font-family: system-ui, sans-serif; padding: 40px; max-width: 600px;">
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { message: 'Successfully subscribed!' },
+      { message: `Successfully subscribed! (Sent to ${DUMMY_EMAIL})` },
       { status: 200 }
     )
   } catch (error) {
