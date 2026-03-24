@@ -19,7 +19,12 @@ import {
   DollarSign,
   Eye,
   EyeOff,
-  LogOut
+  LogOut,
+  Building,
+  Phone,
+  FileText,
+  ShoppingBag,
+  Package
 } from 'lucide-react'
 import { getEvents } from '@/lib/events'
 import { EventForm } from './EventForm'
@@ -32,25 +37,22 @@ const mockUsers = [
   { id: 4, name: 'Lisa Müller', email: 'lisa@example.com', role: 'User', status: 'Inactive', joined: '2024-03-10' },
 ]
 
-const mockNotifications = [
-  { id: 1, type: 'booking', title: 'Neue Raumanfrage', message: 'Neue Anfrage für Wohnzimmer am 15.04.2024', date: '2024-03-22 14:30', read: false },
-  { id: 2, type: 'contact', title: 'Kontaktformular', message: 'Neue Nachricht von max@example.com', date: '2024-03-22 12:15', read: false },
-  { id: 3, type: 'career', title: 'Neue Bewerbung', message: 'Bewerbung als Barkeeper eingegangen', date: '2024-03-21 18:45', read: true },
-  { id: 4, type: 'system', title: 'System Update', message: 'System erfolgreich aktualisiert', date: '2024-03-20 03:00', read: true },
-]
 
-const mockJobs = [
-  { id: 1, title: 'Barkeeper', department: 'Bar', type: 'Part-time', location: 'Basel', status: 'Active', applicants: 5 },
-  { id: 2, title: 'Security', department: 'Security', type: 'Part-time', location: 'Basel', status: 'Active', applicants: 3 },
-  { id: 3, title: 'Lichttechniker', department: 'Technik', type: 'Freelance', location: 'Basel', status: 'Inactive', applicants: 0 },
-]
+
+
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [users, setUsers] = useState<any[]>([])
-  const [notifications, setNotifications] = useState(mockNotifications)
-  const [jobs, setJobs] = useState(mockJobs)
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [jobs, setJobs] = useState<any[]>([])
   const [events, setEvents] = useState<any[]>([])
+  const [rentalInquiries, setRentalInquiries] = useState<any[]>([])
+  const [applications, setApplications] = useState<any[]>([])
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
+  const [merchandise, setMerchandise] = useState<any[]>([])
+  const [showAddMerch, setShowAddMerch] = useState(false)
+  const [editingMerch, setEditingMerch] = useState<any>(null)
   const [showAddUser, setShowAddUser] = useState(false)
   const [showAddJob, setShowAddJob] = useState(false)
   const [showAddEvent, setShowAddEvent] = useState(false)
@@ -73,10 +75,26 @@ export default function AdminDashboard() {
     location: 'Basel',
     description: ''
   })
+  
+  // New merchandise form state
+  const [newMerch, setNewMerch] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: 'clothing',
+    sizes: [] as string[],
+    stock: '',
+    image: ''
+  })
 
   useEffect(() => {
     loadEvents()
     loadUsers()
+    loadNotifications()
+    loadRentalInquiries()
+    loadApplications()
+    loadJobs()
+    loadMerchandise()
   }, [])
 
   const loadEvents = async () => {
@@ -100,6 +118,30 @@ export default function AdminDashboard() {
     }
   }
 
+  const loadNotifications = async () => {
+    try {
+      const response = await fetch('/api/notifications')
+      if (response.ok) {
+        const data = await response.json()
+        setNotifications(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error)
+    }
+  }
+
+  const loadRentalInquiries = async () => {
+    try {
+      const response = await fetch('/api/rental')
+      if (response.ok) {
+        const data = await response.json()
+        setRentalInquiries(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading rental inquiries:', error)
+    }
+  }
+
   // Calculate events for this month
   const currentMonth = new Date().getMonth()
   const currentYear = new Date().getFullYear()
@@ -112,22 +154,231 @@ export default function AdminDashboard() {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'events', label: 'Events', icon: Calendar },
     { id: 'users', label: 'User Management', icon: Users },
+    { id: 'rental', label: 'Raumanfragen', icon: Building },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
     { id: 'careers', label: 'Careers', icon: Briefcase },
+    { id: 'merchandise', label: 'Merch', icon: ShoppingBag },
   ]
 
   const unreadCount = notifications.filter(n => !n.read).length
 
-  const markAsRead = (id: number) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n))
+  const markAsRead = async (id: string) => {
+    try {
+      const response = await fetch(`/api/notifications/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ read: true })
+      })
+      if (response.ok) {
+        setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n))
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+    }
   }
 
-  const deleteNotification = (id: number) => {
-    setNotifications(notifications.filter(n => n.id !== id))
+  const markAllAsRead = async () => {
+    try {
+      await Promise.all(
+        notifications.filter(n => !n.read).map(n => 
+          fetch(`/api/notifications/${n.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ read: true })
+          })
+        )
+      )
+      setNotifications(notifications.map(n => ({ ...n, read: true })))
+    } catch (error) {
+      console.error('Error marking all as read:', error)
+    }
   }
 
-  const toggleJobStatus = (id: number) => {
-    setJobs(jobs.map(j => j.id === id ? { ...j, status: j.status === 'Active' ? 'Inactive' : 'Active' } : j))
+  const deleteNotification = async (id: string) => {
+    try {
+      const response = await fetch(`/api/notifications/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        setNotifications(notifications.filter(n => n.id !== id))
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error)
+    }
+  }
+
+  const updateRentalStatus = async (id: string, status: string) => {
+    try {
+      const response = await fetch(`/api/rental/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      })
+      if (response.ok) {
+        setRentalInquiries(rentalInquiries.map(r => r.id === id ? { ...r, status } : r))
+      }
+    } catch (error) {
+      console.error('Error updating rental status:', error)
+    }
+  }
+
+  const deleteRentalInquiry = async (id: string) => {
+    if (!confirm('Möchtest du diese Anfrage wirklich löschen?')) return
+    try {
+      const response = await fetch(`/api/rental/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        setRentalInquiries(rentalInquiries.filter(r => r.id !== id))
+      }
+    } catch (error) {
+      console.error('Error deleting rental inquiry:', error)
+    }
+  }
+
+  const loadApplications = async (jobId?: string) => {
+    try {
+      const url = jobId ? `/api/applications?jobId=${jobId}` : '/api/applications'
+      const response = await fetch(url)
+      if (response.ok) {
+        const data = await response.json()
+        setApplications(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading applications:', error)
+    }
+  }
+
+  const updateApplicationStatus = async (id: string, status: string) => {
+    try {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      })
+      if (response.ok) {
+        setApplications(applications.map(a => a.id === id ? { ...a, status } : a))
+      }
+    } catch (error) {
+      console.error('Error updating application status:', error)
+    }
+  }
+
+  const deleteApplication = async (id: string) => {
+    if (!confirm('Möchtest du diese Bewerbung wirklich löschen?')) return
+    try {
+      const response = await fetch(`/api/applications/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        setApplications(applications.filter(a => a.id !== id))
+      }
+    } catch (error) {
+      console.error('Error deleting application:', error)
+    }
+  }
+
+  const loadJobs = async () => {
+    try {
+      const response = await fetch('/api/jobs')
+      if (response.ok) {
+        const data = await response.json()
+        setJobs(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading jobs:', error)
+    }
+  }
+
+  const toggleJobStatus = async (id: string) => {
+    const job = jobs.find(j => j.id === id)
+    if (!job) return
+    
+    const newStatus = job.status === 'Active' ? 'Inactive' : 'Active'
+    try {
+      const response = await fetch(`/api/jobs/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (response.ok) {
+        setJobs(jobs.map(j => j.id === id ? { ...j, status: newStatus } : j))
+      }
+    } catch (error) {
+      console.error('Error toggling job status:', error)
+    }
+  }
+
+  const deleteJob = async (id: string) => {
+    if (!confirm('Möchtest du diesen Job wirklich löschen?')) return
+    try {
+      const response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        setJobs(jobs.filter(j => j.id !== id))
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error)
+    }
+  }
+
+  const loadMerchandise = async () => {
+    try {
+      const response = await fetch('/api/merchandise')
+      if (response.ok) {
+        const data = await response.json()
+        setMerchandise(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading merchandise:', error)
+    }
+  }
+
+  const handleAddMerch = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const response = await fetch('/api/merchandise', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newMerch,
+          price: parseFloat(newMerch.price),
+          stock: parseInt(newMerch.stock)
+        })
+      })
+      
+      if (response.ok) {
+        await loadMerchandise()
+        setShowAddMerch(false)
+        setNewMerch({ name: '', description: '', price: '', category: 'clothing', sizes: [], stock: '', image: '' })
+      } else {
+        const error = await response.json()
+        alert('Error adding merchandise: ' + (error.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error adding merchandise:', error)
+      alert('Error adding merchandise')
+    }
+  }
+
+  const toggleMerchStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/merchandise/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !currentStatus })
+      })
+      if (response.ok) {
+        setMerchandise(merchandise.map(m => m.id === id ? { ...m, active: !currentStatus } : m))
+      }
+    } catch (error) {
+      console.error('Error toggling merchandise status:', error)
+    }
+  }
+
+  const deleteMerch = async (id: string) => {
+    if (!confirm('Möchtest du diesen Artikel wirklich löschen?')) return
+    try {
+      const response = await fetch(`/api/merchandise/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        setMerchandise(merchandise.filter(m => m.id !== id))
+      }
+    } catch (error) {
+      console.error('Error deleting merchandise:', error)
+    }
   }
 
   const handleAddUser = async (e: React.FormEvent) => {
@@ -156,15 +407,20 @@ export default function AdminDashboard() {
   const handleAddJob = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const jobToAdd = {
-        ...newJob,
-        id: jobs.length + 1,
-        status: 'Active',
-        applicants: 0
+      const response = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newJob)
+      })
+      
+      if (response.ok) {
+        await loadJobs()
+        setShowAddJob(false)
+        setNewJob({ title: '', department: '', type: 'Full-time', location: 'Basel', description: '' })
+      } else {
+        const error = await response.json()
+        alert('Error adding job: ' + (error.error || 'Unknown error'))
       }
-      setJobs([...jobs, jobToAdd])
-      setShowAddJob(false)
-      setNewJob({ title: '', department: '', type: 'Full-time', location: 'Basel', description: '' })
     } catch (error) {
       console.error('Error adding job:', error)
       alert('Error adding job')
@@ -392,6 +648,126 @@ export default function AdminDashboard() {
             </motion.div>
           )}
 
+          {/* Rental Inquiries */}
+          {activeTab === 'rental' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h1 className="text-4xl font-bold text-white">Raumanfragen</h1>
+                <span className="text-white/60">{rentalInquiries.filter(r => r.status === 'new').length} neue Anfragen</span>
+              </div>
+
+              <div className="space-y-4">
+                {rentalInquiries.map((inquiry) => (
+                  <div 
+                    key={inquiry.id} 
+                    className={`p-6 rounded-xl border ${inquiry.status === 'new' ? 'bg-red-500/5 border-red-500/20' : 'bg-neutral-900/30 border-white/10'}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold text-white text-lg">{inquiry.name}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs ${
+                            inquiry.status === 'new' ? 'bg-red-500/20 text-red-500' :
+                            inquiry.status === 'contacted' ? 'bg-yellow-500/20 text-yellow-500' :
+                            'bg-green-500/20 text-green-500'
+                          }`}>
+                            {inquiry.status === 'new' ? 'Neu' :
+                             inquiry.status === 'contacted' ? 'Kontaktiert' :
+                             inquiry.status === 'confirmed' ? 'Bestätigt' : 'Abgelehnt'}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-white/60 mb-3">
+                          <span className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-red-500" />
+                            {inquiry.email}
+                          </span>
+                          {inquiry.phone && (
+                            <span className="flex items-center gap-2">
+                              <Phone className="w-4 h-4 text-red-500" />
+                              {inquiry.phone}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-red-500" />
+                            {new Date(inquiry.date).toLocaleDateString('de-CH')}
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-red-500" />
+                            {inquiry.guests} Gäste
+                          </span>
+                        </div>
+
+                        <div className="mb-3">
+                          <span className="text-white/40 text-sm">Räume:</span>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {inquiry.rooms?.map((room: string) => (
+                              <span key={room} className="px-3 py-1 bg-white/10 rounded-full text-sm text-white">
+                                {room}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {inquiry.extras?.length > 0 && (
+                          <div className="mb-3">
+                            <span className="text-white/40 text-sm">Extras:</span>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {inquiry.extras.map((extra: string) => (
+                                <span key={extra} className="px-3 py-1 bg-red-500/10 rounded-full text-sm text-red-400">
+                                  {extra}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {inquiry.message && (
+                          <p className="text-white/60 text-sm bg-black/30 p-3 rounded-lg mt-3">
+                            {inquiry.message}
+                          </p>
+                        )}
+
+                        <p className="text-white/40 text-xs mt-3">
+                          Angefragt am: {new Date(inquiry.created_at).toLocaleString('de-CH')}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 ml-4">
+                        {inquiry.status === 'new' && (
+                          <button
+                            onClick={() => updateRentalStatus(inquiry.id, 'contacted')}
+                            className="p-2 text-white/60 hover:text-green-500 transition-colors"
+                            title="Als kontaktiert markieren"
+                          >
+                            <Check className="w-5 h-5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteRentalInquiry(inquiry.id)}
+                          className="p-2 text-white/60 hover:text-red-500 transition-colors"
+                          title="Löschen"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {rentalInquiries.length === 0 && (
+                  <div className="text-center py-12 text-white/40">
+                    <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Keine Raumanfragen vorhanden</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {/* Notifications */}
           {activeTab === 'notifications' && (
             <motion.div
@@ -401,7 +777,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-4xl font-bold text-white">Benachrichtigungszentrum</h1>
                 <button
-                  onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+                  onClick={markAllAsRead}
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
                 >
                   Mark all as read
@@ -422,7 +798,7 @@ export default function AdminDashboard() {
                             {notif.title}
                           </h3>
                           <p className="text-white/60 mt-1">{notif.message}</p>
-                          <p className="text-white/40 text-sm mt-2">{notif.date}</p>
+                          <p className="text-white/40 text-sm mt-2">{new Date(notif.created_at).toLocaleString('de-CH')}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -561,7 +937,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              <div className="grid gap-6">
+              <div className="grid gap-6 mb-8">
                 {jobs.map((job) => (
                   <div key={job.id} className="bg-neutral-900/50 rounded-xl p-6 border border-white/10">
                     <div className="flex items-start justify-between">
@@ -587,11 +963,107 @@ export default function AdminDashboard() {
                             <MapPin className="w-4 h-4" />
                             {job.location}
                           </span>
-                          <span className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedJobId(selectedJobId === job.id ? null : job.id)
+                              if (selectedJobId !== job.id) loadApplications(job.id)
+                            }}
+                            className="flex items-center gap-2 text-red-500 hover:text-red-400 transition-colors"
+                          >
                             <Users className="w-4 h-4" />
                             {job.applicants} Applicants
-                          </span>
+                            {selectedJobId === job.id ? ' ▲' : ' ▼'}
+                          </button>
                         </div>
+
+                        {/* Applications for this job */}
+                        {selectedJobId === job.id && (
+                          <div className="mt-4 border-t border-white/10 pt-4">
+                            <h4 className="text-white font-semibold mb-3">Bewerbungen für {job.title}</h4>
+                            <div className="space-y-3">
+                              {applications.filter(a => a.job_id === job.id).map((app) => (
+                                <div 
+                                  key={app.id} 
+                                  className={`p-4 rounded-lg border ${app.status === 'new' ? 'bg-red-500/5 border-red-500/20' : 'bg-black/30 border-white/10'}`}
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-3 mb-2">
+                                        <span className="font-semibold text-white">{app.name}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                          app.status === 'new' ? 'bg-red-500/20 text-red-500' :
+                                          app.status === 'reviewed' ? 'bg-yellow-500/20 text-yellow-500' :
+                                          app.status === 'interview' ? 'bg-blue-500/20 text-blue-500' :
+                                          app.status === 'hired' ? 'bg-green-500/20 text-green-500' :
+                                          'bg-white/10 text-white/60'
+                                        }`}>
+                                          {app.status === 'new' ? 'Neu' :
+                                           app.status === 'reviewed' ? 'Geprüft' :
+                                           app.status === 'interview' ? 'Interview' :
+                                           app.status === 'hired' ? 'Eingestellt' : 'Abgelehnt'}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-4 text-sm text-white/60 mb-2">
+                                        <span className="flex items-center gap-1">
+                                          <Mail className="w-3 h-3 text-red-500" />
+                                          {app.email}
+                                        </span>
+                                        {app.phone && (
+                                          <span className="flex items-center gap-1">
+                                            <Phone className="w-3 h-3 text-red-500" />
+                                            {app.phone}
+                                          </span>
+                                        )}
+                                        <span className="text-white/40">
+                                          {new Date(app.created_at).toLocaleDateString('de-CH')}
+                                        </span>
+                                      </div>
+                                      {app.message && (
+                                        <p className="text-white/60 text-sm bg-black/30 p-2 rounded mt-2">
+                                          {app.message}
+                                        </p>
+                                      )}
+                                      {app.cv_url && (
+                                        <a 
+                                          href={app.cv_url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 text-red-500 hover:text-red-400 text-sm mt-2"
+                                        >
+                                          <FileText className="w-4 h-4" />
+                                          Lebenslauf ansehen
+                                        </a>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1 ml-4">
+                                      <select
+                                        value={app.status}
+                                        onChange={(e) => updateApplicationStatus(app.id, e.target.value)}
+                                        className="px-2 py-1 bg-black border border-white/20 rounded text-sm text-white"
+                                      >
+                                        <option value="new">Neu</option>
+                                        <option value="reviewed">Geprüft</option>
+                                        <option value="interview">Interview</option>
+                                        <option value="hired">Eingestellt</option>
+                                        <option value="rejected">Abgelehnt</option>
+                                      </select>
+                                      <button
+                                        onClick={() => deleteApplication(app.id)}
+                                        className="p-2 text-white/40 hover:text-red-500 transition-colors"
+                                        title="Löschen"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              {applications.filter(a => a.job_id === job.id).length === 0 && (
+                                <p className="text-white/40 text-sm italic">Keine Bewerbungen für diese Position</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -604,7 +1076,10 @@ export default function AdminDashboard() {
                         <button className="p-2 text-white/60 hover:text-white transition-colors">
                           <Edit className="w-5 h-5" />
                         </button>
-                        <button className="p-2 text-white/60 hover:text-red-500 transition-colors">
+                        <button 
+                          onClick={() => deleteJob(job.id)}
+                          className="p-2 text-white/60 hover:text-red-500 transition-colors"
+                        >
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
@@ -612,6 +1087,127 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+            </motion.div>
+          )}
+
+          {/* Merchandise */}
+          {activeTab === 'merchandise' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h1 className="text-4xl font-bold text-white">Merchandise</h1>
+                <button
+                  onClick={() => setShowAddMerch(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                  Add Product
+                </button>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="bg-neutral-900/50 rounded-xl p-6 border border-white/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <Package className="w-8 h-8 text-red-500" />
+                    <span className="text-3xl font-bold text-white">{merchandise.length}</span>
+                  </div>
+                  <p className="text-white/60">Total Products</p>
+                </div>
+                <div className="bg-neutral-900/50 rounded-xl p-6 border border-white/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <Eye className="w-8 h-8 text-green-500" />
+                    <span className="text-3xl font-bold text-white">{merchandise.filter(m => m.active).length}</span>
+                  </div>
+                  <p className="text-white/60">Active</p>
+                </div>
+                <div className="bg-neutral-900/50 rounded-xl p-6 border border-white/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <EyeOff className="w-8 h-8 text-white/50" />
+                    <span className="text-3xl font-bold text-white">{merchandise.filter(m => !m.active).length}</span>
+                  </div>
+                  <p className="text-white/60">Inactive</p>
+                </div>
+                <div className="bg-neutral-900/50 rounded-xl p-6 border border-white/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <DollarSign className="w-8 h-8 text-yellow-500" />
+                    <span className="text-3xl font-bold text-white">
+                      {merchandise.reduce((sum, m) => sum + (m.stock || 0), 0)}
+                    </span>
+                  </div>
+                  <p className="text-white/60">Total Stock</p>
+                </div>
+              </div>
+
+              {/* Products Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {merchandise.map((item) => (
+                  <div key={item.id} className="bg-neutral-900/50 rounded-xl overflow-hidden border border-white/10">
+                    {/* Image */}
+                    <div className="aspect-square bg-neutral-800 relative">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingBag className="w-16 h-16 text-white/20" />
+                        </div>
+                      )}
+                      <span className={`absolute top-2 right-2 px-2 py-1 rounded text-xs ${
+                        item.active ? 'bg-green-500/20 text-green-500' : 'bg-white/10 text-white/60'
+                      }`}>
+                        {item.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    
+                    {/* Info */}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-white">{item.name}</h3>
+                        <span className="text-red-500 font-bold">CHF {item.price}</span>
+                      </div>
+                      <p className="text-white/60 text-sm mb-3 line-clamp-2">{item.description}</p>
+                      
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {item.sizes?.map((size: string) => (
+                          <span key={size} className="px-2 py-1 bg-white/10 rounded text-xs text-white">
+                            {size}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className={`text-sm ${item.stock < 10 ? 'text-red-400' : 'text-white/60'}`}>
+                          Stock: {item.stock}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleMerchStatus(item.id, item.active)}
+                            className="p-2 text-white/60 hover:text-white transition-colors"
+                            title={item.active ? 'Deactivate' : 'Activate'}
+                          >
+                            {item.active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => deleteMerch(item.id)}
+                            className="p-2 text-white/60 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {merchandise.length === 0 && (
+                <div className="text-center py-12 text-white/40">
+                  <ShoppingBag className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p>No merchandise yet</p>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -821,6 +1417,123 @@ export default function AdminDashboard() {
                       className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                     >
                       Add Job
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Add Merchandise Modal */}
+          {showAddMerch && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-neutral-900 rounded-2xl p-8 max-w-md w-full border border-white/10"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Add New Product</h2>
+                  <button
+                    onClick={() => setShowAddMerch(false)}
+                    className="p-2 text-white/60 hover:text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <form onSubmit={handleAddMerch} className="space-y-4">
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Product Name</label>
+                    <input
+                      type="text"
+                      value={newMerch.name}
+                      onChange={(e) => setNewMerch({ ...newMerch, name: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="e.g. KINKER Hoodie"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Description</label>
+                    <textarea
+                      value={newMerch.description}
+                      onChange={(e) => setNewMerch({ ...newMerch, description: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 resize-none"
+                      placeholder="Product description..."
+                      rows={2}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-white/70 text-sm mb-2">Price (CHF)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={newMerch.price}
+                        onChange={(e) => setNewMerch({ ...newMerch, price: e.target.value })}
+                        className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                        placeholder="49.90"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/70 text-sm mb-2">Stock</label>
+                      <input
+                        type="number"
+                        value={newMerch.stock}
+                        onChange={(e) => setNewMerch({ ...newMerch, stock: e.target.value })}
+                        className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                        placeholder="10"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Category</label>
+                    <select
+                      value={newMerch.category}
+                      onChange={(e) => setNewMerch({ ...newMerch, category: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="clothing">Clothing</option>
+                      <option value="accessories">Accessories</option>
+                      <option value="music">Music</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Sizes (comma separated)</label>
+                    <input
+                      type="text"
+                      value={newMerch.sizes.join(', ')}
+                      onChange={(e) => setNewMerch({ ...newMerch, sizes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="S, M, L, XL"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Image URL</label>
+                    <input
+                      type="url"
+                      value={newMerch.image}
+                      onChange={(e) => setNewMerch({ ...newMerch, image: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddMerch(false)}
+                      className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                    >
+                      Add Product
                     </button>
                   </div>
                 </form>

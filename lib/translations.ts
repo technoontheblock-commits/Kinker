@@ -162,6 +162,30 @@ export const translations = {
         message: 'Thank you for your interest. We will review your application and get back to you as soon as possible.',
       },
     },
+    // Merch Page
+    merch: {
+      title: 'MERCH',
+      subtitle: 'Official Store',
+      description: 'Show your love for KINKER with our official merchandise. From hoodies to accessories - wear the underground.',
+      empty: 'No items available',
+      addToCart: 'Add to Cart',
+      cart: 'Cart',
+      emptyCart: 'Your cart is empty',
+      subtotal: 'Subtotal',
+      checkout: 'Checkout',
+      continueShopping: 'Continue Shopping',
+      size: 'Size',
+      quantity: 'Quantity',
+      stock: 'Stock',
+      outOfStock: 'Out of Stock',
+      lowStock: 'Only {count} left',
+      categories: {
+        clothing: 'Clothing',
+        accessories: 'Accessories',
+        music: 'Music',
+        other: 'Other',
+      },
+    },
     // Location Page
     locationPage: {
       title: 'LOCATION',
@@ -172,6 +196,11 @@ export const translations = {
       publicTransport: 'Public Transport',
       byCar: 'By Car',
       parking: 'Parking',
+      hotels: 'Hotels Nearby',
+      budget: 'Budget',
+      midRange: 'Mid-Range',
+      luxury: 'Luxury',
+      priceDisclaimer: '* Prices are estimates and may vary by season. Early booking recommended.',
     },
     // Club Page
     club: {
@@ -386,6 +415,30 @@ export const translations = {
         message: 'Vielen Dank für dein Interesse. Wir prüfen deine Bewerbung und melden uns so schnell wie möglich bei dir.',
       },
     },
+    // Merch Page
+    merch: {
+      title: 'MERCH',
+      subtitle: 'Official Store',
+      description: 'Zeige deine Liebe zu KINKER mit unserem offiziellen Merchandise. Von Hoodies bis Accessoires - trag den Underground.',
+      empty: 'Keine Artikel verfügbar',
+      addToCart: 'In den Warenkorb',
+      cart: 'Warenkorb',
+      emptyCart: 'Dein Warenkorb ist leer',
+      subtotal: 'Zwischensumme',
+      checkout: 'Zur Kasse',
+      continueShopping: 'Weiter einkaufen',
+      size: 'Grösse',
+      quantity: 'Anzahl',
+      stock: 'Lagerbestand',
+      outOfStock: 'Ausverkauft',
+      lowStock: 'Nur noch {count} verfügbar',
+      categories: {
+        clothing: 'Kleidung',
+        accessories: 'Accessoires',
+        music: 'Musik',
+        other: 'Sonstiges',
+      },
+    },
     // Location Page
     locationPage: {
       title: 'LOCATION',
@@ -396,6 +449,11 @@ export const translations = {
       publicTransport: 'Öffentliche Verkehrsmittel',
       byCar: 'Mit dem Auto',
       parking: 'Parken',
+      hotels: 'Hotels in der Nähe',
+      budget: 'Preiswert',
+      midRange: 'Mittelklasse',
+      luxury: 'Gehoben',
+      priceDisclaimer: '* Preise sind Richtwerte und können je nach Saison variieren. Empfohlen wird eine frühzeitige Buchung.',
     },
     // Club Page
     club: {

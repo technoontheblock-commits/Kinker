@@ -39,6 +39,7 @@ export function Navigation() {
     { name: t.nav.location, href: '/location' },
     { name: t.nav.rental, href: '/rental' },
     { name: t.nav.career, href: '/career' },
+    { name: t.nav.merch, href: '/merch' },
   ]
 
   return (

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { MapPin, Train, Bus, Car, Clock } from 'lucide-react'
+import { MapPin, Train, Bus, Car, Clock, Hotel, Star, Euro } from 'lucide-react'
 import { clubInfo } from '@/lib/data'
 
 export default function LocationPage() {
@@ -201,6 +201,93 @@ export default function LocationPage() {
           <p className="text-white/70 leading-relaxed">
             We encourage everyone to plan their journey home in advance and look 
             out for each other. Your safety is our priority.
+          </p>
+        </motion.div>
+
+        {/* Hotels Nearby */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-16"
+        >
+          <div className="flex items-center gap-4 mb-8">
+            <Hotel className="w-8 h-8 text-red-500" />
+            <h2 className="text-3xl font-bold text-white font-display">Hotels in der Nähe</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Budget */}
+            <div className="p-6 bg-neutral-900/50 rounded-xl border border-white/10">
+              <div className="flex items-center gap-2 mb-4">
+                <Euro className="w-5 h-5 text-green-500" />
+                <h3 className="text-xl font-bold text-white font-display">Preiswert</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 bg-black/30 rounded-lg">
+                  <h4 className="font-semibold text-white">Ibis Budget Basel City</h4>
+                  <p className="text-white/60 text-sm">Grosspeterstrasse 12, 4052 Basel</p>
+                  <p className="text-green-400 text-sm mt-1">ab CHF 75/Nacht</p>
+                  <p className="text-white/40 text-xs mt-1">~15 Min. mit Tram</p>
+                </div>
+                <div className="p-4 bg-black/30 rounded-lg">
+                  <h4 className="font-semibold text-white">EasyHotel Basel</h4>
+                  <p className="text-white/60 text-sm">Riehenring 109, 4058 Basel</p>
+                  <p className="text-green-400 text-sm mt-1">ab CHF 85/Nacht</p>
+                  <p className="text-white/40 text-xs mt-1">~20 Min. mit Tram</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Mid-Range */}
+            <div className="p-6 bg-neutral-900/50 rounded-xl border border-white/10">
+              <div className="flex items-center gap-2 mb-4">
+                <Star className="w-5 h-5 text-yellow-500" />
+                <h3 className="text-xl font-bold text-white font-display">Mittelklasse</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 bg-black/30 rounded-lg">
+                  <h4 className="font-semibold text-white">Hotel Basel</h4>
+                  <p className="text-white/60 text-sm">Münzgasse 12, 4001 Basel</p>
+                  <p className="text-yellow-400 text-sm mt-1">ab CHF 150/Nacht</p>
+                  <p className="text-white/40 text-xs mt-1">~25 Min. mit Tram</p>
+                </div>
+                <div className="p-4 bg-black/30 rounded-lg">
+                  <h4 className="font-semibold text-white">Radisson Blu Basel</h4>
+                  <p className="text-white/60 text-sm">Steinentorstrasse 25, 4001 Basel</p>
+                  <p className="text-yellow-400 text-sm mt-1">ab CHF 180/Nacht</p>
+                  <p className="text-white/40 text-xs mt-1">~20 Min. mit Tram</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Luxury */}
+            <div className="p-6 bg-neutral-900/50 rounded-xl border border-white/10">
+              <div className="flex items-center gap-2 mb-4">
+                <Star className="w-5 h-5 text-red-500" />
+                <Star className="w-5 h-5 text-red-500" />
+                <h3 className="text-xl font-bold text-white font-display">Gehoben</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 bg-black/30 rounded-lg">
+                  <h4 className="font-semibold text-white">Grand Hotel Les Trois Rois</h4>
+                  <p className="text-white/60 text-sm">Blumenrain 8, 4001 Basel</p>
+                  <p className="text-red-400 text-sm mt-1">ab CHF 350/Nacht</p>
+                  <p className="text-white/40 text-xs mt-1">~25 Min. mit Tram</p>
+                </div>
+                <div className="p-4 bg-black/30 rounded-lg">
+                  <h4 className="font-semibold text-white">Hotel Victoria</h4>
+                  <p className="text-white/60 text-sm">Centralbahnplatz 3, 4002 Basel</p>
+                  <p className="text-red-400 text-sm mt-1">ab CHF 280/Nacht</p>
+                  <p className="text-white/40 text-xs mt-1">~20 Min. mit Tram</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-white/40 text-sm mt-6 text-center">
+            * Preise sind Richtwerte und können je nach Saison variieren. Empfohlen wird eine frühzeitige Buchung.
           </p>
         </motion.div>
       </section>
