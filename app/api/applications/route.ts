@@ -1,91 +1,149 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-// GET /api/applications - Get all job applications
-export async function GET(request: NextRequest) {
+function getCurrentUser() {
+  const session = cookies().get('user_session')?.value
+  if (!session) return null
+  return JSON.parse(session)
+}
+
+// GET /api/applications - Get user's job applications
+export async function GET() {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
+    const user = getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-    
-    const { searchParams } = new URL(request.url)
-    const jobId = searchParams.get('jobId')
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    let query = supabase
+    const { data, error } = await supabase
       .from('job_applications')
-      .select('*, jobs(title)')
+      .select(`
+        *,
+        job:jobs(title, department, type, location)
+      `)
+      .eq('email', user.email)
       .order('created_at', { ascending: false })
-    
-    if (jobId) {
-      query = query.eq('job_id', jobId)
-    }
-    
-    const { data, error } = await query
 
     if (error) {
-      console.error('GET applications error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json(data || [])
   } catch (error: any) {
-    console.error('GET applications exception:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-// POST /api/applications - Create new job application
+// POST /api/applications - Submit new application
 export async function POST(request: NextRequest) {
   try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
+    const user = getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-    
+
     const body = await request.json()
+    const { job_id, message, cv_url } = body
+
+    if (!job_id) {
+      return NextResponse.json({ error: 'Job ID required' }, { status: 400 })
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
+    // Check if already applied
+    const { data: existing } = await supabase
+      .from('job_applications')
+      .select('id')
+      .eq('job_id', job_id)
+      .eq('email', user.email)
+      .single()
+
+    if (existing) {
+      return NextResponse.json({ error: 'Already applied to this job' }, { status: 400 })
+    }
+
+    // Get user profile for additional info
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('name, phone')
+      .eq('id', user.id)
+      .single()
+
     const { data, error } = await supabase
       .from('job_applications')
-      .insert([{
-        job_id: body.jobId,
-        name: body.name,
-        email: body.email,
-        phone: body.phone,
-        message: body.message,
-        cv_url: body.cvUrl,
-        status: 'new'
-      }])
+      .insert({
+        job_id,
+        name: profile?.name || user.email.split('@')[0],
+        email: user.email,
+        phone: profile?.phone || '',
+        message: message || '',
+        cv_url: cv_url || '',
+        status: 'pending'
+      })
       .select()
       .single()
 
     if (error) {
-      console.error('POST application error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Get job title for notification
-    const { data: job } = await supabase
-      .from('jobs')
-      .select('title')
-      .eq('id', body.jobId)
+    return NextResponse.json({ success: true, application: data })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+// DELETE /api/applications - Withdraw application
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Application ID required' }, { status: 400 })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    
+    // Verify ownership
+    const { data: existing } = await supabase
+      .from('job_applications')
+      .select('id, status')
+      .eq('id', id)
+      .eq('email', user.email)
       .single()
 
-    // Create notification for admin
-    await supabase.from('notifications').insert([{
-      type: 'career',
-      title: 'Neue Bewerbung',
-      message: `Bewerbung als ${job?.title || 'Position'} von ${body.name}`,
-      read: false
-    }])
+    if (!existing) {
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+    }
 
-    return NextResponse.json(data)
+    if (existing.status === 'hired' || existing.status === 'rejected') {
+      return NextResponse.json({ error: 'Cannot withdraw processed application' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('job_applications')
+      .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
+      .eq('id', id)
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('POST application exception:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

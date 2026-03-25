@@ -9,9 +9,7 @@ import { cn } from '@/lib/utils'
 import { LogoIcon } from './logo'
 import { useLanguage } from './language-provider'
 
-const adminNavItems = [
-  { name: 'Admin', href: '/admin' },
-]
+
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -70,20 +68,6 @@ export function Navigation() {
                 {item.name}
               </Link>
             ))}
-            <span className="w-px h-4 bg-white/20" />
-            {adminNavItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'text-sm font-medium tracking-wide uppercase transition-colors hover:text-red-500',
-                  pathname === item.href ? 'text-red-500' : 'text-white/60'
-                )}
-              >
-                {item.name}
-              </Link>
-            ))}
-            
             {/* Language Toggle */}
             <button
               onClick={toggleLanguage}
@@ -100,7 +84,7 @@ export function Navigation() {
               className="ml-4"
               asChild
             >
-              <Link href="/events">{t.nav.getTickets}</Link>
+              <Link href="/dashboard">Dashboard</Link>
             </Button>
           </nav>
 
@@ -153,7 +137,7 @@ export function Navigation() {
                 onClick={() => setIsOpen(false)}
                 asChild
               >
-                <Link href="/events">{t.nav.getTickets}</Link>
+                <Link href="/dashboard">Dashboard</Link>
               </Button>
             </div>
           </div>

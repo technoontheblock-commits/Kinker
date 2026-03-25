@@ -94,7 +94,7 @@ export default function MerchPage() {
   }
 
   const total = cart.reduce((sum, item) => sum + (item.product?.price * item.quantity), 0)
-  const categories = [...new Set(products.map(p => p.category))]
+  const categories = Array.from(new Set(products.map(p => p.category)))
 
   return (
     <div className="min-h-screen bg-black pt-24">

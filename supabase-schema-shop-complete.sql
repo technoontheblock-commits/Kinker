@@ -207,18 +207,11 @@ CREATE POLICY "ticket_scans_all" ON ticket_scans FOR ALL USING (true);
 -- SAMPLE DATA
 -- ============================================
 
--- Insert sample products
-INSERT INTO products (name, description, price, category, sizes, stock, active) VALUES
-('KINKER Hoodie Black', 'Premium Hoodie mit Stick-Logo. 80% Baumwolle, 20% Polyester.', 89.90, 'clothing', ARRAY['S', 'M', 'L', 'XL', 'XXL'], 25, true),
-('KINKER T-Shirt', 'Klassisches Shirt mit rotem KINKER Print. 100% Bio-Baumwolle.', 39.90, 'clothing', ARRAY['S', 'M', 'L', 'XL', 'XXL'], 50, true),
-('KINKER Beanie', 'Schwarze Beanie mit gesticktem Logo.', 29.90, 'accessories', ARRAY['One Size'], 30, true),
-('KINKER Tote Bag', 'Robuste Canvas Tasche mit Print.', 19.90, 'accessories', ARRAY['One Size'], 40, true);
-
 -- Insert sample scanner user (password: scanner123)
 INSERT INTO scanner_users (name, email, password_hash, role, active) VALUES
-('Abendkasse 1', 'kasse1@kinker.ch', '$2b$10$YourHashedPasswordHere', 'scanner', true),
-('Abendkasse 2', 'kasse2@kinker.ch', '$2b$10$YourHashedPasswordHere', 'scanner', true),
-('Manager', 'manager@kinker.ch', '$2b$10$YourHashedPasswordHere', 'manager', true);
+('Abendkasse 1', 'kasse1@kinker.ch', 'scanner123', 'scanner', true),
+('Abendkasse 2', 'kasse2@kinker.ch', 'scanner123', 'scanner', true),
+('Manager', 'manager@kinker.ch', 'scanner123', 'manager', true);
 
 -- ============================================
 -- FUNCTIONS
