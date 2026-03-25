@@ -31,7 +31,7 @@ export default function MerchPage() {
 
   const loadProducts = async () => {
     try {
-      const response = await fetch('/api/products')
+      const response = await fetch('/api/merchandise')
       if (response.ok) {
         const data = await response.json()
         setProducts(data)
@@ -158,55 +158,60 @@ export default function MerchPage() {
       {/* Product Modal */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-neutral-900 rounded-2xl max-w-lg w-full p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-white">{selectedProduct.name}</h2>
-              <button onClick={() => setSelectedProduct(null)} className="text-white/60">
-                <X className="w-6 h-6" />
+          <div className="bg-neutral-900 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {/* Image - smaller height */}
+            <div className="relative h-48 sm:h-56 bg-neutral-800 rounded-t-2xl">
+              {selectedProduct.image ? (
+                <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover rounded-t-2xl" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ShoppingBag className="w-16 h-16 text-white/20" />
+                </div>
+              )}
+              <button 
+                onClick={() => setSelectedProduct(null)} 
+                className="absolute top-3 right-3 p-2 bg-black/50 rounded-full text-white/80 hover:text-white"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="aspect-square bg-neutral-800 rounded-lg mb-4">
-              {selectedProduct.image ? (
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover rounded-lg" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ShoppingBag className="w-24 h-24 text-white/20" />
+            {/* Content */}
+            <div className="p-5">
+              <h2 className="text-xl font-bold text-white mb-1">{selectedProduct.name}</h2>
+              <p className="text-xl font-bold text-red-500 mb-3">CHF {selectedProduct.price}</p>
+              
+              <p className="text-white/60 text-sm mb-4">{selectedProduct.description}</p>
+              
+              {selectedProduct.sizes.length > 0 && (
+                <div className="mb-4">
+                  <label className="text-white/70 text-sm mb-2 block">Grösse</label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProduct.sizes.map(size => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-3 py-2 rounded-lg border text-sm ${
+                          selectedSize === size
+                            ? 'border-red-500 bg-red-500/20 text-white'
+                            : 'border-white/20 text-white/70'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
+              
+              <button
+                onClick={addToCart}
+                disabled={!selectedSize}
+                className="w-full py-3 bg-red-500 hover:bg-red-600 disabled:bg-white/10 text-white font-semibold rounded-lg"
+              >
+                In den Warenkorb
+              </button>
             </div>
-            
-            <p className="text-white/60 mb-4">{selectedProduct.description}</p>
-            <p className="text-2xl font-bold text-white mb-4">CHF {selectedProduct.price}</p>
-            
-            {selectedProduct.sizes.length > 0 && (
-              <div className="mb-4">
-                <label className="text-white/70 text-sm mb-2 block">Grösse</label>
-                <div className="flex gap-2">
-                  {selectedProduct.sizes.map(size => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 rounded-lg border ${
-                        selectedSize === size
-                          ? 'border-red-500 bg-red-500/20 text-white'
-                          : 'border-white/20 text-white/70'
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <button
-              onClick={addToCart}
-              disabled={!selectedSize}
-              className="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-white/10 text-white font-semibold rounded-lg"
-            >
-              In den Warenkorb
-            </button>
           </div>
         </div>
       )}

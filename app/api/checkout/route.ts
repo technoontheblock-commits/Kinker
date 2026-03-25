@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       .from('cart_items')
       .select(`
         *,
-        product:products(*),
+        product:merchandise(*),
         event_ticket:event_tickets(*, event:events(*))
       `)
       .eq('session_id', sessionId)

@@ -24,7 +24,9 @@ import {
   Phone,
   FileText,
   ShoppingBag,
-  Package
+  Package,
+  Ticket,
+  Ban
 } from 'lucide-react'
 import { getEvents } from '@/lib/events'
 import { EventForm } from './EventForm'
@@ -56,8 +58,11 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([])
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
   const [orderFilter, setOrderFilter] = useState('all')
+  const [tickets, setTickets] = useState<any[]>([])
+  const [ticketFilter, setTicketFilter] = useState('all')
   const [showAddUser, setShowAddUser] = useState(false)
   const [showAddJob, setShowAddJob] = useState(false)
+  const [editingJob, setEditingJob] = useState<any>(null)
   const [showAddEvent, setShowAddEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -76,7 +81,8 @@ export default function AdminDashboard() {
     department: '',
     type: 'Full-time',
     location: 'Basel',
-    description: ''
+    description: '',
+    requirements: [] as string[]
   })
   
   // New merchandise form state
@@ -99,6 +105,7 @@ export default function AdminDashboard() {
     loadJobs()
     loadMerchandise()
     loadOrders()
+    loadTickets()
   }, [])
 
   const loadEvents = async () => {
@@ -157,6 +164,7 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'events', label: 'Events', icon: Calendar },
+    { id: 'tickets', label: 'Tickets', icon: Ticket },
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'rental', label: 'Raumanfragen', icon: Building },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
@@ -212,16 +220,25 @@ export default function AdminDashboard() {
 
   const updateRentalStatus = async (id: string, status: string) => {
     try {
+      console.log('Updating rental status:', id, status)
       const response = await fetch(`/api/rental/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       })
+      console.log('Response status:', response.status)
       if (response.ok) {
+        const data = await response.json()
+        console.log('Updated successfully:', data)
         setRentalInquiries(rentalInquiries.map(r => r.id === id ? { ...r, status } : r))
+      } else {
+        const error = await response.json()
+        console.error('Error response:', error)
+        alert('Error: ' + (error.error || 'Failed to update status'))
       }
     } catch (error) {
       console.error('Error updating rental status:', error)
+      alert('Error updating status')
     }
   }
 
@@ -293,7 +310,7 @@ export default function AdminDashboard() {
     const job = jobs.find(j => j.id === id)
     if (!job) return
     
-    const newStatus = job.status === 'Active' ? 'Inactive' : 'Active'
+    const newStatus = job.status === 'active' ? 'inactive' : 'active'
     try {
       const response = await fetch(`/api/jobs/${id}`, {
         method: 'PUT',
@@ -392,10 +409,44 @@ export default function AdminDashboard() {
       const response = await fetch('/api/orders')
       if (response.ok) {
         const data = await response.json()
+        console.log('Orders loaded:', data)
         setOrders(data || [])
+      } else {
+        const error = await response.json()
+        console.error('Error loading orders:', error)
       }
     } catch (error) {
       console.error('Error loading orders:', error)
+    }
+  }
+
+  // Load tickets
+  const loadTickets = async () => {
+    try {
+      const response = await fetch('/api/tickets/admin')
+      if (response.ok) {
+        const data = await response.json()
+        setTickets(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading tickets:', error)
+    }
+  }
+
+  // Cancel ticket
+  const cancelTicket = async (ticketId: string) => {
+    if (!confirm('Are you sure you want to cancel this ticket?')) return
+    try {
+      const response = await fetch(`/api/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' })
+      })
+      if (response.ok) {
+        setTickets(tickets.map(t => t.id === ticketId ? { ...t, status: 'cancelled' } : t))
+      }
+    } catch (error) {
+      console.error('Error cancelling ticket:', error)
     }
   }
 
@@ -450,11 +501,14 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleAddJob = async (e: React.FormEvent) => {
+  const handleSaveJob = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch('/api/jobs', {
-        method: 'POST',
+      const url = editingJob ? `/api/jobs/${editingJob.id}` : '/api/jobs'
+      const method = editingJob ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newJob)
       })
@@ -462,14 +516,15 @@ export default function AdminDashboard() {
       if (response.ok) {
         await loadJobs()
         setShowAddJob(false)
-        setNewJob({ title: '', department: '', type: 'Full-time', location: 'Basel', description: '' })
+        setEditingJob(null)
+        setNewJob({ title: '', department: '', type: 'Full-time', location: 'Basel', description: '', requirements: [] })
       } else {
         const error = await response.json()
-        alert('Error adding job: ' + (error.error || 'Unknown error'))
+        alert('Error saving job: ' + (error.error || 'Unknown error'))
       }
     } catch (error) {
-      console.error('Error adding job:', error)
-      alert('Error adding job')
+      console.error('Error saving job:', error)
+      alert('Error saving job')
     }
   }
 
@@ -702,27 +757,28 @@ export default function AdminDashboard() {
             >
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-4xl font-bold text-white">Raumanfragen</h1>
-                <span className="text-white/60">{rentalInquiries.filter(r => r.status === 'new').length} neue Anfragen</span>
+                <span className="text-white/60">{rentalInquiries.filter(r => r.status === 'pending').length} pending inquiries</span>
               </div>
 
               <div className="space-y-4">
                 {rentalInquiries.map((inquiry) => (
                   <div 
                     key={inquiry.id} 
-                    className={`p-6 rounded-xl border ${inquiry.status === 'new' ? 'bg-red-500/5 border-red-500/20' : 'bg-neutral-900/30 border-white/10'}`}
+                    className={`p-6 rounded-xl border ${inquiry.status === 'pending' ? 'bg-red-500/5 border-red-500/20' : 'bg-neutral-900/30 border-white/10'}`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="font-semibold text-white text-lg">{inquiry.name}</h3>
                           <span className={`px-3 py-1 rounded-full text-xs ${
-                            inquiry.status === 'new' ? 'bg-red-500/20 text-red-500' :
+                            inquiry.status === 'pending' ? 'bg-red-500/20 text-red-500' :
                             inquiry.status === 'contacted' ? 'bg-yellow-500/20 text-yellow-500' :
-                            'bg-green-500/20 text-green-500'
+                            inquiry.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
+                            'bg-red-500/20 text-red-500'
                           }`}>
-                            {inquiry.status === 'new' ? 'Neu' :
-                             inquiry.status === 'contacted' ? 'Kontaktiert' :
-                             inquiry.status === 'confirmed' ? 'Bestätigt' : 'Abgelehnt'}
+                            {inquiry.status === 'pending' ? 'Pending' :
+                             inquiry.status === 'contacted' ? 'Contacted' :
+                             inquiry.status === 'confirmed' ? 'Confirmed' : 'Declined'}
                           </span>
                         </div>
                         
@@ -739,7 +795,7 @@ export default function AdminDashboard() {
                           )}
                           <span className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-red-500" />
-                            {new Date(inquiry.date).toLocaleDateString('de-CH')}
+                            {new Date(inquiry.event_date).toLocaleDateString('de-CH')}
                           </span>
                           <span className="flex items-center gap-2">
                             <Users className="w-4 h-4 text-red-500" />
@@ -783,19 +839,31 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
-                        {inquiry.status === 'new' && (
-                          <button
-                            onClick={() => updateRentalStatus(inquiry.id, 'contacted')}
-                            className="p-2 text-white/60 hover:text-green-500 transition-colors"
-                            title="Als kontaktiert markieren"
-                          >
-                            <Check className="w-5 h-5" />
-                          </button>
-                        )}
+                        <select
+                          value={inquiry.status}
+                          onChange={(e) => updateRentalStatus(inquiry.id, e.target.value)}
+                          className={`px-3 py-1 pr-8 rounded-full text-xs font-medium border-0 cursor-pointer appearance-none bg-transparent ${
+                            inquiry.status === 'pending' ? 'text-red-500' :
+                            inquiry.status === 'contacted' ? 'text-yellow-500' :
+                            inquiry.status === 'confirmed' ? 'text-green-500' :
+                            'text-white/60'
+                          }`}
+                          style={{ 
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
+                            backgroundPosition: 'right 4px center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundSize: '16px'
+                          }}
+                        >
+                          <option value="pending" className="bg-neutral-900 text-red-500">Pending</option>
+                          <option value="contacted" className="bg-neutral-900 text-yellow-500">Contacted</option>
+                          <option value="confirmed" className="bg-neutral-900 text-green-500">Confirmed</option>
+                          <option value="declined" className="bg-neutral-900 text-white/60">Declined</option>
+                        </select>
                         <button
                           onClick={() => deleteRentalInquiry(inquiry.id)}
                           className="p-2 text-white/60 hover:text-red-500 transition-colors"
-                          title="Löschen"
+                          title="Delete"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -991,7 +1059,7 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-4 mb-2">
                           <h3 className="text-xl font-bold text-white">{job.title}</h3>
                           <span className={`px-3 py-1 rounded-full text-xs ${
-                            job.status === 'Active' ? 'bg-green-500/20 text-green-500' : 'bg-white/10 text-white/70'
+                            job.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-white/10 text-white/70'
                           }`}>
                             {job.status}
                           </span>
@@ -1115,11 +1183,25 @@ export default function AdminDashboard() {
                         <button
                           onClick={() => toggleJobStatus(job.id)}
                           className="p-2 text-white/60 hover:text-white transition-colors"
-                          title={job.status === 'Active' ? 'Deactivate' : 'Activate'}
+                          title={job.status === 'active' ? 'Deactivate' : 'Activate'}
                         >
-                          {job.status === 'Active' ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          {job.status === 'active' ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
-                        <button className="p-2 text-white/60 hover:text-white transition-colors">
+                        <button 
+                          onClick={() => {
+                            setEditingJob(job)
+                            setNewJob({
+                              title: job.title,
+                              department: job.department,
+                              type: job.type,
+                              location: job.location,
+                              description: job.description || '',
+                              requirements: job.requirements || []
+                            })
+                          }}
+                          className="p-2 text-white/60 hover:text-white transition-colors"
+                          title="Edit"
+                        >
                           <Edit className="w-5 h-5" />
                         </button>
                         <button 
@@ -1266,19 +1348,19 @@ export default function AdminDashboard() {
             >
               {/* Header */}
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">Bestellungen</h2>
+                <h2 className="text-2xl font-bold text-white">Orders</h2>
                 <div className="flex items-center gap-3">
                   <select
                     value={orderFilter}
                     onChange={(e) => setOrderFilter(e.target.value)}
                     className="px-4 py-2 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500"
                   >
-                    <option value="all">Alle Bestellungen</option>
-                    <option value="pending">Ausstehend</option>
-                    <option value="processing">In Bearbeitung</option>
-                    <option value="shipped">Versendet</option>
-                    <option value="completed">Abgeschlossen</option>
-                    <option value="cancelled">Storniert</option>
+                    <option value="all">All Orders</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>
@@ -1291,11 +1373,11 @@ export default function AdminDashboard() {
                 </div>
                 <div className="bg-neutral-900/50 rounded-xl p-4 border border-white/10">
                   <p className="text-2xl font-bold text-yellow-500">{orders.filter(o => o.status === 'pending').length}</p>
-                  <p className="text-white/60 text-sm">Ausstehend</p>
+                  <p className="text-white/60 text-sm">Pending</p>
                 </div>
                 <div className="bg-neutral-900/50 rounded-xl p-4 border border-white/10">
                   <p className="text-2xl font-bold text-blue-500">{orders.filter(o => o.status === 'processing').length}</p>
-                  <p className="text-white/60 text-sm">In Bearbeitung</p>
+                  <p className="text-white/60 text-sm">Processing</p>
                 </div>
                 <div className="bg-neutral-900/50 rounded-xl p-4 border border-white/10">
                   <p className="text-2xl font-bold text-green-500">
@@ -1311,7 +1393,7 @@ export default function AdminDashboard() {
                   <table className="w-full">
                     <thead className="bg-black/30">
                       <tr>
-                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Order ID</th>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Order Number</th>
                         <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Customer</th>
                         <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Date</th>
                         <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Total</th>
@@ -1325,7 +1407,7 @@ export default function AdminDashboard() {
                         .map((order) => (
                         <tr key={order.id} className="hover:bg-white/5">
                           <td className="px-4 py-3">
-                            <span className="text-white font-mono text-sm">{order.id?.slice(0, 8)}...</span>
+                            <span className="text-white font-mono text-sm">{order.order_number}</span>
                           </td>
                           <td className="px-4 py-3">
                             <div>
@@ -1347,11 +1429,11 @@ export default function AdminDashboard() {
                               onChange={(e) => updateOrderStatus(order.id, e.target.value)}
                               className={`px-3 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${getStatusColor(order.status)}`}
                             >
-                              <option value="pending">Ausstehend</option>
-                              <option value="processing">In Bearbeitung</option>
-                              <option value="shipped">Versendet</option>
-                              <option value="completed">Abgeschlossen</option>
-                              <option value="cancelled">Storniert</option>
+                              <option value="pending">Pending</option>
+                              <option value="processing">Processing</option>
+                              <option value="shipped">Shipped</option>
+                              <option value="completed">Completed</option>
+                              <option value="cancelled">Cancelled</option>
                             </select>
                           </td>
                           <td className="px-4 py-3">
@@ -1372,7 +1454,7 @@ export default function AdminDashboard() {
                 {orders.filter(order => orderFilter === 'all' || order.status === orderFilter).length === 0 && (
                   <div className="text-center py-12 text-white/40">
                     <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p>Keine Bestellungen gefunden</p>
+                    <p>No orders found</p>
                   </div>
                 )}
               </div>
@@ -1481,6 +1563,123 @@ export default function AdminDashboard() {
                   </motion.div>
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {/* Tickets */}
+          {activeTab === 'tickets' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-white">Tickets</h2>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={ticketFilter}
+                    onChange={(e) => setTicketFilter(e.target.value)}
+                    className="px-4 py-2 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500"
+                  >
+                    <option value="all">All Tickets</option>
+                    <option value="valid">Valid</option>
+                    <option value="used">Used</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-neutral-900/50 rounded-xl p-4 border border-white/10">
+                  <p className="text-2xl font-bold text-white">{tickets.length}</p>
+                  <p className="text-white/60 text-sm">Total Tickets</p>
+                </div>
+                <div className="bg-neutral-900/50 rounded-xl p-4 border border-white/10">
+                  <p className="text-2xl font-bold text-green-500">{tickets.filter(t => t.status === 'valid').length}</p>
+                  <p className="text-white/60 text-sm">Valid</p>
+                </div>
+                <div className="bg-neutral-900/50 rounded-xl p-4 border border-white/10">
+                  <p className="text-2xl font-bold text-blue-500">{tickets.filter(t => t.status === 'used').length}</p>
+                  <p className="text-white/60 text-sm">Used</p>
+                </div>
+                <div className="bg-neutral-900/50 rounded-xl p-4 border border-white/10">
+                  <p className="text-2xl font-bold text-red-500">{tickets.filter(t => t.status === 'cancelled').length}</p>
+                  <p className="text-white/60 text-sm">Cancelled</p>
+                </div>
+              </div>
+
+              {/* Tickets Table */}
+              <div className="bg-neutral-900/50 rounded-xl border border-white/10 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-black/30">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Ticket Number</th>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Event</th>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Customer</th>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Date</th>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Status</th>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {tickets
+                        .filter(ticket => ticketFilter === 'all' || ticket.status === ticketFilter)
+                        .map((ticket) => (
+                        <tr key={ticket.id} className="hover:bg-white/5">
+                          <td className="px-4 py-3">
+                            <span className="text-white font-mono text-sm">{ticket.ticket_number}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-white text-sm">{ticket.event?.name || 'Unknown Event'}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>
+                              <p className="text-white text-sm">{ticket.holder_name}</p>
+                              <p className="text-white/40 text-xs">{ticket.holder_email}</p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-white/60 text-sm">
+                              {new Date(ticket.created_at).toLocaleDateString('de-CH')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-3 py-1 rounded-full text-xs ${
+                              ticket.status === 'valid' ? 'bg-green-500/20 text-green-500' :
+                              ticket.status === 'used' ? 'bg-blue-500/20 text-blue-500' :
+                              ticket.status === 'cancelled' ? 'bg-red-500/20 text-red-500' :
+                              'bg-white/10 text-white/60'
+                            }`}>
+                              {ticket.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {ticket.status !== 'cancelled' && (
+                              <button
+                                onClick={() => cancelTicket(ticket.id)}
+                                className="p-2 text-white/60 hover:text-red-500 transition-colors"
+                                title="Cancel Ticket"
+                              >
+                                <Ban className="w-4 h-4" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {tickets.filter(ticket => ticketFilter === 'all' || ticket.status === ticketFilter).length === 0 && (
+                  <div className="text-center py-12 text-white/40">
+                    <Ticket className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p>No tickets found</p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -1605,7 +1804,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Add Job Modal */}
-          {showAddJob && (
+          {(showAddJob || editingJob) && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -1621,7 +1820,7 @@ export default function AdminDashboard() {
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-                <form onSubmit={handleAddJob} className="space-y-4">
+                <form onSubmit={handleSaveJob} className="space-y-4">
                   <div>
                     <label className="block text-white/70 text-sm mb-2">Job Title</label>
                     <input
@@ -1677,10 +1876,47 @@ export default function AdminDashboard() {
                       rows={3}
                     />
                   </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Requirements</label>
+                    <div className="space-y-2">
+                      {newJob.requirements.map((req, index) => (
+                        <div key={index} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={req}
+                            onChange={(e) => {
+                              const newReqs = [...newJob.requirements]
+                              newReqs[index] = e.target.value
+                              setNewJob({ ...newJob, requirements: newReqs })
+                            }}
+                            className="flex-1 px-4 py-2 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                            placeholder={`Requirement ${index + 1}`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newReqs = newJob.requirements.filter((_, i) => i !== index)
+                              setNewJob({ ...newJob, requirements: newReqs })
+                            }}
+                            className="px-3 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setNewJob({ ...newJob, requirements: [...newJob.requirements, ''] })}
+                        className="w-full px-4 py-2 border border-dashed border-white/20 text-white/60 hover:border-red-500/50 hover:text-red-500 rounded-lg transition-colors"
+                      >
+                        + Add Requirement
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex gap-3 pt-4">
                     <button
                       type="button"
-                      onClick={() => setShowAddJob(false)}
+                      onClick={() => { setShowAddJob(false); setEditingJob(null); }}
                       className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
                     >
                       Cancel

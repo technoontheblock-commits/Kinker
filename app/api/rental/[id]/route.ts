@@ -21,7 +21,7 @@ export async function PUT(
     if (body.status !== undefined) updatePayload.status = body.status
     if (body.notes !== undefined) updatePayload.notes = body.notes
     
-    updatePayload.updated_at = new Date().toISOString()
+    // updated_at column doesn't exist, skip it
     
     const { data, error } = await supabase
       .from('rental_inquiries')

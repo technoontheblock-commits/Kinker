@@ -13,19 +13,37 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data: orders, error } = await supabase
+    // First get all orders
+    const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select(`
-        *,
-        items:order_items(*)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (ordersError) {
+      console.error('Orders error:', ordersError)
+      return NextResponse.json({ error: ordersError.message }, { status: 500 })
     }
 
-    return NextResponse.json(orders || [])
+    // Then get order items for each order
+    const ordersWithItems = await Promise.all(
+      (orders || []).map(async (order) => {
+        const { data: items, error: itemsError } = await supabase
+          .from('order_items')
+          .select('*')
+          .eq('order_id', order.id)
+        
+        if (itemsError) {
+          console.error('Items error for order', order.id, itemsError)
+        }
+        
+        return {
+          ...order,
+          items: items || []
+        }
+      })
+    )
+
+    return NextResponse.json(ordersWithItems)
   } catch (error: any) {
     console.error('Error fetching orders:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

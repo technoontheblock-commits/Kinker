@@ -1,20 +1,39 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Briefcase, Clock, MapPin, CheckCircle, XCircle, Clock3 } from 'lucide-react'
+import { Briefcase, Clock, MapPin, CheckCircle, XCircle, Clock3, Loader2 } from 'lucide-react'
+
+interface Application {
+  id: string
+  job_id: string
+  status: string
+  created_at: string
+  job?: {
+    title: string
+    department: string
+  }
+}
 
 export default function CareersPage() {
-  const [applications, setApplications] = useState<any[]>([])
+  const [applications, setApplications] = useState<Application[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadApplications()
   }, [])
 
   const loadApplications = async () => {
-    setApplications([
-      { id: 1, position: 'Barkeeper', status: 'reviewed', applied: '2024-03-15', department: 'Bar' },
-      { id: 2, position: 'Security', status: 'pending', applied: '2024-03-20', department: 'Security' },
-    ])
+    try {
+      const response = await fetch('/api/applications/user')
+      if (response.ok) {
+        const data = await response.json()
+        setApplications(data.applications || [])
+      }
+    } catch (error) {
+      console.error('Error loading applications:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getStatusIcon = (status: string) => {
@@ -34,6 +53,14 @@ export default function CareersPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -50,15 +77,15 @@ export default function CareersPage() {
                   <Briefcase className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">{app.position}</h3>
+                  <h3 className="text-xl font-bold text-white">{app.job?.title || 'Unknown Position'}</h3>
                   <div className="flex items-center gap-4 text-white/60 mt-2">
                     <span className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
-                      {app.department}
+                      {app.job?.department || 'Unknown'}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      Applied {new Date(app.applied).toLocaleDateString('de-CH')}
+                      Applied {new Date(app.created_at).toLocaleDateString('de-CH')}
                     </span>
                   </div>
                 </div>

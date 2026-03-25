@@ -22,7 +22,7 @@ export async function PUT(
     if (body.title !== undefined) updatePayload.title = body.title
     if (body.message !== undefined) updatePayload.message = body.message
     
-    updatePayload.updated_at = new Date().toISOString()
+    // updated_at column doesn't exist, skip it
     
     const { data, error } = await supabase
       .from('notifications')

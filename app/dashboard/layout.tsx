@@ -87,8 +87,8 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-black pt-20">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-neutral-950 min-h-screen fixed left-0 top-20 border-r border-white/10">
-          <nav className="p-4 space-y-1">
+        <aside className="w-64 bg-neutral-950 h-[calc(100vh-5rem)] fixed left-0 top-20 border-r border-white/10 flex flex-col z-40">
+          <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
@@ -141,7 +141,7 @@ export default function DashboardLayout({
           </nav>
 
           {/* User Profile */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+          <div className="p-4 border-t border-white/10 bg-neutral-950">
             <div className="flex items-center gap-3 px-4 py-3 mb-2">
               <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
@@ -153,7 +153,7 @@ export default function DashboardLayout({
             </div>
             <button 
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 w-full text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              className="flex items-center gap-3 px-4 py-3 w-full text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium uppercase tracking-wider text-sm">Sign Out</span>
@@ -162,7 +162,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 ml-64 p-8">
+        <main className="flex-1 ml-64 p-8 min-h-[calc(100vh-5rem)]">
           {children}
         </main>
       </div>

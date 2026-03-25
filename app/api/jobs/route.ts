@@ -70,7 +70,8 @@ export async function POST(request: NextRequest) {
         type: body.type,
         location: body.location,
         description: body.description,
-        status: 'Active'
+        requirements: body.requirements || [],
+        status: 'active'
       }])
       .select()
       .single()

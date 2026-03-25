@@ -46,12 +46,12 @@ export async function POST(request: NextRequest) {
         email: body.email,
         phone: body.phone,
         event_type: body.eventType,
-        date: body.date,
+        event_date: body.date,
         guests: parseInt(body.guests) || 0,
         rooms: body.rooms,
         extras: body.extras,
         message: body.message,
-        status: 'new'
+        status: 'pending'
       }])
       .select()
       .single()

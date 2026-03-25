@@ -41,7 +41,35 @@ export default function RentalPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
+    
+    try {
+      const response = await fetch('/api/rental', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          eventType: formData.eventType,
+          date: formData.date,
+          guests: formData.guests,
+          rooms: formData.rooms,
+          extras: formData.extras,
+          message: formData.message
+        })
+      })
+      
+      if (response.ok) {
+        setSubmitted(true)
+      } else {
+        const error = await response.json()
+        console.error('Error submitting rental inquiry:', error)
+        alert('Fehler beim Senden der Anfrage: ' + (error.error || 'Unbekannter Fehler'))
+      }
+    } catch (error) {
+      console.error('Error submitting rental inquiry:', error)
+      alert('Fehler beim Senden der Anfrage')
+    }
   }
 
   const toggleRoom = (roomName: string) => {
