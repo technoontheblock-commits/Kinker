@@ -15,9 +15,24 @@ interface Floor {
   active: boolean
 }
 
+interface TicketType {
+  name: string
+  price: number
+  description: string
+  max_quantity: number
+  active: boolean
+}
+
 const DEFAULT_FLOORS: Floor[] = [
   { name: 'Wohnzimmer', djs: [], active: true },
   { name: 'Bunker', djs: [], active: true }
+]
+
+const AVAILABLE_TICKET_TYPES = [
+  { id: 'blind', label: 'Blindticket', description: 'Special early bird price' },
+  { id: 'earlybird', label: 'Early Bird', description: 'Early bird discount' },
+  { id: 'regular', label: 'Regular', description: 'Standard entry' },
+  { id: 'lastchance', label: 'Last Chance', description: 'Last minute ticket' }
 ]
 
 export function EventForm({ event, onClose, onSuccess }: { event: any, onClose: () => void, onSuccess: () => void }) {
@@ -48,6 +63,10 @@ export function EventForm({ event, onClose, onSuccess }: { event: any, onClose: 
   }
   
   const [floors, setFloors] = useState<Floor[]>(parseExistingFloors())
+  const [ticketTypes, setTicketTypes] = useState<TicketType[]>([
+    { name: 'Early Bird', price: 20, description: 'Early bird discount', max_quantity: 100, active: true },
+    { name: 'Regular', price: 25, description: 'Standard entry', max_quantity: 200, active: true }
+  ])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url')
@@ -184,6 +203,19 @@ export function EventForm({ event, onClose, onSuccess }: { event: any, onClose: 
         const data = await response.json()
 
         if (response.ok) {
+          // Save ticket types
+          const eventId = event?.id || data.id
+          if (eventId) {
+            try {
+              await fetch(`/api/events/${eventId}/tickets`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticketTypes })
+              })
+            } catch (ticketError) {
+              console.error('Error saving ticket types:', ticketError)
+            }
+          }
           onSuccess()
         } else {
           console.error('API error:', data)
@@ -285,26 +317,89 @@ export function EventForm({ event, onClose, onSuccess }: { event: any, onClose: 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-white/80 mb-2 text-sm">Price</label>
-          <input
-            type="text"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-            className="w-full px-4 py-3 bg-black border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
-            placeholder="e.g. CHF 25"
-          />
+      {/* Ticket Types Section */}
+      <div className="border-t border-white/10 pt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">Ticket Types</h3>
+          <span className="text-white/50 text-sm">Configure available tickets</span>
         </div>
-        <div>
-          <label className="block text-white/80 mb-2 text-sm">Ticket Link</label>
-          <input
-            type="url"
-            value={formData.ticket_link}
-            onChange={(e) => setFormData({ ...formData, ticket_link: e.target.value })}
-            className="w-full px-4 py-3 bg-black border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500"
-            placeholder="https://..."
-          />
+        
+        <div className="space-y-4">
+          {AVAILABLE_TICKET_TYPES.map((type) => {
+            const existingTicket = ticketTypes.find(t => t.name === type.label)
+            const isActive = !!existingTicket
+            
+            return (
+              <div 
+                key={type.id}
+                className={`bg-black/30 rounded-xl p-4 border transition-all ${
+                  isActive ? 'border-white/10' : 'border-white/5 opacity-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={isActive}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setTicketTypes([...ticketTypes, {
+                            name: type.label,
+                            price: type.id === 'blind' ? 15 : type.id === 'earlybird' ? 20 : type.id === 'regular' ? 25 : 30,
+                            description: type.description,
+                            max_quantity: 100,
+                            active: true
+                          }])
+                        } else {
+                          setTicketTypes(ticketTypes.filter(t => t.name !== type.label))
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-white/20 bg-black text-red-500"
+                    />
+                    <div>
+                      <span className="text-white font-medium">{type.label}</span>
+                      <p className="text-white/50 text-xs">{type.description}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {isActive && existingTicket && (
+                  <div className="grid grid-cols-2 gap-4 pl-7">
+                    <div>
+                      <label className="block text-white/60 text-xs mb-1">Price (CHF)</label>
+                      <input
+                        type="number"
+                        value={existingTicket.price}
+                        onChange={(e) => {
+                          const newTypes = ticketTypes.map(t => 
+                            t.name === type.label ? { ...t, price: parseInt(e.target.value) || 0 } : t
+                          )
+                          setTicketTypes(newTypes)
+                        }}
+                        className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/60 text-xs mb-1">Max Quantity</label>
+                      <input
+                        type="number"
+                        value={existingTicket.max_quantity}
+                        onChange={(e) => {
+                          const newTypes = ticketTypes.map(t => 
+                            t.name === type.label ? { ...t, max_quantity: parseInt(e.target.value) || 0 } : t
+                          )
+                          setTicketTypes(newTypes)
+                        }}
+                        className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 

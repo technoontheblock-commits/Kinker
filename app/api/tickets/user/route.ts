@@ -6,10 +6,34 @@ import { createHash } from 'crypto'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-function getCurrentUser() {
-  const session = cookies().get('user_session')?.value
-  if (!session) return null
-  return JSON.parse(session)
+// Helper to get user from session cookie (same as dashboard)
+async function getCurrentUser() {
+  const cookieStore = cookies()
+  
+  // Try session cookie first (from /api/auth/session)
+  const sessionCookie = cookieStore.get('session')?.value
+  if (sessionCookie) {
+    try {
+      const session = JSON.parse(sessionCookie)
+      if (session.user) {
+        return session.user
+      }
+    } catch {
+      // Invalid cookie, continue to next method
+    }
+  }
+  
+  // Try user_session cookie
+  const userSessionCookie = cookieStore.get('user_session')?.value
+  if (userSessionCookie) {
+    try {
+      return JSON.parse(userSessionCookie)
+    } catch {
+      // Invalid cookie
+    }
+  }
+  
+  return null
 }
 
 function generateQRData(ticket: any) {
@@ -24,42 +48,108 @@ function generateQRData(ticket: any) {
 // GET /api/tickets/user - Get user's tickets
 export async function GET() {
   try {
-    const user = getCurrentUser()
+    const user = await getCurrentUser()
+    
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
+    if (!user.email) {
+      return NextResponse.json({ error: 'User email not found' }, { status: 400 })
+    }
+
+    // Check if Supabase is configured
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    const { data: tickets, error } = await supabase
+    // First, get tickets
+    const { data: tickets, error: ticketsError } = await supabase
       .from('tickets')
-      .select(`
-        *,
-        event:events(name, date, time, image, venue)
-      `)
+      .select('*')
       .eq('holder_email', user.email)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (ticketsError) {
+      return NextResponse.json({ 
+        error: ticketsError.message, 
+        code: ticketsError.code,
+      }, { status: 500 })
     }
 
-    // Generate QR data for each ticket
-    const ticketsWithQR = tickets?.map(ticket => ({
-      ...ticket,
-      qr_data: generateQRData(ticket)
-    }))
+    // Debug info
+    const debug: any = {
+      ticketCount: tickets?.length || 0,
+      ticketEventIds: tickets?.map(t => ({ 
+        ticket_number: t.ticket_number, 
+        event_id: t.event_id,
+        event_id_type: typeof t.event_id
+      })),
+      userEmail: user.email
+    }
 
-    return NextResponse.json(ticketsWithQR || [])
+    // Fetch event data separately
+    const eventIds = tickets?.map(t => t.event_id).filter(id => id !== null && id !== undefined) || []
+    const uniqueEventIds = Array.from(new Set(eventIds))
+    
+    let eventsMap: Record<string, any> = {}
+    
+    if (uniqueEventIds.length > 0) {
+      const { data: events, error: eventsError } = await supabase
+        .from('events')
+        .select('id, name, date, time, image')
+        .in('id', uniqueEventIds)
+      
+      debug.eventQueryError = eventsError?.message || null
+      debug.foundEvents = events?.length || 0
+      debug.eventIdsSearched = uniqueEventIds
+      debug.eventsFound = events?.map(e => ({ id: e.id, name: e.name }))
+      
+      events?.forEach(e => {
+        eventsMap[e.id] = e
+      })
+    } else {
+      debug.noEventIds = true
+    }
+
+    // Combine ticket data with event data
+    const ticketsWithQR = tickets?.map(ticket => {
+      const event = ticket.event_id ? eventsMap[ticket.event_id] : null
+      
+      return {
+        ...ticket,
+        event: event || {
+          name: 'Unknown Event',
+          date: new Date().toISOString(),
+          time: '23:00',
+          image: '',
+          venue: 'KINKER Basel'
+        },
+        qr_data: generateQRData(ticket)
+      }
+    })
+
+    // Return tickets with debug info
+    return NextResponse.json({
+      tickets: ticketsWithQR || [],
+      debug: debug
+    })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Tickets API error:', error)
+    return NextResponse.json({ 
+      error: error.message, 
+      stack: error.stack,
+      name: error.name 
+    }, { status: 500 })
   }
 }
 
 // POST /api/tickets/user - Transfer ticket
 export async function POST(request: NextRequest) {
   try {
-    const user = getCurrentUser()
+    const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }

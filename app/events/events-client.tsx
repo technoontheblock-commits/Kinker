@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Calendar, Clock, Filter, ArrowRight } from 'lucide-react'
+import { Calendar, Clock, Filter, ArrowRight, ShoppingCart, X, Plus, Minus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
@@ -15,9 +15,82 @@ interface EventsClientProps {
   events: Event[]
 }
 
+interface CartItem {
+  id: string
+  event_ticket_id: string
+  quantity: number
+  event_ticket: {
+    id: string
+    name: string
+    price: number
+    event: {
+      id: string
+      name: string
+      date: string
+      image: string
+    }
+  }
+}
+
 export function EventsClient({ events }: EventsClientProps) {
   const { t } = useLanguage()
   const [activeFilter, setActiveFilter] = useState<EventType>('all')
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartLoading, setCartLoading] = useState(false)
+
+  // Load cart on mount
+  useEffect(() => {
+    loadCart()
+  }, [])
+
+  const loadCart = async () => {
+    try {
+      const res = await fetch('/api/cart')
+      if (res.ok) {
+        const data = await res.json()
+        setCart(data.items || [])
+      }
+    } catch (error) {
+      console.error('Error loading cart:', error)
+    }
+  }
+
+  const updateQuantity = async (itemId: string, quantity: number) => {
+    if (quantity < 1) return
+    setCartLoading(true)
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_id: itemId, quantity })
+      })
+      if (res.ok) {
+        loadCart()
+      }
+    } catch (error) {
+      console.error('Error updating cart:', error)
+    } finally {
+      setCartLoading(false)
+    }
+  }
+
+  const removeItem = async (itemId: string) => {
+    setCartLoading(true)
+    try {
+      const res = await fetch(`/api/cart?itemId=${itemId}`, { method: 'DELETE' })
+      if (res.ok) {
+        loadCart()
+      }
+    } catch (error) {
+      console.error('Error removing item:', error)
+    } finally {
+      setCartLoading(false)
+    }
+  }
+
+  const cartTotal = cart.reduce((sum, item) => sum + ((item.event_ticket?.price || 0) * item.quantity), 0)
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
   const filteredEvents = events.filter((event) =>
     activeFilter === 'all' ? true : event.type === activeFilter
@@ -27,15 +100,130 @@ export function EventsClient({ events }: EventsClientProps) {
     <div className="min-h-screen bg-black pt-24 lg:pt-32">
       {/* Header */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div>
-          <span className="text-red-500 font-semibold tracking-widest uppercase text-sm mb-4 block">
-            {t.events.whatsOn}
-          </span>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter font-display text-white">
-            EVENTS
-          </h1>
+        <div className="flex items-start justify-between">
+          <div>
+            <span className="text-red-500 font-semibold tracking-widest uppercase text-sm mb-4 block">
+              {t.events.whatsOn}
+            </span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter font-display text-white">
+              EVENTS
+            </h1>
+          </div>
+          
+          {/* Cart Button */}
+          <button
+            onClick={() => setCartOpen(true)}
+            className="relative p-3 bg-neutral-900 border border-white/10 rounded-lg hover:border-red-500/50 transition-colors"
+          >
+            <ShoppingCart className="w-6 h-6 text-white" />
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </button>
         </div>
       </section>
+
+      {/* Cart Sidebar */}
+      {cartOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setCartOpen(false)}
+          />
+          
+          {/* Cart Panel */}
+          <div className="relative w-full max-w-md bg-neutral-900 border-l border-white/10 h-full overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white font-display">Your Cart</h2>
+                <button
+                  onClick={() => setCartOpen(false)}
+                  className="p-2 text-white/60 hover:text-white"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {cart.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingCart className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                  <p className="text-white/60">Your cart is empty</p>
+                  <p className="text-white/40 text-sm mt-2">Add tickets to get started</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4 mb-6">
+                    {cart.map((item) => (
+                      <div key={item.id} className="bg-black/30 rounded-lg p-4 border border-white/5">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div 
+                            className="w-16 h-16 bg-neutral-800 rounded bg-cover bg-center flex-shrink-0"
+                            style={{ backgroundImage: `url('${item.event_ticket.event.image}')` }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-white font-semibold truncate">{item.event_ticket.event.name}</h3>
+                            <p className="text-white/60 text-sm">{item.event_ticket.name}</p>
+                            <p className="text-red-500 font-bold">CHF {item.event_ticket.price}</p>
+                          </div>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            disabled={cartLoading}
+                            className="p-1 text-white/40 hover:text-red-500 disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        
+                        {/* Quantity Controls */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              disabled={cartLoading || item.quantity <= 1}
+                              className="p-1 border border-white/20 rounded text-white hover:bg-white/10 disabled:opacity-50"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="text-white font-semibold w-8 text-center">{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              disabled={cartLoading}
+                              className="p-1 border border-white/20 rounded text-white hover:bg-white/10 disabled:opacity-50"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <span className="text-white font-bold">
+                            CHF {(item.event_ticket.price * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Total & Checkout */}
+                  <div className="border-t border-white/10 pt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-white/60">Total</span>
+                      <span className="text-2xl font-bold text-white">CHF {cartTotal.toFixed(2)}</span>
+                    </div>
+                    <Link
+                      href="/checkout"
+                      onClick={() => setCartOpen(false)}
+                      className="block w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors text-center"
+                    >
+                      Proceed to Checkout
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">

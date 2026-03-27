@@ -205,7 +205,7 @@ ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_payment_status_check;
 -- ADD CHECK CONSTRAINTS WITH VALID VALUES
 -- ============================================
 ALTER TABLE orders ADD CONSTRAINT orders_payment_method_check 
-  CHECK (payment_method IS NULL OR payment_method IN ('twint', 'bank_transfer', 'card', 'cash', 'wallet'));
+  CHECK (payment_method IS NULL OR payment_method IN ('twint', 'bank_transfer', 'sepa', 'cash'));
 
 ALTER TABLE orders ADD CONSTRAINT orders_payment_status_check 
   CHECK (payment_status IS NULL OR payment_status IN ('pending', 'paid', 'failed', 'refunded'));

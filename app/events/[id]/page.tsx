@@ -88,6 +88,23 @@ export default function EventDetailPage() {
     setTimeout(() => setAddedToCart(false), 2000)
   }
 
+  const buyNow = async () => {
+    if (!selectedTicket) return
+    
+    // Add to cart first
+    await fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_ticket_id: selectedTicket.id,
+        quantity: quantity
+      })
+    })
+    
+    // Redirect to checkout
+    window.location.href = '/checkout'
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
@@ -257,26 +274,42 @@ export default function EventDetailPage() {
                     </span>
                   </div>
 
-                  {/* Add to Cart */}
-                  <Button
-                    variant="glitch"
-                    size="lg"
-                    className="w-full"
+                  {/* Add to Cart - Full width white button */}
+                  <button
                     onClick={addToCart}
                     disabled={addedToCart}
+                    className="w-full py-4 px-6 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
                   >
                     {addedToCart ? (
                       <>
-                        <Check className="mr-2 h-4 w-4" />
+                        <Check className="w-5 h-5" />
                         Added to Cart
                       </>
                     ) : (
                       <>
-                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        <ShoppingCart className="w-5 h-5" />
                         Add to Cart
                       </>
                     )}
-                  </Button>
+                  </button>
+
+                  {/* Buy Now - Red button */}
+                  <button
+                    onClick={buyNow}
+                    className="w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 mt-3"
+                  >
+                    Buy Now
+                  </button>
+
+                  {/* View Cart Link */}
+                  <div className="text-center mt-4">
+                    <Link 
+                      href="/cart" 
+                      className="text-white/60 hover:text-white text-sm underline"
+                    >
+                      View Cart
+                    </Link>
+                  </div>
                 </>
               ) : (
                 <>

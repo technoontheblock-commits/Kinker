@@ -17,6 +17,7 @@ export default function CheckoutPage() {
     name: '',
     email: '',
     phone: '',
+    iban: '',
     payment_method: 'twint',
     // Billing Address
     billing_street: '',
@@ -111,6 +112,9 @@ export default function CheckoutPage() {
   }
 
   if (orderComplete) {
+    const paymentMethod = orderData?.order?.payment_method
+    const isPending = orderData?.order?.payment_status === 'pending'
+    
     return (
       <div className="min-h-screen bg-black pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-2xl">
@@ -120,19 +124,105 @@ export default function CheckoutPage() {
             className="bg-neutral-900 rounded-2xl p-8 text-center"
           >
             <Check className="w-16 h-16 text-green-500 mx-auto mb-6" />
-            <h1 className="text-3xl font-bold text-white mb-4">Bestellung erfolgreich!</h1>
+            <h1 className="text-3xl font-bold text-white mb-4">Order Successful!</h1>
             <p className="text-white/60 mb-6">
-              Bestellnummer: <span className="text-white font-mono">{orderData?.order?.order_number}</span>
+              Order Number: <span className="text-white font-mono">{orderData?.order?.order_number}</span>
             </p>
             
-            {orderData?.tickets?.length > 0 && (
-              <div className="bg-black/30 rounded-lg p-4 mb-6">
-                <p className="text-white/80">Deine Tickets wurden per E-Mail gesendet.</p>
+            {/* Payment Instructions */}
+            {isPending && (
+              <div className="bg-white rounded-xl p-6 mb-6 text-left">
+                {/* TWINT */}
+                {paymentMethod === 'twint' && (
+                  <>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">T</span>
+                      </div>
+                      <div>
+                        <h3 className="text-black font-bold text-lg">Pay with TWINT</h3>
+                        <p className="text-gray-600 text-sm">Complete your payment to receive your tickets</p>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                      <p className="text-gray-700 text-sm mb-2">Amount to pay:</p>
+                      <p className="text-black text-3xl font-bold">CHF {orderData?.order?.total?.toFixed(2)}</p>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-2 text-gray-600 text-sm">
+                      <li>Open your TWINT app</li>
+                      <li>Tap &quot;Send Money&quot;</li>
+                      <li>Enter phone: <span className="font-mono font-bold text-black">+41 79 123 45 67</span></li>
+                      <li>Add reference: <span className="font-mono font-bold text-black">{orderData?.order?.order_number}</span></li>
+                      <li>Confirm payment</li>
+                    </ol>
+                  </>
+                )}
+
+                {/* SEPA */}
+                {paymentMethod === 'sepa' && (
+                  <>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">S</span>
+                      </div>
+                      <div>
+                        <h3 className="text-black font-bold text-lg">SEPA Direct Debit</h3>
+                        <p className="text-gray-600 text-sm">We will debit your account automatically</p>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                      <p className="text-gray-700 text-sm mb-2">Amount to be debited:</p>
+                      <p className="text-black text-3xl font-bold">CHF {orderData?.order?.total?.toFixed(2)}</p>
+                    </div>
+                    <p className="text-gray-600 text-sm">
+                      Your IBAN has been saved. The amount will be debited within 1-3 business days. 
+                      You will receive a confirmation email once the debit is processed.
+                    </p>
+                  </>
+                )}
+
+                {/* Bank Transfer */}
+                {paymentMethod === 'bank_transfer' && (
+                  <>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">B</span>
+                      </div>
+                      <div>
+                        <h3 className="text-black font-bold text-lg">Bank Transfer</h3>
+                        <p className="text-gray-600 text-sm">Please transfer the amount manually</p>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                      <p className="text-gray-700 text-sm mb-2">Amount to transfer:</p>
+                      <p className="text-black text-3xl font-bold">CHF {orderData?.order?.total?.toFixed(2)}</p>
+                    </div>
+                    <div className="space-y-2 text-sm text-gray-700">
+                      <p><span className="font-medium">IBAN:</span> <span className="font-mono">CH93 0076 2011 6238 5295 7</span></p>
+                      <p><span className="font-medium">BIC:</span> <span className="font-mono">BKBBCHBB</span></p>
+                      <p><span className="font-medium">Account:</span> KINKER Basel GmbH</p>
+                      <p><span className="font-medium">Reference:</span> <span className="font-mono font-bold">{orderData?.order?.order_number}</span></p>
+                    </div>
+                  </>
+                )}
+
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 text-xs">
+                    Your order is pending payment. Once payment is confirmed, 
+                    your tickets will be activated and sent to your email.
+                  </p>
+                </div>
               </div>
             )}
             
-            <Link href="/" className="inline-block px-8 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg">
-              Zurück zur Startseite
+            {orderData?.tickets?.length > 0 && !isPending && (
+              <div className="bg-black/30 rounded-lg p-4 mb-6">
+                <p className="text-white/80">Your tickets have been sent by email.</p>
+              </div>
+            )}
+            
+            <Link href="/dashboard/tickets" className="inline-block px-8 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg">
+              My Tickets
             </Link>
           </motion.div>
         </div>
@@ -290,22 +380,45 @@ export default function CheckoutPage() {
               <h2 className="text-xl font-semibold text-white mb-4">Zahlung</h2>
               
               <div className="space-y-3">
-                {['twint', 'bank_transfer', 'cash'].map((method) => (
-                  <label key={method} className="flex items-center gap-3 p-4 bg-black/30 rounded-lg cursor-pointer hover:bg-black/50 transition-colors">
+                {[
+                  { id: 'twint', label: 'TWINT', desc: 'Pay with TWINT app' },
+                  { id: 'sepa', label: 'SEPA Direct Debit', desc: 'Automatic bank debit' },
+                  { id: 'bank_transfer', label: 'Bank Transfer', desc: 'Manual bank transfer' }
+                ].map((method) => (
+                  <label key={method.id} className="flex items-center gap-3 p-4 bg-black/30 rounded-lg cursor-pointer hover:bg-black/50 transition-colors">
                     <input
                       type="radio"
                       name="payment"
-                      value={method}
-                      checked={formData.payment_method === method}
+                      value={method.id}
+                      checked={formData.payment_method === method.id}
                       onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                       className="w-4 h-4 text-red-500"
                     />
-                    <span className="text-white capitalize">
-                      {method === 'twint' ? 'TWINT' : method === 'bank_transfer' ? 'Banküberweisung' : 'Bar vor Ort'}
-                    </span>
+                    <div>
+                      <span className="text-white font-medium block">{method.label}</span>
+                      <span className="text-white/50 text-sm">{method.desc}</span>
+                    </div>
                   </label>
                 ))}
               </div>
+
+              {/* SEPA IBAN Field */}
+              {formData.payment_method === 'sepa' && (
+                <div className="mt-4 p-4 bg-black/30 rounded-lg">
+                  <label className="block text-white/70 text-sm mb-2">IBAN for Direct Debit</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.iban}
+                    onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
+                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 uppercase"
+                    placeholder="CH00 0000 0000 0000 0000 0"
+                  />
+                  <p className="text-white/40 text-xs mt-2">
+                    By providing your IBAN, you authorize us to debit the amount from your account.
+                  </p>
+                </div>
+              )}
             </div>
             
             <button

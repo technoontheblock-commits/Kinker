@@ -88,12 +88,12 @@ export async function POST(request: NextRequest) {
         shipping_address: body.shipping_address || null,
         billing_address: body.billing_address || null,
         payment_method: body.payment_method,
-        payment_status: body.payment_method === 'twint' ? 'pending' : 'pending',
+        payment_status: ['twint', 'sepa', 'bank_transfer'].includes(body.payment_method) ? 'pending' : 'pending',
         subtotal: subtotal,
         shipping_cost: shippingCost,
         total: total,
         status: 'pending',
-        notes: body.notes || null
+        notes: body.iban ? `IBAN: ${body.iban}` : (body.notes || null)
       }])
       .select()
       .single()
@@ -131,7 +131,8 @@ export async function POST(request: NextRequest) {
               qr_code: generateQRCode(randomUUID(), ticketSecret),
               qr_secret: ticketSecret,
               holder_name: body.customer_name,
-              holder_email: body.customer_email
+              holder_email: body.customer_email,
+              payment_status: 'pending'
             }])
             .select()
             .single()
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
       order,
       items: createdItems,
       tickets,
-      paymentInstructions: getPaymentInstructions(body.payment_method, order.order_number)
+      paymentInstructions: getPaymentInstructions(body.payment_method, order.order_number, body.iban)
     })
   } catch (error: any) {
     console.error('Checkout exception:', error)
@@ -179,34 +180,43 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function getPaymentInstructions(method: string, orderNumber: string) {
+function getPaymentInstructions(method: string, orderNumber: string, iban?: string) {
   switch (method) {
     case 'twint':
       return {
         method: 'twint',
-        title: 'Zahlung per TWINT',
-        description: 'Scanne den QR-Code mit deiner TWINT App oder sende die Zahlung an:',
+        title: 'Pay with TWINT',
+        description: 'Open your TWINT app and send the payment to:',
         qrCode: true,
         phone: '+41 79 123 45 67',
-        reference: orderNumber
+        reference: orderNumber,
+        steps: [
+          'Open TWINT app',
+          'Tap "Send Money"',
+          `Enter phone: +41 79 123 45 67`,
+          `Add reference: ${orderNumber}`,
+          'Confirm payment'
+        ]
+      }
+    case 'sepa':
+      return {
+        method: 'sepa',
+        title: 'SEPA Direct Debit',
+        description: 'We will debit the amount from your account within 1-3 business days.',
+        iban: iban || 'Provided at checkout',
+        reference: orderNumber,
+        note: 'You will receive a confirmation email once the debit is processed.'
       }
     case 'bank_transfer':
       return {
         method: 'bank_transfer',
-        title: 'Banküberweisung',
-        description: 'Bitte überweise den Betrag auf folgendes Konto:',
+        title: 'Bank Transfer',
+        description: 'Please transfer the amount to the following account:',
         iban: 'CH93 0076 2011 6238 5295 7',
         bic: 'BKBBCHBB',
         accountName: 'KINKER Basel GmbH',
         reference: orderNumber,
-        note: 'Die Bestellung wird nach Zahlungseingang bearbeitet.'
-      }
-    case 'invoice':
-      return {
-        method: 'invoice',
-        title: 'Rechnung',
-        description: 'Du erhältst eine Rechnung per E-Mail.',
-        note: 'Zahlungsfrist: 14 Tage nach Rechnungsdatum'
+        note: 'Your order will be processed after payment is received.'
       }
     default:
       return null

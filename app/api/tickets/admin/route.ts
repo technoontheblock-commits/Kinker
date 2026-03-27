@@ -13,12 +13,10 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // First get all tickets
     const { data: tickets, error } = await supabase
       .from('tickets')
-      .select(`
-        *,
-        event:events(name, date)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -26,7 +24,28 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(tickets || [])
+    // Get event data separately
+    const eventIds = tickets?.map(t => t.event_id).filter(Boolean) || []
+    let eventsMap: Record<string, any> = {}
+    
+    if (eventIds.length > 0) {
+      const { data: events } = await supabase
+        .from('events')
+        .select('id, name, date')
+        .in('id', eventIds)
+      
+      events?.forEach(e => {
+        eventsMap[e.id] = e
+      })
+    }
+
+    // Combine ticket data with event data
+    const ticketsWithEvents = tickets?.map(ticket => ({
+      ...ticket,
+      event: eventsMap[ticket.event_id] || { name: 'Unknown Event', date: null }
+    }))
+
+    return NextResponse.json(ticketsWithEvents || [])
   } catch (error: any) {
     console.error('Error fetching tickets:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

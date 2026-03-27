@@ -37,8 +37,8 @@ export async function GET() {
       .from('cart_items')
       .select(`
         *,
-        product:merchandise(*),
-        event_ticket:event_tickets(*, event:events(*))
+        product:merchandise(id, name, price, image),
+        event_ticket:event_tickets(id, name, price, event_id)
       `)
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false })

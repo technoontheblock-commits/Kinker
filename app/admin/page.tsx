@@ -26,7 +26,8 @@ import {
   ShoppingBag,
   Package,
   Ticket,
-  Ban
+  Ban,
+  QrCode
 } from 'lucide-react'
 import { getEvents } from '@/lib/events'
 import { EventForm } from './EventForm'
@@ -60,6 +61,7 @@ export default function AdminDashboard() {
   const [orderFilter, setOrderFilter] = useState('all')
   const [tickets, setTickets] = useState<any[]>([])
   const [ticketFilter, setTicketFilter] = useState('all')
+  const [selectedTicket, setSelectedTicket] = useState<any>(null)
   const [showAddUser, setShowAddUser] = useState(false)
   const [showAddJob, setShowAddJob] = useState(false)
   const [editingJob, setEditingJob] = useState<any>(null)
@@ -1620,7 +1622,8 @@ export default function AdminDashboard() {
                         <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Event</th>
                         <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Customer</th>
                         <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Date</th>
-                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Status</th>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Ticket Status</th>
+                        <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Payment</th>
                         <th className="px-4 py-3 text-left text-white/60 font-medium text-sm">Actions</th>
                       </tr>
                     </thead>
@@ -1657,15 +1660,34 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            {ticket.status !== 'cancelled' && (
+                            <span className={`px-3 py-1 rounded-full text-xs ${
+                              ticket.payment_status === 'paid' ? 'bg-green-500/20 text-green-500' :
+                              ticket.payment_status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                              ticket.payment_status === 'failed' ? 'bg-red-500/20 text-red-500' :
+                              'bg-white/10 text-white/60'
+                            }`}>
+                              {ticket.payment_status || 'pending'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
                               <button
-                                onClick={() => cancelTicket(ticket.id)}
-                                className="p-2 text-white/60 hover:text-red-500 transition-colors"
-                                title="Cancel Ticket"
+                                onClick={() => setSelectedTicket(ticket)}
+                                className="p-2 text-white/60 hover:text-blue-500 transition-colors"
+                                title="View Details"
                               >
-                                <Ban className="w-4 h-4" />
+                                <Eye className="w-4 h-4" />
                               </button>
-                            )}
+                              {ticket.status !== 'cancelled' && (
+                                <button
+                                  onClick={() => cancelTicket(ticket.id)}
+                                  className="p-2 text-white/60 hover:text-red-500 transition-colors"
+                                  title="Cancel Ticket"
+                                >
+                                  <Ban className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1681,6 +1703,128 @@ export default function AdminDashboard() {
                 )}
               </div>
             </motion.div>
+          )}
+
+          {/* Ticket Details Modal */}
+          {selectedTicket && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-neutral-900 rounded-2xl p-8 max-w-lg w-full border border-white/10"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Ticket Details</h2>
+                  <button
+                    onClick={() => setSelectedTicket(null)}
+                    className="p-2 text-white/60 hover:text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Ticket Number */}
+                  <div className="bg-black/30 rounded-lg p-4">
+                    <p className="text-white/60 text-sm mb-1">Ticket Number</p>
+                    <p className="text-white font-mono text-lg">{selectedTicket.ticket_number}</p>
+                  </div>
+
+                  {/* QR Code */}
+                  <div className="bg-white rounded-lg p-4 flex flex-col items-center">
+                    <QrCode className="w-32 h-32 text-black" />
+                    <p className="text-black/60 text-xs mt-2 font-mono">{selectedTicket.qr_code}</p>
+                  </div>
+
+                  {/* Event Info */}
+                  <div className="bg-black/30 rounded-lg p-4">
+                    <p className="text-white/60 text-sm mb-1">Event</p>
+                    <p className="text-white font-medium">{selectedTicket.event?.name || 'Unknown Event'}</p>
+                    <p className="text-white/40 text-sm">
+                      {selectedTicket.event?.date && new Date(selectedTicket.event.date).toLocaleDateString('de-CH')}
+                    </p>
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="bg-black/30 rounded-lg p-4">
+                    <p className="text-white/60 text-sm mb-1">Customer</p>
+                    <p className="text-white font-medium">{selectedTicket.holder_name}</p>
+                    <p className="text-white/40 text-sm">{selectedTicket.holder_email}</p>
+                  </div>
+
+                  {/* Status */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-black/30 rounded-lg p-4">
+                      <p className="text-white/60 text-sm mb-1">Ticket Status</p>
+                      <span className={`px-3 py-1 rounded-full text-xs ${
+                        selectedTicket.status === 'valid' ? 'bg-green-500/20 text-green-500' :
+                        selectedTicket.status === 'used' ? 'bg-blue-500/20 text-blue-500' :
+                        selectedTicket.status === 'cancelled' ? 'bg-red-500/20 text-red-500' :
+                        'bg-white/10 text-white/60'
+                      }`}>
+                        {selectedTicket.status}
+                      </span>
+                    </div>
+                    <div className="bg-black/30 rounded-lg p-4">
+                      <p className="text-white/60 text-sm mb-1">Payment Status</p>
+                      <span className={`px-3 py-1 rounded-full text-xs ${
+                        selectedTicket.payment_status === 'paid' ? 'bg-green-500/20 text-green-500' :
+                        selectedTicket.payment_status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                        selectedTicket.payment_status === 'failed' ? 'bg-red-500/20 text-red-500' :
+                        'bg-white/10 text-white/60'
+                      }`}>
+                        {selectedTicket.payment_status || 'pending'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Created Date */}
+                  <div className="bg-black/30 rounded-lg p-4">
+                    <p className="text-white/60 text-sm mb-1">Created</p>
+                    <p className="text-white text-sm">
+                      {new Date(selectedTicket.created_at).toLocaleString('de-CH')}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-4">
+                    {selectedTicket.payment_status === 'pending' && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch('/api/tickets/admin/payment', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ ticket_id: selectedTicket.id, status: 'paid' })
+                            })
+                            if (res.ok) {
+                              setSelectedTicket({ ...selectedTicket, payment_status: 'paid' })
+                              loadTickets()
+                            }
+                          } catch (err) {
+                            console.error('Error updating payment status:', err)
+                          }
+                        }}
+                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
+                      >
+                        Mark as Paid
+                      </button>
+                    )}
+                    {selectedTicket.status !== 'cancelled' && (
+                      <button
+                        onClick={() => {
+                          cancelTicket(selectedTicket.id)
+                          setSelectedTicket(null)
+                        }}
+                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
+                      >
+                        Cancel Ticket
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           )}
 
           {/* Add/Edit Event Modal */}
