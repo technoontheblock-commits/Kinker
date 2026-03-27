@@ -13,10 +13,10 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // First get all tickets
+    // First get all tickets with order info
     const { data: tickets, error } = await supabase
       .from('tickets')
-      .select('*')
+      .select('*, order:order_id(*)')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -39,10 +39,11 @@ export async function GET() {
       })
     }
 
-    // Combine ticket data with event data
+    // Combine ticket data with event and order data
     const ticketsWithEvents = tickets?.map(ticket => ({
       ...ticket,
-      event: eventsMap[ticket.event_id] || { name: 'Unknown Event', date: null }
+      event: eventsMap[ticket.event_id] || { name: 'Unknown Event', date: null },
+      order: ticket.order || null
     }))
 
     return NextResponse.json(ticketsWithEvents || [])

@@ -1778,6 +1778,40 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
+                  {/* Payment Info */}
+                  {selectedTicket.order && (
+                    <div className="bg-black/30 rounded-lg p-2.5">
+                      <p className="text-white/50 text-xs mb-1.5">Payment Info</p>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Method:</span>
+                          <span className="text-white capitalize">{selectedTicket.order.payment_method?.replace('_', ' ') || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Order Status:</span>
+                          <span className={`capitalize ${
+                            selectedTicket.order.status === 'completed' ? 'text-green-500' :
+                            selectedTicket.order.status === 'pending' ? 'text-yellow-500' :
+                            selectedTicket.order.status === 'failed' ? 'text-red-500' :
+                            'text-white/60'
+                          }`}>{selectedTicket.order.status || 'N/A'}</span>
+                        </div>
+                        {selectedTicket.order.total_amount && (
+                          <div className="flex justify-between">
+                            <span className="text-white/40">Amount:</span>
+                            <span className="text-white">CHF {selectedTicket.order.total_amount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {selectedTicket.order.payment_details?.reference && (
+                          <div className="flex justify-between">
+                            <span className="text-white/40">Reference:</span>
+                            <span className="text-white font-mono text-[10px]">{selectedTicket.order.payment_details.reference}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Created Date */}
                   <div className="bg-black/30 rounded-lg p-2.5">
                     <p className="text-white/50 text-xs mb-0.5">Created</p>
@@ -1788,7 +1822,7 @@ export default function AdminDashboard() {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
-                    {selectedTicket.payment_status === 'pending' && (
+                    {(selectedTicket.payment_status === 'pending' || !selectedTicket.payment_status) && (
                       <button
                         onClick={async () => {
                           try {
@@ -1800,9 +1834,13 @@ export default function AdminDashboard() {
                             if (res.ok) {
                               setSelectedTicket({ ...selectedTicket, payment_status: 'paid' })
                               loadTickets()
+                            } else {
+                              const err = await res.json()
+                              alert('Error: ' + (err.error || 'Failed to update'))
                             }
                           } catch (err) {
                             console.error('Error updating payment status:', err)
+                            alert('Error updating payment status')
                           }
                         }}
                         className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
