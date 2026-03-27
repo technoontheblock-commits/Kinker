@@ -1711,52 +1711,52 @@ export default function AdminDashboard() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-neutral-900 rounded-2xl p-8 max-w-lg w-full border border-white/10"
+                className="bg-neutral-900 rounded-xl p-5 max-w-sm w-full border border-white/10 max-h-[85vh] overflow-y-auto"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Ticket Details</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-white">Ticket Details</h2>
                   <button
                     onClick={() => setSelectedTicket(null)}
-                    className="p-2 text-white/60 hover:text-white"
+                    className="p-1.5 text-white/60 hover:text-white"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
+                  {/* QR Code - Compact */}
+                  <div className="bg-white rounded-lg p-3 flex flex-col items-center">
+                    <QrCode className="w-20 h-20 text-black" />
+                    <p className="text-black/60 text-[10px] mt-1 font-mono truncate max-w-full">{selectedTicket.qr_code}</p>
+                  </div>
+
                   {/* Ticket Number */}
-                  <div className="bg-black/30 rounded-lg p-4">
-                    <p className="text-white/60 text-sm mb-1">Ticket Number</p>
-                    <p className="text-white font-mono text-lg">{selectedTicket.ticket_number}</p>
+                  <div className="bg-black/30 rounded-lg p-2.5">
+                    <p className="text-white/50 text-xs mb-0.5">Ticket Number</p>
+                    <p className="text-white font-mono text-sm">{selectedTicket.ticket_number}</p>
                   </div>
 
-                  {/* QR Code */}
-                  <div className="bg-white rounded-lg p-4 flex flex-col items-center">
-                    <QrCode className="w-32 h-32 text-black" />
-                    <p className="text-black/60 text-xs mt-2 font-mono">{selectedTicket.qr_code}</p>
+                  {/* Event & Customer - Side by side */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-black/30 rounded-lg p-2.5">
+                      <p className="text-white/50 text-xs mb-0.5">Event</p>
+                      <p className="text-white text-sm font-medium truncate">{selectedTicket.event?.name || 'Unknown'}</p>
+                      <p className="text-white/40 text-[10px]">
+                        {selectedTicket.event?.date && new Date(selectedTicket.event.date).toLocaleDateString('de-CH')}
+                      </p>
+                    </div>
+                    <div className="bg-black/30 rounded-lg p-2.5">
+                      <p className="text-white/50 text-xs mb-0.5">Customer</p>
+                      <p className="text-white text-sm font-medium truncate">{selectedTicket.holder_name}</p>
+                      <p className="text-white/40 text-[10px] truncate">{selectedTicket.holder_email}</p>
+                    </div>
                   </div>
 
-                  {/* Event Info */}
-                  <div className="bg-black/30 rounded-lg p-4">
-                    <p className="text-white/60 text-sm mb-1">Event</p>
-                    <p className="text-white font-medium">{selectedTicket.event?.name || 'Unknown Event'}</p>
-                    <p className="text-white/40 text-sm">
-                      {selectedTicket.event?.date && new Date(selectedTicket.event.date).toLocaleDateString('de-CH')}
-                    </p>
-                  </div>
-
-                  {/* Customer Info */}
-                  <div className="bg-black/30 rounded-lg p-4">
-                    <p className="text-white/60 text-sm mb-1">Customer</p>
-                    <p className="text-white font-medium">{selectedTicket.holder_name}</p>
-                    <p className="text-white/40 text-sm">{selectedTicket.holder_email}</p>
-                  </div>
-
-                  {/* Status */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-black/30 rounded-lg p-4">
-                      <p className="text-white/60 text-sm mb-1">Ticket Status</p>
-                      <span className={`px-3 py-1 rounded-full text-xs ${
+                  {/* Status - Side by side */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-black/30 rounded-lg p-2.5">
+                      <p className="text-white/50 text-xs mb-1">Ticket</p>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] ${
                         selectedTicket.status === 'valid' ? 'bg-green-500/20 text-green-500' :
                         selectedTicket.status === 'used' ? 'bg-blue-500/20 text-blue-500' :
                         selectedTicket.status === 'cancelled' ? 'bg-red-500/20 text-red-500' :
@@ -1765,9 +1765,9 @@ export default function AdminDashboard() {
                         {selectedTicket.status}
                       </span>
                     </div>
-                    <div className="bg-black/30 rounded-lg p-4">
-                      <p className="text-white/60 text-sm mb-1">Payment Status</p>
-                      <span className={`px-3 py-1 rounded-full text-xs ${
+                    <div className="bg-black/30 rounded-lg p-2.5">
+                      <p className="text-white/50 text-xs mb-1">Payment</p>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] ${
                         selectedTicket.payment_status === 'paid' ? 'bg-green-500/20 text-green-500' :
                         selectedTicket.payment_status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
                         selectedTicket.payment_status === 'failed' ? 'bg-red-500/20 text-red-500' :
@@ -1779,15 +1779,15 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Created Date */}
-                  <div className="bg-black/30 rounded-lg p-4">
-                    <p className="text-white/60 text-sm mb-1">Created</p>
-                    <p className="text-white text-sm">
+                  <div className="bg-black/30 rounded-lg p-2.5">
+                    <p className="text-white/50 text-xs mb-0.5">Created</p>
+                    <p className="text-white text-xs">
                       {new Date(selectedTicket.created_at).toLocaleString('de-CH')}
                     </p>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex gap-2 pt-2">
                     {selectedTicket.payment_status === 'pending' && (
                       <button
                         onClick={async () => {
@@ -1805,7 +1805,7 @@ export default function AdminDashboard() {
                             console.error('Error updating payment status:', err)
                           }
                         }}
-                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
+                        className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
                       >
                         Mark as Paid
                       </button>
@@ -1816,7 +1816,7 @@ export default function AdminDashboard() {
                           cancelTicket(selectedTicket.id)
                           setSelectedTicket(null)
                         }}
-                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
+                        className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
                       >
                         Cancel Ticket
                       </button>
