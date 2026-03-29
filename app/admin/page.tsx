@@ -27,8 +27,10 @@ import {
   Package,
   Ticket,
   Ban,
-  QrCode
+  QrCode,
+  Gift
 } from 'lucide-react'
+import Link from 'next/link'
 import { getEvents } from '@/lib/events'
 import { EventForm } from './EventForm'
 
@@ -63,6 +65,7 @@ export default function AdminDashboard() {
   const [ticketFilter, setTicketFilter] = useState('all')
   const [selectedTicket, setSelectedTicket] = useState<any>(null)
   const [showAddUser, setShowAddUser] = useState(false)
+  const [editingUser, setEditingUser] = useState<any>(null)
   const [showAddJob, setShowAddJob] = useState(false)
   const [editingJob, setEditingJob] = useState<any>(null)
   const [showAddEvent, setShowAddEvent] = useState(false)
@@ -73,8 +76,7 @@ export default function AdminDashboard() {
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
-    role: 'user',
-    status: 'active'
+    role: 'user'
   })
   
   // New job form state
@@ -97,17 +99,48 @@ export default function AdminDashboard() {
     stock: '',
     image: ''
   })
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    loadEvents()
-    loadUsers()
-    loadNotifications()
-    loadRentalInquiries()
-    loadApplications()
-    loadJobs()
-    loadMerchandise()
-    loadOrders()
-    loadTickets()
+    // Check authentication
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/session')
+        const data = await res.json()
+        
+        if (!data.user) {
+          // Not logged in, redirect to login
+          window.location.href = '/login?redirect=/admin'
+          return
+        }
+        
+        // Check if user is admin
+        if (data.user.role !== 'admin') {
+          // Not an admin, redirect to home
+          window.location.href = '/'
+          return
+        }
+        
+        // User is authenticated and is admin, load data
+        await Promise.all([
+          loadEvents(),
+          loadUsers(),
+          loadNotifications(),
+          loadRentalInquiries(),
+          loadApplications(),
+          loadJobs(),
+          loadMerchandise(),
+          loadOrders(),
+          loadTickets()
+        ])
+        
+        setIsLoading(false)
+      } catch {
+        window.location.href = '/login?redirect=/admin'
+      }
+    }
+    
+    checkAuth()
   }, [])
 
   const loadEvents = async () => {
@@ -173,6 +206,7 @@ export default function AdminDashboard() {
     { id: 'careers', label: 'Careers', icon: Briefcase },
     { id: 'merchandise', label: 'Merch', icon: ShoppingBag },
     { id: 'orders', label: 'Bestellungen', icon: Package },
+    { id: 'rewards', label: 'Reward Validator', icon: Gift, href: '/admin/rewards' },
   ]
 
   const unreadCount = notifications.filter(n => !n.read).length
@@ -492,7 +526,7 @@ export default function AdminDashboard() {
       if (response.ok) {
         await loadUsers()
         setShowAddUser(false)
-        setNewUser({ name: '', email: '', role: 'user', status: 'active' })
+        setNewUser({ name: '', email: '', role: 'user' })
       } else {
         const error = await response.json()
         alert('Error adding user: ' + (error.error || 'Unknown error'))
@@ -500,6 +534,34 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error adding user:', error)
       alert('Error adding user')
+    }
+  }
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser) return
+    
+    try {
+      const response = await fetch(`/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editingUser.name,
+          email: editingUser.email,
+          role: editingUser.role
+        })
+      })
+      
+      if (response.ok) {
+        await loadUsers()
+        setEditingUser(null)
+      } else {
+        const error = await response.json()
+        alert('Error updating user: ' + (error.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error updating user:', error)
+      alert('Error updating user')
     }
   }
 
@@ -569,6 +631,18 @@ export default function AdminDashboard() {
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white/60">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-black pt-20">
       <div className="flex">
@@ -579,6 +653,21 @@ export default function AdminDashboard() {
             <nav className="space-y-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon
+                const isExternal = tab.href
+                
+                if (isExternal) {
+                  return (
+                    <Link
+                      key={tab.id}
+                      href={tab.href}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-white/70 hover:bg-white/5 hover:text-white"
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{tab.label}</span>
+                    </Link>
+                  )
+                }
+                
                 return (
                   <button
                     key={tab.id}
@@ -705,7 +794,6 @@ export default function AdminDashboard() {
                       <th className="text-left text-white/60 font-medium px-6 py-4">Name</th>
                       <th className="text-left text-white/60 font-medium px-6 py-4">Email</th>
                       <th className="text-left text-white/60 font-medium px-6 py-4">Role</th>
-                      <th className="text-left text-white/60 font-medium px-6 py-4">Status</th>
                       <th className="text-left text-white/60 font-medium px-6 py-4">Joined</th>
                       <th className="text-left text-white/60 font-medium px-6 py-4">Actions</th>
                     </tr>
@@ -722,17 +810,13 @@ export default function AdminDashboard() {
                             {user.role}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs capitalize ${
-                            user.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-white/10 text-white/70'
-                          }`}>
-                            {user.status}
-                          </span>
-                        </td>
                         <td className="px-6 py-4 text-white/60">{new Date(user.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <button className="p-2 text-white/60 hover:text-white transition-colors">
+                            <button 
+                              onClick={() => setEditingUser(user)}
+                              className="p-2 text-white/60 hover:text-white transition-colors"
+                            >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button 
@@ -1954,17 +2038,6 @@ export default function AdminDashboard() {
                       <option value="admin">Admin</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-white/70 text-sm mb-2">Status</label>
-                    <select
-                      value={newUser.status}
-                      onChange={(e) => setNewUser({ ...newUser, status: e.target.value })}
-                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500"
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
                   <div className="flex gap-3 pt-4">
                     <button
                       type="button"
@@ -1978,6 +2051,77 @@ export default function AdminDashboard() {
                       className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                     >
                       Add User
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Edit User Modal */}
+          {editingUser && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-neutral-900 rounded-2xl p-8 max-w-md w-full border border-white/10"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Edit User</h2>
+                  <button
+                    onClick={() => setEditingUser(null)}
+                    className="p-2 text-white/60 hover:text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <form onSubmit={handleUpdateUser} className="space-y-4">
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Name</label>
+                    <input
+                      type="text"
+                      value={editingUser.name}
+                      onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="Enter name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={editingUser.email}
+                      onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                      placeholder="Enter email"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Role</label>
+                    <select
+                      value={editingUser.role}
+                      onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setEditingUser(null)}
+                      className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                    >
+                      Save Changes
                     </button>
                   </div>
                 </form>

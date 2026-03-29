@@ -21,9 +21,33 @@ export default function PaymentsPage() {
   const [verifyingId, setVerifyingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'pending' | 'paid'>('pending')
+  const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
-    loadOrders()
+    // Check authentication
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/session')
+        const data = await res.json()
+        
+        if (!data.user) {
+          window.location.href = '/login?redirect=/admin/payments'
+          return
+        }
+        
+        if (data.user.role !== 'admin') {
+          window.location.href = '/'
+          return
+        }
+        
+        setAuthChecked(true)
+        loadOrders()
+      } catch {
+        window.location.href = '/login?redirect=/admin/payments'
+      }
+    }
+    
+    checkAuth()
   }, [])
 
   const loadOrders = async () => {
@@ -90,7 +114,7 @@ export default function PaymentsPage() {
     return `CHF ${price.toFixed(2)}`
   }
 
-  if (loading) {
+  if (!authChecked || loading) {
     return (
       <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-red-500 animate-spin" />

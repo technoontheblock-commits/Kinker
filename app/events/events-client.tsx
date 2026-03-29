@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Calendar, Clock, Filter, ArrowRight, ShoppingCart, X, Plus, Minus, Trash2 } from 'lucide-react'
+import { Calendar, Clock, Filter, ArrowRight, ShoppingCart, X, Plus, Minus, Trash2, Ticket, Tag, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
@@ -36,8 +36,13 @@ export function EventsClient({ events }: EventsClientProps) {
   const { t } = useLanguage()
   const [activeFilter, setActiveFilter] = useState<EventType>('all')
   const [cart, setCart] = useState<CartItem[]>([])
+  const [cartData, setCartData] = useState<any>(null)
   const [cartOpen, setCartOpen] = useState(false)
   const [cartLoading, setCartLoading] = useState(false)
+  const [discountCode, setDiscountCode] = useState('')
+  const [discountLoading, setDiscountLoading] = useState(false)
+  const [discountError, setDiscountError] = useState('')
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null)
 
   // Load cart on mount
   useEffect(() => {
@@ -50,10 +55,47 @@ export function EventsClient({ events }: EventsClientProps) {
       if (res.ok) {
         const data = await res.json()
         setCart(data.items || [])
+        setCartData(data)
+        setAppliedDiscount(data.discount)
       }
     } catch (error) {
       console.error('Error loading cart:', error)
     }
+  }
+
+  const applyDiscount = async () => {
+    if (!discountCode.trim()) return
+    
+    setDiscountLoading(true)
+    setDiscountError('')
+    
+    try {
+      const res = await fetch('/api/cart/discount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: discountCode.trim() })
+      })
+      
+      const data = await res.json()
+      
+      if (res.ok) {
+        setAppliedDiscount(data.discount)
+        setDiscountCode('')
+        await loadCart()
+      } else {
+        setDiscountError(data.error || 'Invalid code')
+      }
+    } catch (error) {
+      setDiscountError('Failed to apply code')
+    } finally {
+      setDiscountLoading(false)
+    }
+  }
+
+  const removeDiscount = async () => {
+    await fetch('/api/cart/discount', { method: 'DELETE' })
+    setAppliedDiscount(null)
+    await loadCart()
   }
 
   const updateQuantity = async (itemId: string, quantity: number) => {
@@ -89,7 +131,9 @@ export function EventsClient({ events }: EventsClientProps) {
     }
   }
 
-  const cartTotal = cart.reduce((sum, item) => sum + ((item.event_ticket?.price || 0) * item.quantity), 0)
+  const cartSubtotal = cart.reduce((sum, item) => sum + ((item.event_ticket?.price || 0) * item.quantity), 0)
+  const cartTotal = cartData?.total ?? cartSubtotal
+  const discountAmount = cartData?.discountAmount ?? 0
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
   const filteredEvents = events.filter((event) =>
@@ -161,12 +205,12 @@ export function EventsClient({ events }: EventsClientProps) {
                         <div className="flex items-start gap-3 mb-3">
                           <div 
                             className="w-16 h-16 bg-neutral-800 rounded bg-cover bg-center flex-shrink-0"
-                            style={{ backgroundImage: `url('${item.event_ticket.event.image}')` }}
+                            style={{ backgroundImage: item.event_ticket?.event?.image ? `url('${item.event_ticket.event.image}')` : undefined }}
                           />
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-white font-semibold truncate">{item.event_ticket.event.name}</h3>
-                            <p className="text-white/60 text-sm">{item.event_ticket.name}</p>
-                            <p className="text-red-500 font-bold">CHF {item.event_ticket.price}</p>
+                            <h3 className="text-white font-semibold truncate">{item.event_ticket?.event?.name || 'Event'}</h3>
+                            <p className="text-white/60 text-sm">{item.event_ticket?.name || 'Ticket'}</p>
+                            <p className="text-red-500 font-bold">CHF {item.event_ticket?.price || 0}</p>
                           </div>
                           <button
                             onClick={() => removeItem(item.id)}
@@ -204,11 +248,67 @@ export function EventsClient({ events }: EventsClientProps) {
                     ))}
                   </div>
 
+                  {/* Discount Code */}
+                  <div className="border-t border-white/10 pt-4 mb-4">
+                    {appliedDiscount ? (
+                      <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg mb-3">
+                        <div className="flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-green-500" />
+                          <div>
+                            <p className="text-green-500 font-medium text-sm">{appliedDiscount.name}</p>
+                            <p className="text-white/60 text-xs">Code: {appliedDiscount.code}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={removeDiscount}
+                          className="text-white/40 hover:text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2 mb-3">
+                        <div className="flex-1 relative">
+                          <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                          <input
+                            type="text"
+                            value={discountCode}
+                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                            placeholder="Reward Code (KINKER-XXX)"
+                            className="w-full bg-black/50 border border-white/10 rounded-lg py-2 pl-10 pr-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                          />
+                        </div>
+                        <button
+                          onClick={applyDiscount}
+                          disabled={discountLoading || !discountCode.trim()}
+                          className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white text-sm rounded-lg transition-colors"
+                        >
+                          {discountLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                        </button>
+                      </div>
+                    )}
+                    {discountError && (
+                      <p className="text-red-500 text-xs mb-3">{discountError}</p>
+                    )}
+                  </div>
+
                   {/* Total & Checkout */}
                   <div className="border-t border-white/10 pt-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-white/60">Total</span>
-                      <span className="text-2xl font-bold text-white">CHF {cartTotal.toFixed(2)}</span>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-white/60 text-sm">
+                        <span>Subtotal</span>
+                        <span>CHF {cartSubtotal.toFixed(2)}</span>
+                      </div>
+                      {discountAmount > 0 && (
+                        <div className="flex items-center justify-between text-green-500 text-sm">
+                          <span>Discount</span>
+                          <span>- CHF {discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                        <span className="text-white/60">Total</span>
+                        <span className="text-2xl font-bold text-white">CHF {cartTotal.toFixed(2)}</span>
+                      </div>
                     </div>
                     <Link
                       href="/checkout"

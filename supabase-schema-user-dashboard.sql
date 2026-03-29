@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   preferences JSONB DEFAULT '{}',
   date_of_birth DATE,
   newsletter_opt_in BOOLEAN DEFAULT true,
+  last_login_reward TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS user_rewards (
   points INTEGER DEFAULT 0 CHECK (points >= 0),
   lifetime_points INTEGER DEFAULT 0 CHECK (lifetime_points >= 0),
   tier TEXT DEFAULT 'Bronze' CHECK (tier IN ('Bronze', 'Silver', 'Gold', 'Platinum')),
+  last_login_reward TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)

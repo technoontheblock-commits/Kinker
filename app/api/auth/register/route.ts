@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, email, password } = body
+    const { name, email, password, newsletter } = body
 
     // Validation
     if (!name || !email || !password) {
@@ -68,8 +68,20 @@ export async function POST(request: NextRequest) {
       .from('user_profiles')
       .insert({
         id: user.id,
-        name: name.trim()
+        name: name.trim(),
+        newsletter_opt_in: newsletter === true
       })
+
+    // Add to newsletter subscribers if opted in
+    if (newsletter === true) {
+      await supabase
+        .from('newsletter_subscribers')
+        .upsert({
+          email: email.toLowerCase(),
+          confirmed: true,
+          subscribed_at: new Date().toISOString()
+        }, { onConflict: 'email' })
+    }
 
     // Create wallet
     await supabase

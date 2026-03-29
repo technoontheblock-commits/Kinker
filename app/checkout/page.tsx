@@ -426,7 +426,7 @@ export default function CheckoutPage() {
               disabled={submitting || cart.items.length === 0}
               className="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-white/10 text-white font-semibold rounded-lg"
             >
-              {submitting ? 'Wird verarbeitet...' : `Bestellung aufgeben - CHF ${cart.subtotal?.toFixed(2)}`}
+              {submitting ? 'Wird verarbeitet...' : `Bestellung aufgeben - CHF ${cart.total?.toFixed(2) || cart.subtotal?.toFixed(2)}`}
             </button>
           </form>
 
@@ -462,13 +462,19 @@ export default function CheckoutPage() {
                   <span>Zwischensumme</span>
                   <span>CHF {cart.subtotal?.toFixed(2)}</span>
                 </div>
+                {cart.discountAmount > 0 && (
+                  <div className="flex justify-between text-green-500">
+                    <span>Rabatt ({cart.discount?.name})</span>
+                    <span>- CHF {cart.discountAmount?.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-white/60">
                   <span>Versand</span>
                   <span>Kostenlos</span>
                 </div>
                 <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-white/10">
                   <span>Gesamt</span>
-                  <span>CHF {cart.subtotal?.toFixed(2)}</span>
+                  <span>CHF {cart.total?.toFixed(2) || cart.subtotal?.toFixed(2)}</span>
                 </div>
               </div>
             </div>

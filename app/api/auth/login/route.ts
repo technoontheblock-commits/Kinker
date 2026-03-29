@@ -47,6 +47,43 @@ export async function POST(request: NextRequest) {
       .update({ last_login: new Date().toISOString() })
       .eq('id', user.id)
 
+    // Add 10 points for daily login
+    const { data: userRewards } = await supabase
+      .from('user_rewards')
+      .select('id, points, lifetime_points, last_login_reward')
+      .eq('user_id', user.id)
+      .single()
+    
+    const today = new Date().toISOString().split('T')[0]
+    const lastRewardDate = userRewards?.last_login_reward 
+      ? new Date(userRewards.last_login_reward).toISOString().split('T')[0]
+      : null
+    
+    // Only award points once per day
+    if (lastRewardDate !== today) {
+      if (userRewards) {
+        await supabase
+          .from('user_rewards')
+          .update({
+            points: (userRewards.points || 0) + 10,
+            lifetime_points: (userRewards.lifetime_points || 0) + 10,
+            last_login_reward: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', userRewards.id)
+      } else {
+        // Create rewards record if not exists
+        await supabase
+          .from('user_rewards')
+          .insert({
+            user_id: user.id,
+            points: 10,
+            lifetime_points: 10,
+            last_login_reward: new Date().toISOString()
+          })
+      }
+    }
+
     // Set session cookie
     const sessionData = {
       id: user.id,

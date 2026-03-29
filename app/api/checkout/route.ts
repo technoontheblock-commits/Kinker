@@ -65,7 +65,44 @@ export async function POST(request: NextRequest) {
     })
 
     const shippingCost = body.shipping_cost || 0
-    const total = subtotal + shippingCost
+    
+    // Get discount from cookie
+    const discountCookie = cookieStore.get('cart_discount')?.value
+    let discountAmount = 0
+    let discountInfo = null
+    let redemptionId = null
+    
+    if (discountCookie) {
+      try {
+        const discount = JSON.parse(discountCookie)
+        redemptionId = discount.redemption_id
+        
+        // Calculate discount based on type
+        if (discount.type === 'discount' && discount.value?.discount_percent) {
+          discountAmount = (subtotal * discount.value.discount_percent) / 100
+        } else if (discount.type === 'free_ticket') {
+          // Free ticket - find cheapest ticket
+          const tickets = orderItems.filter((item: any) => item.is_ticket)
+          if (tickets.length > 0) {
+            const cheapestTicket = tickets.reduce((min: any, item: any) => 
+              item.price < min.price ? item : min
+            )
+            discountAmount = cheapestTicket.price * cheapestTicket.quantity
+          }
+        }
+        
+        discountInfo = {
+          code: discount.code,
+          name: discount.name,
+          type: discount.type,
+          amount: discountAmount
+        }
+      } catch {
+        // Invalid discount cookie
+      }
+    }
+    
+    const total = Math.max(0, subtotal + shippingCost - discountAmount)
 
     // Generate order number
     const year = new Date().getFullYear()
@@ -91,6 +128,8 @@ export async function POST(request: NextRequest) {
         payment_status: ['twint', 'sepa', 'bank_transfer'].includes(body.payment_method) ? 'pending' : 'pending',
         subtotal: subtotal,
         shipping_cost: shippingCost,
+        discount_amount: discountAmount,
+        discount_code: discountInfo?.code || null,
         total: total,
         status: 'pending',
         notes: body.iban ? `IBAN: ${body.iban}` : (body.notes || null)
@@ -152,6 +191,84 @@ export async function POST(request: NextRequest) {
 
     // Clear cart
     await supabase.from('cart_items').delete().eq('session_id', sessionId)
+
+    // Mark redemption as used if discount was applied
+    if (redemptionId) {
+      try {
+        await supabase
+          .from('reward_redemptions')
+          .update({
+            status: 'used',
+            used_at: new Date().toISOString()
+          })
+          .eq('id', redemptionId)
+        
+        // Clear discount cookie
+        cookieStore.delete('cart_discount')
+      } catch (error) {
+        console.error('Error marking redemption as used:', error)
+      }
+    }
+
+    // Award points to logged-in user
+    try {
+      const userSession = cookieStore.get('user_session')?.value
+      if (userSession) {
+        const user = JSON.parse(userSession)
+        
+        // Calculate points: Tickets = 1x, Merch = 2x
+        let pointsToAdd = 0
+        for (const item of orderItems) {
+          if (item.is_ticket) {
+            pointsToAdd += Math.floor(item.price * item.quantity) // 1 CHF = 1 point
+          } else {
+            pointsToAdd += Math.floor(item.price * item.quantity * 2) // 1 CHF = 2 points
+          }
+        }
+
+        if (pointsToAdd > 0) {
+          // Get current rewards
+          const { data: userRewards } = await supabase
+            .from('user_rewards')
+            .select('points, lifetime_points, tier')
+            .eq('user_id', user.id)
+            .single()
+
+          // Apply tier multiplier
+          let multiplier = 1
+          if (userRewards?.tier === 'Silver') multiplier = 1.2
+          if (userRewards?.tier === 'Gold') multiplier = 1.5
+          if (userRewards?.tier === 'Platinum') multiplier = 2
+
+          const finalPoints = Math.floor(pointsToAdd * multiplier)
+
+          if (userRewards) {
+            // Update existing rewards
+            await supabase
+              .from('user_rewards')
+              .update({
+                points: userRewards.points + finalPoints,
+                lifetime_points: userRewards.lifetime_points + finalPoints,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id)
+          } else {
+            // Create new rewards record
+            await supabase
+              .from('user_rewards')
+              .insert({
+                user_id: user.id,
+                points: finalPoints,
+                lifetime_points: finalPoints,
+                tier: 'Bronze'
+              })
+          }
+        }
+      }
+    } catch (pointsError) {
+      console.error('Error awarding points:', pointsError)
+      // Don't fail the order if points fail
+    }
 
     // Send confirmation email
     try {

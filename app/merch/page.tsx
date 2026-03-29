@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingBag, Plus, Minus, X, ShoppingCart } from 'lucide-react'
+import { ShoppingBag, Plus, Minus, X, ShoppingCart, Trash2, Ticket, Tag, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 interface Product {
@@ -19,10 +19,15 @@ interface Product {
 export default function MerchPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<any[]>([])
+  const [cartData, setCartData] = useState<any>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedSize, setSelectedSize] = useState('')
   const [showCart, setShowCart] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [discountCode, setDiscountCode] = useState('')
+  const [discountLoading, setDiscountLoading] = useState(false)
+  const [discountError, setDiscountError] = useState('')
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null)
 
   useEffect(() => {
     loadProducts()
@@ -49,10 +54,47 @@ export default function MerchPage() {
       if (response.ok) {
         const data = await response.json()
         setCart(data.items || [])
+        setCartData(data)
+        setAppliedDiscount(data.discount)
       }
     } catch (error) {
       console.error('Error loading cart:', error)
     }
+  }
+
+  const applyDiscount = async () => {
+    if (!discountCode.trim()) return
+    
+    setDiscountLoading(true)
+    setDiscountError('')
+    
+    try {
+      const res = await fetch('/api/cart/discount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: discountCode.trim() })
+      })
+      
+      const data = await res.json()
+      
+      if (res.ok) {
+        setAppliedDiscount(data.discount)
+        setDiscountCode('')
+        await loadCart()
+      } else {
+        setDiscountError(data.error || 'Invalid code')
+      }
+    } catch (error) {
+      setDiscountError('Failed to apply code')
+    } finally {
+      setDiscountLoading(false)
+    }
+  }
+
+  const removeDiscount = async () => {
+    await fetch('/api/cart/discount', { method: 'DELETE' })
+    setAppliedDiscount(null)
+    await loadCart()
   }
 
   const addToCart = async () => {
@@ -81,19 +123,29 @@ export default function MerchPage() {
     const newQuantity = item.quantity + delta
     
     if (newQuantity <= 0) {
-      await fetch('/api/cart?id=' + itemId, { method: 'DELETE' })
+      await removeItem(itemId)
     } else {
       await fetch('/api/cart', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: itemId, quantity: newQuantity })
       })
+      await loadCart()
     }
-
-    await loadCart()
   }
 
-  const total = cart.reduce((sum, item) => sum + (item.product?.price * item.quantity), 0)
+  const removeItem = async (itemId: string) => {
+    try {
+      await fetch('/api/cart?id=' + itemId, { method: 'DELETE' })
+      await loadCart()
+    } catch (error) {
+      console.error('Error removing item:', error)
+    }
+  }
+
+  const subtotal = cart.reduce((sum, item) => sum + (item.product?.price * item.quantity), 0)
+  const total = cartData?.total ?? subtotal
+  const discountAmount = cartData?.discountAmount ?? 0
   const categories = Array.from(new Set(products.map(p => p.category)))
 
   return (
@@ -239,25 +291,90 @@ export default function MerchPage() {
                         <p className="text-white font-medium">{item.product?.name}</p>
                         <p className="text-white/60 text-sm">{item.selected_size}</p>
                         <div className="flex items-center gap-2 mt-2">
-                          <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-white/60">
+                          <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-white/60 hover:text-white">
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="text-white w-6 text-center">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-white/60">
+                          <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-white/60 hover:text-white">
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
-                      <p className="text-white font-semibold">CHF {(item.product?.price * item.quantity).toFixed(2)}</p>
+                      <div className="flex flex-col items-end gap-2">
+                        <button 
+                          onClick={() => removeItem(item.id)}
+                          className="p-1 text-white/40 hover:text-red-500 transition-colors"
+                          title="Entfernen"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <p className="text-white font-semibold">CHF {(item.product?.price * item.quantity).toFixed(2)}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="border-t border-white/10 pt-4">
-                  <div className="flex justify-between text-xl font-bold text-white mb-4">
-                    <span>Total</span>
-                    <span>CHF {total.toFixed(2)}</span>
+                {/* Discount Code */}
+                <div className="border-t border-white/10 pt-4 mb-4">
+                  {appliedDiscount ? (
+                    <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg mb-3">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-green-500" />
+                        <div>
+                          <p className="text-green-500 font-medium text-sm">{appliedDiscount.name}</p>
+                          <p className="text-white/60 text-xs">Code: {appliedDiscount.code}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={removeDiscount}
+                        className="text-white/40 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 mb-3">
+                      <div className="flex-1 relative">
+                        <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                        <input
+                          type="text"
+                          value={discountCode}
+                          onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                          placeholder="Reward Code (KINKER-XXX)"
+                          className="w-full bg-black/50 border border-white/10 rounded-lg py-2 pl-10 pr-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-red-500"
+                        />
+                      </div>
+                      <button
+                        onClick={applyDiscount}
+                        disabled={discountLoading || !discountCode.trim()}
+                        className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white text-sm rounded-lg transition-colors"
+                      >
+                        {discountLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                      </button>
+                    </div>
+                  )}
+                  {discountError && (
+                    <p className="text-red-500 text-xs mb-3">{discountError}</p>
+                  )}
+                  
+                  {/* Price Breakdown */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-white/60 text-sm">
+                      <span>Subtotal</span>
+                      <span>CHF {subtotal.toFixed(2)}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-green-500 text-sm">
+                        <span>Discount</span>
+                        <span>- CHF {discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-white/10">
+                      <span>Total</span>
+                      <span>CHF {total.toFixed(2)}</span>
+                    </div>
                   </div>
+                  
                   <Link
                     href="/checkout"
                     className="block w-full py-4 bg-red-500 hover:bg-red-600 text-white text-center font-semibold rounded-lg"

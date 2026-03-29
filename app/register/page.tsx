@@ -16,10 +16,12 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [success, setSuccess] = useState(false)
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    newsletter: false
   })
 
   // Check if already logged in
@@ -48,8 +50,8 @@ export default function RegisterPage() {
       setError('Passwords do not match')
       return false
     }
-    if (!formData.name.trim()) {
-      setError('Name is required')
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setError('First name and last name are required')
       return false
     }
     return true
@@ -68,9 +70,10 @@ export default function RegisterPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.name,
+          name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          newsletter: formData.newsletter
         })
       })
 
@@ -147,21 +150,39 @@ export default function RegisterPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  className="w-full bg-black/50 border border-white/10 rounded-lg py-3 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
-                  placeholder="John Doe"
-                />
+            {/* First Name & Last Name */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  First Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <input
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    required
+                    className="w-full bg-black/50 border border-white/10 rounded-lg py-3 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
+                    placeholder="John"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Last Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <input
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    required
+                    className="w-full bg-black/50 border border-white/10 rounded-lg py-3 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
+                    placeholder="Doe"
+                  />
+                </div>
               </div>
             </div>
 
@@ -227,6 +248,19 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
+
+            {/* Newsletter */}
+            <label className="flex items-start gap-2 text-sm text-white/60 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={formData.newsletter}
+                onChange={(e) => setFormData({ ...formData, newsletter: e.target.checked })}
+                className="mt-0.5 rounded border-white/20 bg-black/50" 
+              />
+              <span>
+                Subscribe to our newsletter for exclusive events and updates
+              </span>
+            </label>
 
             {/* Terms */}
             <label className="flex items-start gap-2 text-sm text-white/60 cursor-pointer">

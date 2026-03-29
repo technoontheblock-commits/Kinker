@@ -38,7 +38,7 @@ export async function GET() {
       .select(`
         *,
         product:merchandise(id, name, price, image),
-        event_ticket:event_tickets(id, name, price, event_id)
+        event_ticket:event_tickets(id, name, price, event:events(id, name, date, image))
       `)
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false })
@@ -48,16 +48,70 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Filter out invalid items (products or tickets that no longer exist)
+    const validItems = (data || []).filter((item: any) => {
+      const hasProduct = item.product_id && item.product
+      const hasEventTicket = item.event_ticket_id && item.event_ticket
+      return hasProduct || hasEventTicket
+    })
+
+    // Remove invalid items from cart
+    const invalidItems = (data || []).filter((item: any) => {
+      const hasProduct = item.product_id && item.product
+      const hasEventTicket = item.event_ticket_id && item.event_ticket
+      return !hasProduct && !hasEventTicket
+    })
+
+    if (invalidItems.length > 0) {
+      await supabase
+        .from('cart_items')
+        .delete()
+        .in('id', invalidItems.map((item: any) => item.id))
+    }
+
     // Calculate totals
-    const subtotal = data?.reduce((sum: number, item: any) => {
+    const subtotal = validItems.reduce((sum: number, item: any) => {
       const price = item.product?.price || item.event_ticket?.price || 0
       return sum + (price * item.quantity)
-    }, 0) || 0
+    }, 0)
+
+    // Get discount from cookie
+    const discountCookie = cookies().get('cart_discount')?.value
+    let discount = null
+    let discountAmount = 0
+    let total = subtotal
+
+    if (discountCookie) {
+      try {
+        discount = JSON.parse(discountCookie)
+        
+        // Calculate discount based on type
+        if (discount.type === 'discount' && discount.value?.discount_percent) {
+          discountAmount = (subtotal * discount.value.discount_percent) / 100
+          total = Math.max(0, subtotal - discountAmount)
+        } else if (discount.type === 'free_ticket') {
+          // Free ticket - find cheapest ticket and make it free
+          const tickets = validItems.filter((item: any) => item.event_ticket)
+          if (tickets.length > 0) {
+            const cheapestTicket = tickets.reduce((min: any, item: any) => 
+              item.event_ticket.price < min.event_ticket.price ? item : min
+            )
+            discountAmount = cheapestTicket.event_ticket.price * cheapestTicket.quantity
+            total = Math.max(0, subtotal - discountAmount)
+          }
+        }
+      } catch {
+        // Invalid discount cookie, ignore
+      }
+    }
 
     return NextResponse.json({
-      items: data || [],
+      items: validItems,
       subtotal,
-      itemCount: data?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0
+      discount: discount ? { ...discount, amount: discountAmount } : null,
+      discountAmount,
+      total,
+      itemCount: validItems.reduce((sum: number, item: any) => sum + item.quantity, 0)
     })
   } catch (error: any) {
     console.error('GET cart exception:', error)

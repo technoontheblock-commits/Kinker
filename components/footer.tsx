@@ -72,11 +72,6 @@ export function Footer() {
                   {t.nav.location}
                 </Link>
               </li>
-              <li>
-                <a href="#tickets" className="text-white/60 hover:text-red-500 transition-colors text-sm">
-                  {t.nav.getTickets}
-                </a>
-              </li>
             </ul>
           </div>
 
@@ -119,10 +114,10 @@ export function Footer() {
             © {new Date().getFullYear()} KINKER BASEL. {t.footer.rights}
           </p>
           <div className="flex space-x-6 text-sm">
-            <Link href="#" className="text-white/40 hover:text-white transition-colors">
+            <Link href="/impressum" className="text-white/40 hover:text-white transition-colors">
               {t.footer.imprint}
             </Link>
-            <Link href="#" className="text-white/40 hover:text-white transition-colors">
+            <Link href="/privacy" className="text-white/40 hover:text-white transition-colors">
               {t.footer.privacy}
             </Link>
           </div>

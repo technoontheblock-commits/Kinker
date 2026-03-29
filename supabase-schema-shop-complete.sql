@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS orders (
   -- Totals
   subtotal DECIMAL(10, 2) NOT NULL,
   shipping_cost DECIMAL(10, 2) DEFAULT 0,
+  discount_amount DECIMAL(10, 2) DEFAULT 0,
+  discount_code TEXT,
   total DECIMAL(10, 2) NOT NULL,
   
   -- Status

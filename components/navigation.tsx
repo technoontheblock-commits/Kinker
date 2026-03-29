@@ -14,8 +14,23 @@ import { useLanguage } from './language-provider'
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const { language, setLanguage, t } = useLanguage()
   const pathname = usePathname()
+
+  useEffect(() => {
+    // Check login status
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/session')
+        const data = await res.json()
+        setIsLoggedIn(!!data.user)
+      } catch {
+        setIsLoggedIn(false)
+      }
+    }
+    checkSession()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,7 +99,9 @@ export function Navigation() {
               className="ml-4"
               asChild
             >
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href={isLoggedIn ? "/dashboard" : "/login"}>
+                {isLoggedIn ? 'Dashboard' : 'Log in'}
+              </Link>
             </Button>
           </nav>
 
@@ -137,7 +154,9 @@ export function Navigation() {
                 onClick={() => setIsOpen(false)}
                 asChild
               >
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href={isLoggedIn ? "/dashboard" : "/login"}>
+                  {isLoggedIn ? 'Dashboard' : 'Log in'}
+                </Link>
               </Button>
             </div>
           </div>
