@@ -59,19 +59,25 @@ export async function GET() {
       .single()
     
     if (!rewards) {
+      // Try to create with minimal fields first
+      const insertData: any = { 
+        user_id: dbUserId, 
+        points: 0,
+        lifetime_points: 0
+      }
+      
       const { data: newRewards, error: insertError } = await supabase
         .from('user_rewards')
-        .insert({ 
-          user_id: dbUserId, 
-          points: 0,
-          lifetime_points: 0,
-          tier: 'Bronze'
-        })
+        .insert(insertData)
         .select()
         .single()
+      
       if (insertError) {
         console.error('Error creating rewards record:', insertError)
-        return NextResponse.json({ error: 'Failed to create rewards record' }, { status: 500 })
+        return NextResponse.json({ 
+          error: 'Failed to create rewards record: ' + insertError.message,
+          details: insertError
+        }, { status: 500 })
       }
       rewards = newRewards
     }
