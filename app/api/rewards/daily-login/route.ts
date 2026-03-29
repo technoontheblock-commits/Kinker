@@ -187,18 +187,19 @@ export async function POST() {
       return NextResponse.json({ error: 'Failed to save reward: ' + updateError.message }, { status: 500 })
     }
     
-    // Add to points history (ignore error if table doesn't exist)
-    try {
-      await supabase
-        .from('points_history')
-        .insert({
-          user_id: dbUserId,
-          points_change: bonusPoints,
-          reason: `Daily Login${newStreak > 1 ? ` (Streak: ${newStreak})` : ''}`,
-          reference_type: 'daily_login'
-        })
-    } catch {
-      // Ignore if table doesn't exist
+    // Add to points history
+    const { error: historyError } = await supabase
+      .from('points_history')
+      .insert({
+        user_id: dbUserId,
+        points_change: bonusPoints,
+        reason: `Daily Login${newStreak > 1 ? ` (Streak: ${newStreak})` : ''}`,
+        reference_type: 'daily_login'
+      })
+    
+    if (historyError) {
+      console.error('Points history error:', historyError)
+      // Don't fail the request, just log the error
     }
 
     return NextResponse.json({

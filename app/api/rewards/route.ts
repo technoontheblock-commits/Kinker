@@ -119,16 +119,15 @@ export async function GET() {
     
     // Get points history (if table exists)
     let pointsHistory: any[] = []
-    try {
-      const { data: ph } = await supabase
-        .from('points_history')
-        .select('*')
-        .eq('user_id', dbUserId)
-        .order('created_at', { ascending: false })
-        .limit(10)
-      pointsHistory = ph || []
-    } catch {
-      // Table might not exist, ignore
+    const { data: ph, error: phError } = await supabase
+      .from('points_history')
+      .select('*')
+      .eq('user_id', dbUserId)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    
+    if (!phError && ph) {
+      pointsHistory = ph
     }
 
     return NextResponse.json({
