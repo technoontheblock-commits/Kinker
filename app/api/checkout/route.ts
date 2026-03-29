@@ -114,26 +114,32 @@ export async function POST(request: NextRequest) {
     const sequence = (orderCount?.length || 0) + 1
     const orderNumber = `KINKER-${year}-${String(sequence).padStart(6, '0')}`
 
-    // Create order
+    // Create order (only include fields that exist in schema)
+    const orderData: any = {
+      order_number: orderNumber,
+      customer_email: body.customer_email,
+      customer_name: body.customer_name,
+      customer_phone: body.customer_phone || null,
+      shipping_address: body.shipping_address || null,
+      billing_address: body.billing_address || null,
+      payment_method: body.payment_method,
+      payment_status: 'pending',
+      subtotal: subtotal,
+      shipping_cost: shippingCost,
+      total: total,
+      status: 'pending',
+      notes: body.iban ? `IBAN: ${body.iban}` : (body.notes || null)
+    }
+    
+    // Only add discount fields if they exist (will be ignored if column doesn't exist)
+    if (discountAmount > 0) {
+      orderData.discount_amount = discountAmount
+      orderData.discount_code = discountInfo?.code || null
+    }
+    
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert([{
-        order_number: orderNumber,
-        customer_email: body.customer_email,
-        customer_name: body.customer_name,
-        customer_phone: body.customer_phone || null,
-        shipping_address: body.shipping_address || null,
-        billing_address: body.billing_address || null,
-        payment_method: body.payment_method,
-        payment_status: ['twint', 'sepa', 'bank_transfer'].includes(body.payment_method) ? 'pending' : 'pending',
-        subtotal: subtotal,
-        shipping_cost: shippingCost,
-        discount_amount: discountAmount,
-        discount_code: discountInfo?.code || null,
-        total: total,
-        status: 'pending',
-        notes: body.iban ? `IBAN: ${body.iban}` : (body.notes || null)
-      }])
+      .insert([orderData])
       .select()
       .single()
 
