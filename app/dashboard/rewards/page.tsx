@@ -52,6 +52,16 @@ export default function RewardsPage() {
     loadRewards()
     loadDailyLoginStatus()
   }, [])
+  
+  // Reload when window gains focus (user might have switched accounts)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadRewards()
+      loadDailyLoginStatus()
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
 
   const loadRewards = async () => {
     try {

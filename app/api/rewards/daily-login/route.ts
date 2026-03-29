@@ -5,44 +5,38 @@ import { cookies } from 'next/headers'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-function getCurrentUser() {
+async function getCurrentUser(supabase: any) {
+  // Try to get from cookie first
   const session = cookies().get('user_session')?.value
-  if (!session) return null
-  return JSON.parse(session)
+  if (session) {
+    try {
+      const user = JSON.parse(session)
+      // Verify user still exists in DB
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('id, email, name, role')
+        .eq('id', user.id)
+        .single()
+      if (dbUser) return dbUser
+    } catch {
+      // Invalid session
+    }
+  }
+  return null
 }
 
 // GET /api/rewards/daily-login - Check daily login status
 export async function GET() {
   try {
-    const user = getCurrentUser()
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    
+    const user = await getCurrentUser(supabase)
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    // First verify the user exists in the database (try by ID first, then by email)
-    let dbUserId = user.id
-    const { data: dbUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', user.id)
-      .single()
-    
-    if (!dbUser) {
-      // Try finding by email as fallback
-      const { data: dbUserByEmail } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', user.email)
-        .single()
-      
-      if (dbUserByEmail) {
-        dbUserId = dbUserByEmail.id
-      }
-    } else {
-      dbUserId = dbUser.id
-    }
+    // Use the verified user ID from database
+    const dbUserId = user.id
     
     // Get user's rewards record
     const { data: rewards } = await supabase
@@ -86,38 +80,15 @@ export async function GET() {
 // POST /api/rewards/daily-login - Claim daily login reward
 export async function POST() {
   try {
-    const user = getCurrentUser()
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    
+    const user = await getCurrentUser(supabase)
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    // First verify the user exists in the database (try by ID first, then by email)
-    let dbUserId = user.id
-    const { data: dbUser, error: userError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', user.id)
-      .single()
-    
-    if (userError || !dbUser) {
-      // Try finding by email as fallback
-      const { data: dbUserByEmail } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', user.email)
-        .single()
-      
-      if (dbUserByEmail) {
-        dbUserId = dbUserByEmail.id
-      } else {
-        console.error('User not found in DB:', user.id, user.email, userError)
-        return NextResponse.json({ error: 'User not found in database' }, { status: 404 })
-      }
-    } else {
-      dbUserId = dbUser.id
-    }
+    // Use the verified user ID from database
+    const dbUserId = user.id
     
     // Get user's rewards record
     const { data: rewards, error: rewardsError } = await supabase
