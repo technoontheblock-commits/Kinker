@@ -20,6 +20,12 @@ interface Redemption {
   rewards: { name: string }
 }
 
+interface DailyLoginStatus {
+  canClaim: boolean
+  lastClaimDate: string | null
+  streak: number
+}
+
 export default function RewardsPage() {
   const [loading, setLoading] = useState(true)
   const [redeeming, setRedeeming] = useState<string | null>(null)
@@ -30,10 +36,13 @@ export default function RewardsPage() {
   const [availableRewards, setAvailableRewards] = useState<Reward[]>([])
   const [allRewards, setAllRewards] = useState<Reward[]>([])
   const [history, setHistory] = useState<Redemption[]>([])
+  const [dailyLogin, setDailyLogin] = useState<DailyLoginStatus | null>(null)
+  const [claimingDaily, setClaimingDaily] = useState(false)
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
 
   useEffect(() => {
     loadRewards()
+    loadDailyLoginStatus()
   }, [])
 
   const loadRewards = async () => {
@@ -53,6 +62,40 @@ export default function RewardsPage() {
       console.error('Error loading rewards:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadDailyLoginStatus = async () => {
+    try {
+      const res = await fetch('/api/rewards/daily-login')
+      if (res.ok) {
+        const data = await res.json()
+        setDailyLogin(data)
+      }
+    } catch (error) {
+      console.error('Error loading daily login status:', error)
+    }
+  }
+
+  const claimDailyLogin = async () => {
+    setClaimingDaily(true)
+    try {
+      const res = await fetch('/api/rewards/daily-login', {
+        method: 'POST'
+      })
+      const data = await res.json()
+      
+      if (res.ok) {
+        setMessage({ type: 'success', text: `+10 points claimed! Come back tomorrow.` })
+        setDailyLogin(data.dailyLogin)
+        await loadRewards()
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Already claimed today' })
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to claim daily reward' })
+    } finally {
+      setClaimingDaily(false)
     }
   }
 
@@ -114,6 +157,53 @@ export default function RewardsPage() {
       {message && (
         <div className={`p-4 rounded-lg ${message.type === 'success' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
           {message.text}
+        </div>
+      )}
+
+      {/* Daily Login Card */}
+      {dailyLogin && (
+        <div className={`rounded-2xl p-6 border-2 ${
+          dailyLogin.canClaim 
+            ? 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400' 
+            : 'bg-neutral-900 border-white/10'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                dailyLogin.canClaim ? 'bg-white/20' : 'bg-white/5'
+              }`}>
+                <LogIn className={`w-7 h-7 ${dailyLogin.canClaim ? 'text-white' : 'text-white/40'}`} />
+              </div>
+              <div>
+                <h3 className={`font-bold text-lg ${dailyLogin.canClaim ? 'text-white' : 'text-white/60'}`}>
+                  Daily Login Reward
+                </h3>
+                <p className={dailyLogin.canClaim ? 'text-white/80' : 'text-white/40'}>
+                  {dailyLogin.canClaim 
+                    ? 'Claim your 10 points now!' 
+                    : `Next claim: ${new Date(dailyLogin.lastClaimDate!).toLocaleDateString('de-CH')}`
+                  }
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={claimDailyLogin}
+              disabled={!dailyLogin.canClaim || claimingDaily}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                dailyLogin.canClaim
+                  ? 'bg-white text-green-600 hover:bg-white/90'
+                  : 'bg-white/10 text-white/40 cursor-not-allowed'
+              }`}
+            >
+              {claimingDaily ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : dailyLogin.canClaim ? (
+                'Claim 10 Points'
+              ) : (
+                'Claimed'
+              )}
+            </button>
+          </div>
         </div>
       )}
 

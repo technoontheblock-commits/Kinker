@@ -51,7 +51,7 @@ export default function PrivacyPage() {
             <h3 className="text-lg font-medium text-white mb-2 mt-4">Usage Data</h3>
             <p className="leading-relaxed">
               We may also collect information on how the Service is accessed and used (&quot;Usage Data&quot;). 
-              This Usage Data may include information such as your computer's Internet Protocol address (e.g. IP address), 
+              This Usage Data may include information such as your computer&apos;s Internet Protocol address (e.g. IP address), 
               browser type, browser version, the pages of our Service that you visit, the time and date of your visit, 
               the time spent on those pages, unique device identifiers and other diagnostic data.
             </p>
