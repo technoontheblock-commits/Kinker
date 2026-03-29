@@ -48,18 +48,23 @@ export default function RewardsPage() {
   const loadRewards = async () => {
     try {
       const res = await fetch('/api/rewards')
+      const data = await res.json()
+      
       if (res.ok) {
-        const data = await res.json()
-        setPoints(data.points)
-        setLifetimePoints(data.lifetimePoints)
-        setTier(data.tier)
-        setNextTier(data.nextTier)
+        setPoints(data.points || 0)
+        setLifetimePoints(data.lifetimePoints || 0)
+        setTier(data.tier || 'Bronze')
+        setNextTier(data.nextTier || null)
         setAvailableRewards(data.availableRewards || [])
         setAllRewards(data.allRewards || [])
         setHistory(data.history || [])
+      } else {
+        console.error('Rewards API error:', data.error)
+        setMessage({ type: 'error', text: data.error || 'Failed to load rewards' })
       }
     } catch (error) {
       console.error('Error loading rewards:', error)
+      setMessage({ type: 'error', text: 'Network error loading rewards' })
     } finally {
       setLoading(false)
     }
@@ -86,8 +91,12 @@ export default function RewardsPage() {
       const data = await res.json()
       
       if (res.ok) {
-        setMessage({ type: 'success', text: `+10 points claimed! Come back tomorrow.` })
+        const pointsEarned = data.pointsEarned || 10
+        setMessage({ type: 'success', text: `+${pointsEarned} points claimed! Come back tomorrow.` })
         setDailyLogin(data.dailyLogin)
+        // Optimistically update points display
+        setPoints(prev => prev + pointsEarned)
+        setLifetimePoints(prev => prev + pointsEarned)
         await loadRewards()
       } else {
         setMessage({ type: 'error', text: data.error || 'Already claimed today' })
