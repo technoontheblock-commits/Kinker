@@ -28,24 +28,51 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
+    // First verify the user exists in the database (try by ID first, then by email)
+    let dbUserId = user.id
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+    
+    if (!dbUser) {
+      // Try finding by email as fallback
+      const { data: dbUserByEmail } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+      
+      if (dbUserByEmail) {
+        dbUserId = dbUserByEmail.id
+      }
+    } else {
+      dbUserId = dbUser.id
+    }
+    
     // Get or create rewards record
     let { data: rewards } = await supabase
       .from('user_rewards')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', dbUserId)
       .single()
     
     if (!rewards) {
-      const { data: newRewards } = await supabase
+      const { data: newRewards, error: insertError } = await supabase
         .from('user_rewards')
         .insert({ 
-          user_id: user.id, 
+          user_id: dbUserId, 
           points: 0,
           lifetime_points: 0,
           tier: 'Bronze'
         })
         .select()
         .single()
+      if (insertError) {
+        console.error('Error creating rewards record:', insertError)
+        return NextResponse.json({ error: 'Failed to create rewards record' }, { status: 500 })
+      }
       rewards = newRewards
     }
     
@@ -76,7 +103,7 @@ export async function GET() {
     const { data: history, error: historyError } = await supabase
       .from('reward_redemptions')
       .select('*, rewards(name)')
-      .eq('user_id', user.id)
+      .eq('user_id', dbUserId)
       .order('created_at', { ascending: false })
       .limit(10)
 
@@ -116,6 +143,31 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
+    // First verify the user exists in the database (try by ID first, then by email)
+    let dbUserId = user.id
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+    
+    if (!dbUser) {
+      // Try finding by email as fallback
+      const { data: dbUserByEmail } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+      
+      if (dbUserByEmail) {
+        dbUserId = dbUserByEmail.id
+      } else {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+    } else {
+      dbUserId = dbUser.id
+    }
+    
     // Get reward details
     const { data: reward, error: rewardError } = await supabase
       .from('rewards')
@@ -131,7 +183,7 @@ export async function POST(request: NextRequest) {
     const { data: userRewards, error: userError } = await supabase
       .from('user_rewards')
       .select('points')
-      .eq('user_id', user.id)
+      .eq('user_id', dbUserId)
       .single()
 
     if (userError) {
@@ -151,7 +203,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabase
       .from('user_rewards')
       .update({ points: newPoints, updated_at: new Date().toISOString() })
-      .eq('user_id', user.id)
+      .eq('user_id', dbUserId)
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
@@ -160,7 +212,7 @@ export async function POST(request: NextRequest) {
     const { data: redemption, error: redemptionError } = await supabase
       .from('reward_redemptions')
       .insert({
-        user_id: user.id,
+        user_id: dbUserId,
         reward_id,
         points_used: reward.points_cost,
         code,
@@ -175,7 +227,7 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('user_rewards')
         .update({ points: userRewards.points })
-        .eq('user_id', user.id)
+        .eq('user_id', dbUserId)
       return NextResponse.json({ error: redemptionError.message }, { status: 500 })
     }
 

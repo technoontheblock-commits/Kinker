@@ -2,10 +2,10 @@
 -- KINKER Rewards System - Complete Setup
 -- ============================================
 
--- Create user_rewards table if not exists
+-- Create user_rewards table if not exists (without FK first to avoid issues)
 CREATE TABLE IF NOT EXISTS user_rewards (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
   points INTEGER DEFAULT 0,
   lifetime_points INTEGER DEFAULT 0,
   tier TEXT DEFAULT 'Bronze',
@@ -15,6 +15,23 @@ CREATE TABLE IF NOT EXISTS user_rewards (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)
 );
+
+-- Add foreign key constraint separately (if users table exists)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+    -- Check if constraint already exists
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.table_constraints 
+      WHERE constraint_name = 'user_rewards_user_id_fkey' 
+      AND table_name = 'user_rewards'
+    ) THEN
+      ALTER TABLE user_rewards 
+      ADD CONSTRAINT user_rewards_user_id_fkey 
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+    END IF;
+  END IF;
+END $$;
 
 -- Create rewards table (available rewards to redeem)
 CREATE TABLE IF NOT EXISTS rewards (

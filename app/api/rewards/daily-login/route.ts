@@ -21,11 +21,34 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
+    // First verify the user exists in the database (try by ID first, then by email)
+    let dbUserId = user.id
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+    
+    if (!dbUser) {
+      // Try finding by email as fallback
+      const { data: dbUserByEmail } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+      
+      if (dbUserByEmail) {
+        dbUserId = dbUserByEmail.id
+      }
+    } else {
+      dbUserId = dbUser.id
+    }
+    
     // Get user's rewards record
     const { data: rewards } = await supabase
       .from('user_rewards')
       .select('last_login_reward, login_streak')
-      .eq('user_id', user.id)
+      .eq('user_id', dbUserId)
       .single()
     
     const today = new Date().toISOString().split('T')[0]
@@ -70,11 +93,37 @@ export async function POST() {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
+    // First verify the user exists in the database (try by ID first, then by email)
+    let dbUserId = user.id
+    const { data: dbUser, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+    
+    if (userError || !dbUser) {
+      // Try finding by email as fallback
+      const { data: dbUserByEmail } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+      
+      if (dbUserByEmail) {
+        dbUserId = dbUserByEmail.id
+      } else {
+        console.error('User not found in DB:', user.id, user.email, userError)
+        return NextResponse.json({ error: 'User not found in database' }, { status: 404 })
+      }
+    } else {
+      dbUserId = dbUser.id
+    }
+    
     // Get user's rewards record
-    const { data: rewards } = await supabase
+    const { data: rewards, error: rewardsError } = await supabase
       .from('user_rewards')
       .select('id, points, lifetime_points, last_login_reward, login_streak')
-      .eq('user_id', user.id)
+      .eq('user_id', dbUserId)
       .single()
     
     const today = new Date().toISOString().split('T')[0]
@@ -124,7 +173,7 @@ export async function POST() {
       const { error } = await supabase
         .from('user_rewards')
         .insert({
-          user_id: user.id,
+          user_id: dbUserId,
           points: bonusPoints,
           lifetime_points: bonusPoints,
           last_login_reward: new Date().toISOString(),
