@@ -40,7 +40,9 @@ CREATE TABLE IF NOT EXISTS rewards (
   description TEXT,
   points_cost INTEGER NOT NULL,
   reward_type TEXT NOT NULL, -- 'free_ticket', 'discount', 'merchandise'
+  reward_value TEXT DEFAULT '',
   active BOOLEAN DEFAULT true,
+  image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -98,11 +100,11 @@ CREATE POLICY "Users can create own redemptions"
   WITH CHECK (user_id = auth.uid());
 
 -- Insert default rewards
-INSERT INTO rewards (name, description, points_cost, reward_type, active) VALUES
-  ('Free Ticket', 'Get one free entry to any KINKER event', 500, 'free_ticket', true),
-  ('20% Discount', '20% off on merchandise', 200, 'discount', true),
-  ('Free Drink', 'One free drink at the bar', 100, 'merchandise', true),
-  ('VIP Upgrade', 'Upgrade to VIP status for one event', 1000, 'free_ticket', true)
+INSERT INTO rewards (name, description, points_cost, reward_type, reward_value, active) VALUES
+  ('Free Ticket', 'Get one free entry to any KINKER event', 500, 'free_ticket', '1', true),
+  ('20% Discount', '20% off on merchandise', 200, 'discount', '20%', true),
+  ('Free Drink', 'One free drink at the bar', 100, 'merchandise', '1', true),
+  ('VIP Upgrade', 'Upgrade to VIP status for one event', 1000, 'free_ticket', '1', true)
 ON CONFLICT DO NOTHING;
 
 -- ============================================
