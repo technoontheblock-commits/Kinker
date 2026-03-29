@@ -84,6 +84,7 @@ export default function RewardsPage() {
 
   const claimDailyLogin = async () => {
     setClaimingDaily(true)
+    setMessage(null)
     try {
       const res = await fetch('/api/rewards/daily-login', {
         method: 'POST'
@@ -94,12 +95,13 @@ export default function RewardsPage() {
         const pointsEarned = data.pointsEarned || 10
         setMessage({ type: 'success', text: `+${pointsEarned} points claimed! Come back tomorrow.` })
         setDailyLogin(data.dailyLogin)
-        // Optimistically update points display
-        setPoints(prev => prev + pointsEarned)
-        setLifetimePoints(prev => prev + pointsEarned)
+        // Reload rewards to get updated points from server
         await loadRewards()
       } else {
-        setMessage({ type: 'error', text: data.error || 'Already claimed today' })
+        setMessage({ type: 'error', text: data.error || 'Failed to claim' })
+        // Reload to get correct state
+        await loadRewards()
+        await loadDailyLoginStatus()
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to claim daily reward' })

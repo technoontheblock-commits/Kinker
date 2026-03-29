@@ -105,8 +105,9 @@ export async function POST() {
     if (newStreak >= 30) bonusPoints = 50
     
     // Update rewards
+    let updateError = null
     if (rewards) {
-      await supabase
+      const { error } = await supabase
         .from('user_rewards')
         .update({
           points: (rewards.points || 0) + bonusPoints,
@@ -116,9 +117,11 @@ export async function POST() {
           updated_at: new Date().toISOString()
         })
         .eq('id', rewards.id)
+      updateError = error
+      if (error) console.error('Update error:', error)
     } else {
       // Create new rewards record
-      await supabase
+      const { error } = await supabase
         .from('user_rewards')
         .insert({
           user_id: user.id,
@@ -127,6 +130,12 @@ export async function POST() {
           last_login_reward: new Date().toISOString(),
           login_streak: newStreak
         })
+      updateError = error
+      if (error) console.error('Insert error:', error)
+    }
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to save reward: ' + updateError.message }, { status: 500 })
     }
 
     return NextResponse.json({
