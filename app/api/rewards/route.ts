@@ -116,6 +116,20 @@ export async function GET() {
     if (historyError) {
       return NextResponse.json({ error: historyError.message }, { status: 500 })
     }
+    
+    // Get points history (if table exists)
+    let pointsHistory: any[] = []
+    try {
+      const { data: ph } = await supabase
+        .from('points_history')
+        .select('*')
+        .eq('user_id', dbUserId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      pointsHistory = ph || []
+    } catch {
+      // Table might not exist, ignore
+    }
 
     return NextResponse.json({
       points: rewards?.points || 0,
@@ -125,7 +139,8 @@ export async function GET() {
       nextTier,
       availableRewards: availableRewards || [],
       allRewards: allRewards || [],
-      history: history || []
+      history: history || [],
+      pointsHistory: pointsHistory || []
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })

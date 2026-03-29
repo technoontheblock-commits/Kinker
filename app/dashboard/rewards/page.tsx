@@ -20,6 +20,13 @@ interface Redemption {
   rewards: { name: string }
 }
 
+interface PointsHistory {
+  id: string
+  points_change: number
+  reason: string
+  created_at: string
+}
+
 interface DailyLoginStatus {
   canClaim: boolean
   lastClaimDate: string | null
@@ -36,6 +43,7 @@ export default function RewardsPage() {
   const [availableRewards, setAvailableRewards] = useState<Reward[]>([])
   const [allRewards, setAllRewards] = useState<Reward[]>([])
   const [history, setHistory] = useState<Redemption[]>([])
+  const [pointsHistory, setPointsHistory] = useState<PointsHistory[]>([])
   const [dailyLogin, setDailyLogin] = useState<DailyLoginStatus | null>(null)
   const [claimingDaily, setClaimingDaily] = useState(false)
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
@@ -58,6 +66,7 @@ export default function RewardsPage() {
         setAvailableRewards(data.availableRewards || [])
         setAllRewards(data.allRewards || [])
         setHistory(data.history || [])
+        setPointsHistory(data.pointsHistory || [])
       } else {
         console.error('Rewards API error:', data.error)
         setMessage({ type: 'error', text: data.error || 'Failed to load rewards' })
@@ -307,11 +316,36 @@ export default function RewardsPage() {
         )}
       </div>
 
+      {/* Points History */}
+      {pointsHistory.length > 0 && (
+        <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <History className="w-5 h-5 text-red-500" />
+            Points History
+          </h2>
+          <div className="space-y-3">
+            {pointsHistory.map((item) => (
+              <div key={item.id} className="flex items-center justify-between p-4 bg-black/30 rounded-lg">
+                <div>
+                  <p className="text-white font-medium">{item.reason}</p>
+                  <p className="text-white/60 text-sm">{new Date(item.created_at).toLocaleDateString('de-CH')}</p>
+                </div>
+                <div className="text-right">
+                  <span className={`font-bold ${item.points_change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {item.points_change >= 0 ? '+' : ''}{item.points_change} points
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Redemption History */}
       {history.length > 0 && (
         <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <History className="w-5 h-5 text-red-500" />
+            <Gift className="w-5 h-5 text-red-500" />
             Your Redemptions
           </h2>
           <div className="space-y-3">
