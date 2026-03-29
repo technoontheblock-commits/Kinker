@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Ticket, Calendar, QrCode, Download, Loader2 } from 'lucide-react'
+import { Ticket, Calendar, Download, Loader2 } from 'lucide-react'
 import { pdf } from '@react-pdf/renderer'
 import { TicketPDF, generateQRCodeDataURL } from './ticket-pdf'
+import { TicketQRCode } from './qr-code'
 
 interface TicketData {
   id: string
@@ -156,9 +157,9 @@ export default function TicketsPage() {
 
             <div className="bg-white p-4 rounded-lg mb-4">
               <div className="flex items-center justify-center">
-                <QrCode className="w-32 h-32 text-black" />
+                <TicketQRCode value={ticket.qr_data} size={128} />
               </div>
-              <p className="text-center text-black/60 text-xs mt-2 font-mono">{ticket.qr_data}</p>
+              <p className="text-center text-black/60 text-xs mt-2 font-mono truncate">{ticket.qr_data}</p>
             </div>
 
             <button 

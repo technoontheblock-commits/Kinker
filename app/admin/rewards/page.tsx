@@ -172,9 +172,9 @@ export default function RewardsValidationPage() {
           <h3 className="text-lg font-semibold text-white mb-4">How to use</h3>
           <ol className="space-y-2 text-white/60 text-sm list-decimal list-inside">
             <li>Enter the reward code provided by the customer</li>
-            <li>Click "Validate" to check if the code is valid</li>
+            <li>Click &quot;Validate&quot; to check if the code is valid</li>
             <li>Verify the customer and reward details</li>
-            <li>Click "Mark as Used" to redeem the reward</li>
+            <li>Click &quot;Mark as Used&quot; to redeem the reward</li>
             <li>Give the customer their reward (discount, free ticket, etc.)</li>
           </ol>
         </div>

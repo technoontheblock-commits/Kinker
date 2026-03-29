@@ -50,7 +50,7 @@ export default function PrivacyPage() {
 
             <h3 className="text-lg font-medium text-white mb-2 mt-4">Usage Data</h3>
             <p className="leading-relaxed">
-              We may also collect information on how the Service is accessed and used («Usage Data»). 
+              We may also collect information on how the Service is accessed and used (&quot;Usage Data&quot;). 
               This Usage Data may include information such as your computer's Internet Protocol address (e.g. IP address), 
               browser type, browser version, the pages of our Service that you visit, the time and date of your visit, 
               the time spent on those pages, unique device identifiers and other diagnostic data.
@@ -170,7 +170,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-white mb-4">Links to Other Sites</h2>
             <p className="leading-relaxed">
               Our Service may contain links to other sites that are not operated by us. If you click on 
-              a third party link, you will be directed to that third party's site. We strongly advise you 
+              a third party link, you will be directed to that third party&apos;s site. We strongly advise you 
               to review the Privacy Policy of every site you visit.
             </p>
             <p className="leading-relaxed mt-4">
@@ -181,7 +181,7 @@ export default function PrivacyPage() {
 
           {/* Children's Privacy */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Children's Privacy</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Children&apos;s Privacy</h2>
             <p className="leading-relaxed">
               Our Service is intended for users who are at least 18 years old. We do not knowingly collect 
               personally identifiable information from anyone under the age of 18. If you are a parent or 
