@@ -269,6 +269,21 @@ export async function POST(request: NextRequest) {
                 tier: 'Bronze'
               })
           }
+          
+          // Add to points history
+          try {
+            await supabase
+              .from('points_history')
+              .insert({
+                user_id: user.id,
+                points_change: finalPoints,
+                reason: `Order ${orderNumber}`,
+                reference_id: order.id,
+                reference_type: 'order'
+              })
+          } catch {
+            // Ignore if table doesn't exist
+          }
         }
       }
     } catch (pointsError) {

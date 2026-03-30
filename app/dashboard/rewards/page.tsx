@@ -48,24 +48,77 @@ export default function RewardsPage() {
   const [claimingDaily, setClaimingDaily] = useState(false)
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
 
+  const [countdown, setCountdown] = useState<string>('')
+
   useEffect(() => {
-    loadRewards()
-    loadDailyLoginStatus()
+    // First check session, then load rewards
+    checkSessionAndLoad()
   }, [])
   
   // Reload when window gains focus (user might have switched accounts)
   useEffect(() => {
     const handleFocus = () => {
-      loadRewards()
-      loadDailyLoginStatus()
+      checkSessionAndLoad()
     }
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
   }, [])
+  
+  // Live countdown timer
+  useEffect(() => {
+    if (!dailyLogin || dailyLogin.canClaim) return
+    
+    const updateCountdown = () => {
+      const lastClaim = new Date(dailyLogin.lastClaimDate!)
+      const nextClaim = new Date(lastClaim.getTime() + 24 * 60 * 60 * 1000)
+      const now = new Date()
+      const diff = nextClaim.getTime() - now.getTime()
+      
+      if (diff <= 0) {
+        setCountdown('Claim now!')
+        // Reload to update status
+        loadDailyLoginStatus()
+        return
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+      
+      setCountdown(`${hours}h ${minutes}m ${seconds}s`)
+    }
+    
+    updateCountdown()
+    const interval = setInterval(updateCountdown, 1000)
+    
+    return () => clearInterval(interval)
+  }, [dailyLogin])
+  
+  const checkSessionAndLoad = async () => {
+    // Check session first to ensure we have the right user
+    const sessionRes = await fetch('/api/auth/session?t=' + Date.now(), {
+      cache: 'no-store'
+    })
+    const sessionData = await sessionRes.json()
+    
+    if (!sessionData.user) {
+      // Not logged in, redirect to login
+      window.location.href = '/login?redirect=/dashboard/rewards'
+      return
+    }
+    
+    // Now load rewards for this specific user
+    await loadRewards()
+    await loadDailyLoginStatus()
+  }
 
   const loadRewards = async () => {
     try {
-      const res = await fetch('/api/rewards')
+      // Add cache-busting parameter and disable cache
+      const res = await fetch('/api/rewards?t=' + Date.now(), {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
       const data = await res.json()
       
       if (res.ok) {
@@ -91,7 +144,10 @@ export default function RewardsPage() {
 
   const loadDailyLoginStatus = async () => {
     try {
-      const res = await fetch('/api/rewards/daily-login')
+      const res = await fetch('/api/rewards/daily-login?t=' + Date.now(), {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
       if (res.ok) {
         const data = await res.json()
         setDailyLogin(data)
@@ -164,8 +220,12 @@ export default function RewardsPage() {
     }
   }
 
+  // Calculate progress to next tier
+  // Bronze (0) -> Silver (500) -> Gold (1500) -> Platinum (5000)
+  const tierMins: Record<string, number> = { Bronze: 0, Silver: 500, Gold: 1500, Platinum: 5000 }
+  const currentTierMin = tierMins[tier] || 0
   const progressToNextTier = nextTier 
-    ? ((lifetimePoints - (nextTier.min - (nextTier.min - lifetimePoints))) / nextTier.min) * 100
+    ? ((lifetimePoints - currentTierMin) / (nextTier.min - currentTierMin)) * 100
     : 100
 
   if (loading) {
@@ -211,7 +271,7 @@ export default function RewardsPage() {
                 <p className={dailyLogin.canClaim ? 'text-white/80' : 'text-white/40'}>
                   {dailyLogin.canClaim 
                     ? 'Claim your 10 points now!' 
-                    : `Next claim: ${new Date(dailyLogin.lastClaimDate!).toLocaleDateString('de-CH')}`
+                    : `Next claim in: ${countdown}`
                   }
                 </p>
               </div>

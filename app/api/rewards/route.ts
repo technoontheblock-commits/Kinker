@@ -2,12 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-async function getCurrentUser(supabase: any) {
-  // Try to get from cookie first
-  const session = cookies().get('user_session')?.value
+async function getCurrentUser(supabase: any, request?: NextRequest) {
+  // Try to get from cookie - either from request headers or cookies()
+  let session = null
+  
+  if (request) {
+    // Try to get from request cookies
+    session = request.cookies.get('user_session')?.value
+  }
+  
+  // Fallback to cookies()
+  if (!session) {
+    session = cookies().get('user_session')?.value
+  }
+  
   if (session) {
     try {
       const user = JSON.parse(session)
@@ -33,11 +48,11 @@ const TIERS = [
 ]
 
 // GET /api/rewards - Get user's rewards and available rewards
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    const user = await getCurrentUser(supabase)
+    const user = await getCurrentUser(supabase, request)
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
@@ -46,14 +61,14 @@ export async function GET() {
     const dbUserId = user.id
     
     // Get or create rewards record
-    let { data: rewards } = await supabase
+    let { data: rewards, error: rewardsError } = await supabase
       .from('user_rewards')
       .select('*')
       .eq('user_id', dbUserId)
       .single()
     
-    if (!rewards) {
-      // Try to create with minimal fields first
+    // If no record found or error, try to create one
+    if (!rewards || rewardsError) {
       const insertData: any = { 
         user_id: dbUserId, 
         points: 0,
@@ -67,13 +82,27 @@ export async function GET() {
         .single()
       
       if (insertError) {
-        console.error('Error creating rewards record:', insertError)
-        return NextResponse.json({ 
-          error: 'Failed to create rewards record: ' + insertError.message,
-          details: insertError
-        }, { status: 500 })
+        // If duplicate key error, try to fetch existing record again
+        if (insertError.message?.includes('duplicate key')) {
+          const { data: existingRewards } = await supabase
+            .from('user_rewards')
+            .select('*')
+            .eq('user_id', dbUserId)
+            .single()
+          if (existingRewards) {
+            rewards = existingRewards
+          } else {
+            return NextResponse.json({ error: 'Failed to fetch rewards record' }, { status: 500 })
+          }
+        } else {
+          console.error('Error creating rewards record:', insertError)
+          return NextResponse.json({ 
+            error: 'Failed to create rewards record: ' + insertError.message
+          }, { status: 500 })
+        }
+      } else {
+        rewards = newRewards
       }
-      rewards = newRewards
     }
     
     // Calculate tier
@@ -81,15 +110,15 @@ export async function GET() {
     const nextTier = TIERS.find(t => t.min > (rewards?.lifetime_points || 0))
     
     // Get available rewards
-    const { data: availableRewards, error: rewardsError } = await supabase
+    const { data: availableRewards, error: availableRewardsError } = await supabase
       .from('rewards')
       .select('*')
       .eq('active', true)
       .lte('points_cost', rewards?.points || 0)
       .order('points_cost', { ascending: true })
 
-    if (rewardsError) {
-      return NextResponse.json({ error: rewardsError.message }, { status: 500 })
+    if (availableRewardsError) {
+      return NextResponse.json({ error: availableRewardsError.message }, { status: 500 })
     }
     
     // Get all rewards for browsing
@@ -145,7 +174,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    const user = await getCurrentUser(supabase)
+    const user = await getCurrentUser(supabase, request)
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }

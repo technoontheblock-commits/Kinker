@@ -2,12 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-async function getCurrentUser(supabase: any) {
-  // Try to get from cookie first
-  const session = cookies().get('user_session')?.value
+async function getCurrentUser(supabase: any, request?: NextRequest) {
+  // Try to get from cookie - either from request cookies or cookies()
+  let session = null
+  
+  if (request) {
+    session = request.cookies.get('user_session')?.value
+  }
+  
+  if (!session) {
+    session = cookies().get('user_session')?.value
+  }
+  
   if (session) {
     try {
       const user = JSON.parse(session)
@@ -26,11 +39,11 @@ async function getCurrentUser(supabase: any) {
 }
 
 // GET /api/rewards/daily-login - Check daily login status
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    const user = await getCurrentUser(supabase)
+    const user = await getCurrentUser(supabase, request)
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
@@ -78,11 +91,11 @@ export async function GET() {
 }
 
 // POST /api/rewards/daily-login - Claim daily login reward
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    const user = await getCurrentUser(supabase)
+    const user = await getCurrentUser(supabase, request)
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
