@@ -4,94 +4,74 @@ import { Resend } from 'resend'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-const sumupApiKey = process.env.SUMUP_API_KEY
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
+// SumUp Webhook Handler
 export async function POST(request: NextRequest) {
   try {
-    const { orderNumber, checkoutId } = await request.json()
+    const payload = await request.json()
+    
+    console.log('SumUp Webhook received:', payload)
 
-    if (!orderNumber) {
-      return NextResponse.json({ error: 'Order number required' }, { status: 400 })
+    // Verify webhook signature (optional but recommended)
+    // In production, verify the signature using SumUp's secret
+
+    const { event_type, checkout } = payload
+
+    if (!checkout || !checkout.checkout_reference) {
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const orderNumber = checkout.checkout_reference
 
-    // Find the order
+    // Handle different event types
+    switch (event_type) {
+      case 'checkout.paid':
+        // Payment successful
+        await handleSuccessfulPayment(supabase, orderNumber, checkout)
+        break
+
+      case 'checkout.failed':
+        // Payment failed
+        await handleFailedPayment(supabase, orderNumber, checkout)
+        break
+
+      case 'checkout.pending':
+        // Payment pending (not used often)
+        console.log(`Payment pending for order ${orderNumber}`)
+        break
+
+      default:
+        console.log(`Unhandled event type: ${event_type}`)
+    }
+
+    return NextResponse.json({ received: true })
+
+  } catch (error: any) {
+    console.error('Webhook error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+async function handleSuccessfulPayment(supabase: any, orderNumber: string, checkout: any) {
+  try {
+    // Update order status
     const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('order_number', orderNumber)
-      .single()
-
-    if (orderError || !order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
-    }
-
-    // Verify payment with SumUp if checkoutId is provided
-    let paymentVerified = false
-    let sumupStatus = 'unknown'
-    
-    if (checkoutId && sumupApiKey) {
-      try {
-        const sumupRes = await fetch(`https://api.sumup.com/v0.1/checkouts/${checkoutId}`, {
-          headers: {
-            'Authorization': `Bearer ${sumupApiKey}`,
-            'Content-Type': 'application/json'
-          }
-        })
-        
-        if (sumupRes.ok) {
-          const sumupData = await sumupRes.json()
-          console.log('SumUp checkout status:', sumupData.status)
-          sumupStatus = sumupData.status
-          
-          // Check if payment was successful
-          const successStatuses = ['PAID', 'SUCCESS', 'COMPLETED', 'CAPTURED']
-          if (successStatuses.includes(sumupData.status)) {
-            paymentVerified = true
-          }
-        }
-      } catch (err) {
-        console.error('Error verifying with SumUp:', err)
-      }
-    }
-
-    // If payment not verified via API, check if it was already marked as paid
-    if (!paymentVerified && order.payment_status === 'paid') {
-      paymentVerified = true
-    }
-
-    if (!paymentVerified) {
-      // Payment failed or not verified
-      await supabase
-        .from('orders')
-        .update({
-          payment_status: 'failed',
-          status: 'cancelled'
-        })
-        .eq('id', order.id)
-      
-      return NextResponse.json({ 
-        error: 'Payment not verified', 
-        status: sumupStatus,
-        verified: false 
-      }, { status: 400 })
-    }
-
-    // Payment verified - update order
-    const { error: updateError } = await supabase
       .from('orders')
       .update({
         payment_status: 'paid',
         status: 'confirmed',
-        paid_at: new Date().toISOString()
+        paid_at: new Date().toISOString(),
+        payment_reference: checkout.id
       })
-      .eq('id', order.id)
+      .eq('order_number', orderNumber)
+      .select()
+      .single()
 
-    if (updateError) {
-      console.error('Error updating order:', updateError)
-      return NextResponse.json({ error: 'Failed to update order' }, { status: 500 })
+    if (orderError) {
+      console.error('Error updating order:', orderError)
+      return
     }
 
     // Update tickets to paid
@@ -115,24 +95,34 @@ export async function POST(request: NextRequest) {
     // Send confirmation email
     if (resend && order.customer_email) {
       try {
-        await sendOrderConfirmationEmail(order, items || [], tickets || [])
+        await sendOrderConfirmationEmail(order, items, tickets)
       } catch (emailError) {
         console.error('Failed to send confirmation email:', emailError)
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      verified: true,
-      order: {
-        ...order,
-        payment_status: 'paid'
-      }
-    })
+    console.log(`Order ${orderNumber} marked as paid`)
 
-  } catch (error: any) {
-    console.error('Payment verification error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error) {
+    console.error('Error handling successful payment:', error)
+  }
+}
+
+async function handleFailedPayment(supabase: any, orderNumber: string, checkout: any) {
+  try {
+    await supabase
+      .from('orders')
+      .update({
+        payment_status: 'failed',
+        status: 'cancelled',
+        payment_reference: checkout.id
+      })
+      .eq('order_number', orderNumber)
+
+    console.log(`Order ${orderNumber} marked as failed`)
+
+  } catch (error) {
+      console.error('Error handling failed payment:', error)
   }
 }
 

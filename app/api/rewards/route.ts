@@ -67,6 +67,8 @@ export async function GET(request: NextRequest) {
       .eq('user_id', dbUserId)
       .single()
     
+    console.log('Rewards record:', rewards, 'Error:', rewardsError)
+    
     // If no record found or error, try to create one
     if (!rewards || rewardsError) {
       const insertData: any = { 

@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { randomUUID } from 'crypto'
+import { Resend } from 'resend'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 // Helper to generate QR code data
 function generateQRCode(ticketId: string, secret: string): string {
@@ -232,13 +234,17 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        console.log('Points to add:', pointsToAdd, 'for order:', orderNumber)
+
         if (pointsToAdd > 0) {
           // Get current rewards
-          const { data: userRewards } = await supabase
+          const { data: userRewards, error: rewardsError } = await supabase
             .from('user_rewards')
             .select('points, lifetime_points, tier')
             .eq('user_id', user.id)
             .single()
+          
+          console.log('Current rewards:', userRewards, 'Error:', rewardsError)
 
           // Apply tier multiplier
           let multiplier = 1
@@ -247,20 +253,32 @@ export async function POST(request: NextRequest) {
           if (userRewards?.tier === 'Platinum') multiplier = 2
 
           const finalPoints = Math.floor(pointsToAdd * multiplier)
+          
+          console.log('Final points with multiplier:', finalPoints)
 
           if (userRewards) {
+            const newPoints = userRewards.points + finalPoints
+            const newLifetime = userRewards.lifetime_points + finalPoints
+            
+            console.log('Updating rewards:', { newPoints, newLifetime })
+            
             // Update existing rewards
-            await supabase
+            const { error: updateError } = await supabase
               .from('user_rewards')
               .update({
-                points: userRewards.points + finalPoints,
-                lifetime_points: userRewards.lifetime_points + finalPoints,
+                points: newPoints,
+                lifetime_points: newLifetime,
                 updated_at: new Date().toISOString()
               })
               .eq('user_id', user.id)
+              
+            if (updateError) {
+              console.error('Error updating rewards:', updateError)
+            }
           } else {
+            console.log('Creating new rewards record with:', finalPoints)
             // Create new rewards record
-            await supabase
+            const { error: insertError } = await supabase
               .from('user_rewards')
               .insert({
                 user_id: user.id,
@@ -268,6 +286,10 @@ export async function POST(request: NextRequest) {
                 lifetime_points: finalPoints,
                 tier: 'Bronze'
               })
+              
+            if (insertError) {
+              console.error('Error creating rewards:', insertError)
+            }
           }
           
           // Add to points history
@@ -281,8 +303,8 @@ export async function POST(request: NextRequest) {
                 reference_id: order.id,
                 reference_type: 'order'
               })
-          } catch {
-            // Ignore if table doesn't exist
+          } catch (historyError) {
+            console.log('Points history error (table may not exist):', historyError)
           }
         }
       }
@@ -291,19 +313,107 @@ export async function POST(request: NextRequest) {
       // Don't fail the order if points fail
     }
 
-    // Send confirmation email
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/email/order-confirmation`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          order,
-          items: createdItems,
-          tickets
+    // Send confirmation email directly via Resend
+    if (resend && order.customer_email) {
+      try {
+        const orderNumber = order.order_number
+        const to = order.customer_email
+        const items = createdItems || []
+        const total = order.total_amount
+        
+        const subtotal = items.reduce((sum: number, item: any) => 
+          sum + ((item.price || item.unit_price || 0) * (item.quantity || 1)), 0
+        )
+
+        const itemsHtml = items.map((item: any) => `
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #333;">
+              <div style="font-weight: 600; color: #ffffff;">${item.product_name || item.name}</div>
+              ${item.variant ? `<div style="font-size: 13px; color: #9CA3AF;">${item.variant}</div>` : ''}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #333; text-align: center; color: #9CA3AF;">${item.quantity || 1}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #333; text-align: right; color: #ffffff;">CHF ${((item.price || item.unit_price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+          </tr>
+        `).join('')
+
+        const html = `
+        <!DOCTYPE html>
+        <html lang="de">
+        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Bestellbestätigung</title></head>
+        <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+            <tr><td align="center">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); border-radius: 16px; overflow: hidden; border: 1px solid #333;">
+                <tr>
+                  <td style="padding: 40px 30px 20px; text-align: center; border-bottom: 2px solid #FF4D00;">
+                    <h1 style="margin: 0; font-size: 32px; font-weight: 800; color: #FF4D00; letter-spacing: 2px;">KINKER</h1>
+                    <p style="margin: 8px 0 0; font-size: 14px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 4px;">BASEL</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 40px 30px; text-align: center;">
+                    <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #10B981, #059669); border-radius: 50%; margin: 0 auto 24px; text-align: center; line-height: 64px; font-size: 32px; color: white;">✓</div>
+                    <h2 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: #ffffff;">Bestellung bestätigt!</h2>
+                    <p style="margin: 0 0 8px; font-size: 16px; color: #9CA3AF;">Vielen Dank für deine Bestellung bei KINKER Basel.</p>
+                    <p style="margin: 0; font-size: 14px; color: #6B7280;">Bestellnummer: <span style="color: #FF4D00; font-family: monospace; font-weight: 600;">${orderNumber}</span></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0 30px 40px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 12px; overflow: hidden;">
+                      <thead><tr style="background-color: #262626;">
+                        <th style="padding: 16px 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #9CA3AF; font-weight: 600; letter-spacing: 1px;">Artikel</th>
+                        <th style="padding: 16px 12px; text-align: center; font-size: 12px; text-transform: uppercase; color: #9CA3AF; font-weight: 600; letter-spacing: 1px;">Menge</th>
+                        <th style="padding: 16px 12px; text-align: right; font-size: 12px; text-transform: uppercase; color: #9CA3AF; font-weight: 600; letter-spacing: 1px;">Preis</th>
+                      </tr></thead>
+                      <tbody>${itemsHtml}
+                        <tr style="border-top: 2px solid #333;">
+                          <td colspan="2" style="padding: 12px; text-align: right; color: #9CA3AF;">Zwischensumme</td>
+                          <td style="padding: 12px; text-align: right; color: #ffffff;">CHF ${subtotal.toFixed(2)}</td>
+                        </tr>
+                        <tr style="background-color: #FF4D00;">
+                          <td colspan="2" style="padding: 16px 12px; text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;">GESAMT</td>
+                          <td style="padding: 16px 12px; text-align: right; font-weight: 700; color: #ffffff; font-size: 18px;">CHF ${total.toFixed(2)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0 30px 40px;">
+                    <div style="background: linear-gradient(135deg, rgba(255, 77, 0, 0.1), rgba(255, 77, 0, 0.05)); border: 1px solid rgba(255, 77, 0, 0.3); border-radius: 12px; padding: 24px;">
+                      <h3 style="margin: 0 0 16px; font-size: 16px; color: #FF4D00; font-weight: 600;">Wichtige Informationen</h3>
+                      <ul style="margin: 0; padding-left: 20px; color: #D1D5DB; font-size: 14px; line-height: 1.8;">
+                        <li>Bitte bringe einen gültigen Ausweis mit</li>
+                        <li>Deine Tickets sind übertragbar</li>
+                        <li>Der Einlass erfolgt ab 23:00 Uhr</li>
+                        <li>Bei Fragen: support@kinker.ch</li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 30px; text-align: center; border-top: 1px solid #333; background-color: #0d0d0d;">
+                    <p style="margin: 0 0 16px; font-size: 14px; color: #6B7280;">Du hast Fragen zu deiner Bestellung?<br><a href="mailto:support@kinker.ch" style="color: #FF4D00; text-decoration: none;">support@kinker.ch</a></p>
+                    <p style="margin: 16px 0 0; font-size: 12px; color: #4B5563;">KINKER Basel • Steinenvorstadt 11 • 4051 Basel</p>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </body>
+        </html>
+        `
+
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+          to,
+          subject: `Deine Bestellbestätigung - ${orderNumber}`,
+          html
         })
-      })
-    } catch (emailError) {
-      console.error('Failed to send confirmation email:', emailError)
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError)
+      }
     }
 
     return NextResponse.json({

@@ -28,7 +28,9 @@ import {
   Ticket,
   Ban,
   QrCode,
-  Gift
+  Gift,
+  CreditCard,
+  MessageSquare
 } from 'lucide-react'
 import Link from 'next/link'
 import { getEvents } from '@/lib/events'
@@ -203,10 +205,14 @@ export default function AdminDashboard() {
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'rental', label: 'Raumanfragen', icon: Building },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
+    { id: 'newsletter', label: 'Newsletter', icon: Mail, href: '/admin/newsletter' },
+    { id: 'email-test', label: 'Email Test', icon: Mail, href: '/admin/email-test' },
     { id: 'careers', label: 'Careers', icon: Briefcase },
     { id: 'merchandise', label: 'Merch', icon: ShoppingBag },
     { id: 'orders', label: 'Bestellungen', icon: Package },
+    { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
     { id: 'rewards', label: 'Reward Validator', icon: Gift, href: '/admin/rewards' },
+    { id: 'sumup', label: 'SumUp', icon: CreditCard, href: '/admin/sumup' },
   ]
 
   const unreadCount = notifications.filter(n => !n.read).length

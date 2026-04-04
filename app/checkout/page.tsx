@@ -1,39 +1,136 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingBag, Check, MapPin, Home, Truck } from 'lucide-react'
+import { Loader2, CreditCard, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
+import Script from 'next/script'
+
+// SumUp Card Widget Types
+declare global {
+  interface Window {
+    SumUpCard?: any
+  }
+}
 
 export default function CheckoutPage() {
-  const [cart, setCart] = useState<any>({ items: [], subtotal: 0 })
+  const [cart, setCart] = useState<any>({ items: [], subtotal: 0, total: 0, discountAmount: 0 })
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [orderComplete, setOrderComplete] = useState(false)
-  const [orderData, setOrderData] = useState<any>(null)
-  const [sameAddress, setSameAddress] = useState(true)
+  const [error, setError] = useState('')
+  const [checkoutId, setCheckoutId] = useState<string | null>(null)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [orderNumber, setOrderNumber] = useState('')
+  const [pollCount, setPollCount] = useState(0)
+  // SumUp Card Widget uses ID 'sumup-card' instead of ref
   
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    iban: '',
-    payment_method: 'twint',
-    // Billing Address
-    billing_street: '',
-    billing_city: '',
-    billing_zip: '',
-    billing_country: 'Schweiz',
-    // Shipping Address
-    shipping_street: '',
-    shipping_city: '',
-    shipping_zip: '',
-    shipping_country: 'Schweiz'
+    street: '',
+    city: '',
+    zip: '',
+    country: 'Schweiz'
   })
 
   useEffect(() => {
     loadCart()
   }, [])
+
+  // Poll order status when checkout is created
+  useEffect(() => {
+    if (checkoutId && orderNumber && !paymentSuccess) {
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/orders?orderNumber=${orderNumber}`)
+          if (res.ok) {
+            const order = await res.json()
+            if (order.payment_status === 'paid') {
+              setPaymentSuccess(true)
+              clearInterval(interval)
+            }
+          }
+          setPollCount(c => c + 1)
+          // Stop polling after 5 minutes (60 * 5s = 300s)
+          if (pollCount > 60) {
+            clearInterval(interval)
+          }
+        } catch (err) {
+          console.error('Error polling order status:', err)
+        }
+      }, 5000) // Poll every 5 seconds
+
+      return () => clearInterval(interval)
+    }
+  }, [checkoutId, orderNumber, paymentSuccess, pollCount])
+
+  // Initialize SumUp Card Widget when checkoutId is available
+  useEffect(() => {
+    if (checkoutId && window.SumUpCard) {
+      try {
+        const card = window.SumUpCard.mount({
+          id: 'sumup-card',
+          checkoutId: checkoutId,
+          showErrorDetails: true, // Show detailed error messages
+          onResponse: (response: any) => {
+            console.log('SumUp response:', JSON.stringify(response, null, 2))
+            
+            // SumUp API returns strings like "sent", "auth-screen", "success", "failed"
+            const responseStr = typeof response === 'string' ? response : response.status || response.transaction_code
+            
+            // Check for various success statuses
+            const successStatuses = ['PAID', 'SUCCESS', 'COMPLETED', 'CAPTURED', 'success']
+            const failedStatuses = ['FAILED', 'CANCELLED', 'DECLINED', 'ERROR', 'failed']
+            
+            if (successStatuses.includes(responseStr)) {
+              console.log('Payment successful!')
+              window.location.href = `/checkout/success?order=${orderNumber}`
+            } else if (failedStatuses.includes(responseStr)) {
+              console.log('Payment failed:', responseStr)
+              
+              // Build detailed error message based on status
+              let errorDetail = ''
+              switch(responseStr) {
+                case 'FAILED':
+                  errorDetail = 'Die Transaktion wurde von der Bank abgelehnt. Mögliche Gründe:\n• Ungültige Kreditkartennummer\n• Nicht genügend Guthaben\n• Karte wurde von der Bank gesperrt\n• 3D Secure Authentifizierung fehlgeschlagen'
+                  break
+                case 'DECLINED':
+                  errorDetail = 'Die Zahlung wurde vom Kartenherausgeber abgelehnt.\nBitte kontaktiere deine Bank oder verwende eine andere Karte.'
+                  break
+                case 'CANCELLED':
+                  errorDetail = 'Die Zahlung wurde abgebrochen.'
+                  break
+                case 'ERROR':
+                  errorDetail = 'Ein technischer Fehler ist aufgetreten.\nBitte versuche es in wenigen Minuten erneut.'
+                  break
+                default:
+                  errorDetail = `Status: ${responseStr}`
+              }
+              
+              setError(errorDetail)
+            } else if (responseStr === 'sent' || responseStr === 'auth-screen') {
+              console.log('Payment in progress:', responseStr)
+            } else {
+              console.log('Unknown payment status:', responseStr)
+            }
+          },
+          onError: (error: any) => {
+            console.error('SumUp error:', error)
+            const errorMsg = typeof error === 'string' ? error : error.message || JSON.stringify(error)
+            setError(`Technischer Fehler: ${errorMsg}\n\nBitte versuche es erneut oder verwende eine andere Zahlungsmethode.`)
+          }
+        })
+
+        return () => {
+          card.unmount()
+        }
+      } catch (err) {
+        console.error('Error mounting SumUp widget:', err)
+        setError('Fehler beim Laden des Zahlungsformulars.')
+      }
+    }
+  }, [checkoutId])
 
   const loadCart = async () => {
     try {
@@ -49,55 +146,42 @@ export default function CheckoutPage() {
     }
   }
 
-  const submitOrder = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
-    
-    const shippingAddress = sameAddress ? {
-      street: formData.billing_street,
-      city: formData.billing_city,
-      zip: formData.billing_zip,
-      country: formData.billing_country
-    } : {
-      street: formData.shipping_street,
-      city: formData.shipping_city,
-      zip: formData.shipping_zip,
-      country: formData.shipping_country
-    }
-    
+    setError('')
+
     try {
-      console.log('Submitting order...', { cart, formData })
-      
-      const response = await fetch('/api/checkout', {
+      const response = await fetch('/api/checkout/sumup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: formData.name,
-          customer_email: formData.email,
-          customer_phone: formData.phone,
-          payment_method: formData.payment_method,
-          billing_address: {
-            street: formData.billing_street,
-            city: formData.billing_city,
-            zip: formData.billing_zip,
-            country: formData.billing_country
-          },
-          shipping_address: shippingAddress
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          shipping_address: {
+            street: formData.street,
+            city: formData.city,
+            zip: formData.zip,
+            country: formData.country
+          }
         })
       })
-      
+
       const data = await response.json()
-      console.log('Checkout response:', response.status, data)
-      
-      if (response.ok) {
-        setOrderData(data)
-        setOrderComplete(true)
+
+      if (response.ok && data.sumup?.checkout_id) {
+        // Store checkout ID for the SumUp Card Widget
+        setCheckoutId(data.sumup.checkout_id)
+        setOrderNumber(data.order?.order_number || '')
       } else {
-        alert('Fehler: ' + (data.error || 'Unbekannter Fehler'))
+        // Show detailed error message
+        const errorMsg = data.error || 'Failed to create checkout'
+        console.error('Checkout error:', errorMsg, data)
+        setError(errorMsg)
       }
-    } catch (error) {
-      console.error('Checkout error:', error)
-      alert('Netzwerkfehler beim Checkout')
+    } catch (err) {
+      setError('An error occurred. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -105,382 +189,305 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
       </div>
     )
   }
 
-  if (orderComplete) {
-    const paymentMethod = orderData?.order?.payment_method
-    const isPending = orderData?.order?.payment_status === 'pending'
-    
+  if (paymentSuccess) {
     return (
-      <div className="min-h-screen bg-black pt-24 pb-12">
-        <div className="container mx-auto px-4 max-w-2xl">
+      <div className="min-h-screen bg-black pt-24">
+        <div className="container mx-auto px-4 max-w-2xl text-center">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-neutral-900 rounded-2xl p-8 text-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6"
           >
-            <Check className="w-16 h-16 text-green-500 mx-auto mb-6" />
-            <h1 className="text-3xl font-bold text-white mb-4">Order Successful!</h1>
-            <p className="text-white/60 mb-6">
-              Order Number: <span className="text-white font-mono">{orderData?.order?.order_number}</span>
-            </p>
-            
-            {/* Payment Instructions */}
-            {isPending && (
-              <div className="bg-white rounded-xl p-6 mb-6 text-left">
-                {/* TWINT */}
-                {paymentMethod === 'twint' && (
-                  <>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">T</span>
-                      </div>
-                      <div>
-                        <h3 className="text-black font-bold text-lg">Pay with TWINT</h3>
-                        <p className="text-gray-600 text-sm">Complete your payment to receive your tickets</p>
-                      </div>
-                    </div>
-                    <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                      <p className="text-gray-700 text-sm mb-2">Amount to pay:</p>
-                      <p className="text-black text-3xl font-bold">CHF {orderData?.order?.total?.toFixed(2)}</p>
-                    </div>
-                    <ol className="list-decimal list-inside space-y-2 text-gray-600 text-sm">
-                      <li>Open your TWINT app</li>
-                      <li>Tap &quot;Send Money&quot;</li>
-                      <li>Enter phone: <span className="font-mono font-bold text-black">+41 79 123 45 67</span></li>
-                      <li>Add reference: <span className="font-mono font-bold text-black">{orderData?.order?.order_number}</span></li>
-                      <li>Confirm payment</li>
-                    </ol>
-                  </>
-                )}
-
-                {/* SEPA */}
-                {paymentMethod === 'sepa' && (
-                  <>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">S</span>
-                      </div>
-                      <div>
-                        <h3 className="text-black font-bold text-lg">SEPA Direct Debit</h3>
-                        <p className="text-gray-600 text-sm">We will debit your account automatically</p>
-                      </div>
-                    </div>
-                    <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                      <p className="text-gray-700 text-sm mb-2">Amount to be debited:</p>
-                      <p className="text-black text-3xl font-bold">CHF {orderData?.order?.total?.toFixed(2)}</p>
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      Your IBAN has been saved. The amount will be debited within 1-3 business days. 
-                      You will receive a confirmation email once the debit is processed.
-                    </p>
-                  </>
-                )}
-
-                {/* Bank Transfer */}
-                {paymentMethod === 'bank_transfer' && (
-                  <>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">B</span>
-                      </div>
-                      <div>
-                        <h3 className="text-black font-bold text-lg">Bank Transfer</h3>
-                        <p className="text-gray-600 text-sm">Please transfer the amount manually</p>
-                      </div>
-                    </div>
-                    <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                      <p className="text-gray-700 text-sm mb-2">Amount to transfer:</p>
-                      <p className="text-black text-3xl font-bold">CHF {orderData?.order?.total?.toFixed(2)}</p>
-                    </div>
-                    <div className="space-y-2 text-sm text-gray-700">
-                      <p><span className="font-medium">IBAN:</span> <span className="font-mono">CH93 0076 2011 6238 5295 7</span></p>
-                      <p><span className="font-medium">BIC:</span> <span className="font-mono">BKBBCHBB</span></p>
-                      <p><span className="font-medium">Account:</span> KINKER Basel GmbH</p>
-                      <p><span className="font-medium">Reference:</span> <span className="font-mono font-bold">{orderData?.order?.order_number}</span></p>
-                    </div>
-                  </>
-                )}
-
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-yellow-800 text-xs">
-                    Your order is pending payment. Once payment is confirmed, 
-                    your tickets will be activated and sent to your email.
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {orderData?.tickets?.length > 0 && !isPending && (
-              <div className="bg-black/30 rounded-lg p-4 mb-6">
-                <p className="text-white/80">Your tickets have been sent by email.</p>
-              </div>
-            )}
-            
-            <Link href="/dashboard/tickets" className="inline-block px-8 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg">
-              My Tickets
-            </Link>
+            <CheckCircle className="w-12 h-12 text-green-500" />
           </motion.div>
+          
+          <h1 className="text-4xl font-bold text-white mb-4">Zahlung erfolgreich!</h1>
+          <p className="text-white/60 text-lg mb-2">Vielen Dank für deine Bestellung bei KINKER Basel.</p>
+          
+          {orderNumber && (
+            <p className="text-white/40 mb-8">
+              Bestellnummer: <span className="text-white font-mono">{orderNumber}</span>
+            </p>
+          )}
+
+          <p className="text-white/60 mb-8">
+            Du erhältst eine Bestätigungs-E-Mail mit deinen Tickets.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/dashboard/orders"
+              className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Meine Bestellungen
+            </Link>
+            <Link
+              href="/events"
+              className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors"
+            >
+              Weitere Events
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (cart.items.length === 0) {
+    return (
+      <div className="min-h-screen bg-black pt-24">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">Warenkorb ist leer</h1>
+          <Link href="/merch" className="text-red-500 hover:text-red-400">
+            Zurück zum Shop
+          </Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-4xl font-bold text-white mb-8">Checkout</h1>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Forms */}
-          <form onSubmit={submitOrder} className="space-y-6">
-            {/* Contact */}
-            <div className="bg-neutral-900 rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5" />
-                Kontaktdaten
-              </h2>
-              
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                  placeholder="Vollständiger Name"
-                />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                  placeholder="E-Mail Adresse"
-                />
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                  placeholder="Telefon (optional)"
-                />
-              </div>
-            </div>
-
-            {/* Billing Address */}
-            <div className="bg-neutral-900 rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <Home className="w-5 h-5" />
-                Rechnungsadresse
-              </h2>
-              
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  required
-                  value={formData.billing_street}
-                  onChange={(e) => setFormData({ ...formData, billing_street: e.target.value })}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                  placeholder="Strasse und Hausnummer"
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    required
-                    value={formData.billing_zip}
-                    onChange={(e) => setFormData({ ...formData, billing_zip: e.target.value })}
-                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                    placeholder="PLZ"
-                  />
-                  <input
-                    type="text"
-                    required
-                    value={formData.billing_city}
-                    onChange={(e) => setFormData({ ...formData, billing_city: e.target.value })}
-                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                    placeholder="Ort"
-                  />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={formData.billing_country}
-                  onChange={(e) => setFormData({ ...formData, billing_country: e.target.value })}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                  placeholder="Land"
-                />
-              </div>
-            </div>
-
-            {/* Shipping Address */}
-            <div className="bg-neutral-900 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4 gap-4">
-                <h2 className="text-xl font-semibold text-white flex items-center gap-2 shrink-0">
-                  <Truck className="w-5 h-5" />
-                  Lieferadresse
-                </h2>
-                <label className="flex items-center gap-2 text-white/60 cursor-pointer shrink-0">
-                  <input
-                    type="checkbox"
-                    checked={sameAddress}
-                    onChange={(e) => setSameAddress(e.target.checked)}
-                    className="w-4 h-4 rounded border-white/20"
-                  />
-                  <span className="text-sm whitespace-nowrap">Gleich wie Rechnungsadresse</span>
-                </label>
-              </div>
-              
-              {!sameAddress && (
+    <>
+      {/* Load SumUp Card Widget SDK */}
+      <Script
+        src="https://gateway.sumup.com/gateway/ecom/card/v2/sdk.js"
+        strategy="lazyOnload"
+        onLoad={() => console.log('SumUp SDK loaded')}
+      />
+      
+      <div className="min-h-screen bg-black pt-24 pb-12">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h1 className="text-3xl font-bold text-white mb-8">Checkout</h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left: Order Summary */}
+            <div>
+              <div className="bg-zinc-900 rounded-xl p-6 mb-6">
+                <h2 className="text-xl font-semibold text-white mb-4">Bestellübersicht</h2>
+                
                 <div className="space-y-4">
-                  <input
-                    type="text"
-                    required
-                    value={formData.shipping_street}
-                    onChange={(e) => setFormData({ ...formData, shipping_street: e.target.value })}
-                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                    placeholder="Strasse und Hausnummer"
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      required
-                      value={formData.shipping_zip}
-                      onChange={(e) => setFormData({ ...formData, shipping_zip: e.target.value })}
-                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                      placeholder="PLZ"
-                    />
-                    <input
-                      type="text"
-                      required
-                      value={formData.shipping_city}
-                      onChange={(e) => setFormData({ ...formData, shipping_city: e.target.value })}
-                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                      placeholder="Ort"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={formData.shipping_country}
-                    onChange={(e) => setFormData({ ...formData, shipping_country: e.target.value })}
-                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
-                    placeholder="Land"
-                  />
+                  {cart.items.map((item: any) => (
+                    <div key={item.id} className="flex justify-between items-center py-2 border-b border-zinc-800">
+                      <div>
+                        <p className="text-white font-medium">{item.product?.name || item.event_ticket?.name}</p>
+                        {item.selected_size && (
+                          <p className="text-zinc-500 text-sm">Größe: {item.selected_size}</p>
+                        )}
+                        <p className="text-zinc-500 text-sm">Menge: {item.quantity}</p>
+                      </div>
+                      <p className="text-white">CHF {((item.product?.price || item.event_ticket?.price) * item.quantity).toFixed(2)}</p>
+                    </div>
+                  ))}
                 </div>
-              )}
+                
+                <div className="mt-4 pt-4 border-t border-zinc-800 space-y-2">
+                  <div className="flex justify-between text-zinc-400">
+                    <span>Zwischensumme</span>
+                    <span>CHF {cart.subtotal.toFixed(2)}</span>
+                  </div>
+                  {cart.discountAmount > 0 && (
+                    <div className="flex justify-between text-green-400">
+                      <span>Rabatt</span>
+                      <span>-CHF {cart.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-white font-bold text-lg">
+                    <span>Gesamt</span>
+                    <span>CHF {cart.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            {/* Payment */}
-            <div className="bg-neutral-900 rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Zahlung</h2>
-              
-              <div className="space-y-3">
-                {[
-                  { id: 'twint', label: 'TWINT', desc: 'Pay with TWINT app' },
-                  { id: 'sepa', label: 'SEPA Direct Debit', desc: 'Automatic bank debit' },
-                  { id: 'bank_transfer', label: 'Bank Transfer', desc: 'Manual bank transfer' }
-                ].map((method) => (
-                  <label key={method.id} className="flex items-center gap-3 p-4 bg-black/30 rounded-lg cursor-pointer hover:bg-black/50 transition-colors">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value={method.id}
-                      checked={formData.payment_method === method.id}
-                      onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                      className="w-4 h-4 text-red-500"
-                    />
+
+            {/* Right: Customer Details or Payment Widget */}
+            <div>
+              {!checkoutId ? (
+                <form onSubmit={handleSubmit} className="bg-zinc-900 rounded-xl p-6">
+                  <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" />
+                    Kundendaten
+                  </h2>
+                  
+                  {error && (
+                    <div className="mb-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                      <p className="text-red-400 text-sm">{error}</p>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-4">
                     <div>
-                      <span className="text-white font-medium block">{method.label}</span>
-                      <span className="text-white/50 text-sm">{method.desc}</span>
+                      <label className="block text-zinc-400 text-sm mb-2">Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      />
                     </div>
-                  </label>
-                ))}
-              </div>
-
-              {/* SEPA IBAN Field */}
-              {formData.payment_method === 'sepa' && (
-                <div className="mt-4 p-4 bg-black/30 rounded-lg">
-                  <label className="block text-white/70 text-sm mb-2">IBAN for Direct Debit</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.iban}
-                    onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
-                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 uppercase"
-                    placeholder="CH00 0000 0000 0000 0000 0"
-                  />
-                  <p className="text-white/40 text-xs mt-2">
-                    By providing your IBAN, you authorize us to debit the amount from your account.
-                  </p>
+                    
+                    <div>
+                      <label className="block text-zinc-400 text-sm mb-2">E-Mail *</label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-zinc-400 text-sm mb-2">Telefon</label>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-zinc-400 text-sm mb-2">Strasse *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.street}
+                        onChange={(e) => setFormData({...formData, street: e.target.value})}
+                        className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-zinc-400 text-sm mb-2">PLZ *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.zip}
+                          onChange={(e) => setFormData({...formData, zip: e.target.value})}
+                          className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-zinc-400 text-sm mb-2">Ort *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.city}
+                          onChange={(e) => setFormData({...formData, city: e.target.value})}
+                          className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full mt-6 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Wird verarbeitet...
+                      </>
+                    ) : (
+                      <>
+                        Weiter zur Zahlung
+                        <CreditCard className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              ) : (
+                <div className="bg-zinc-900 rounded-xl p-6">
+                  <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" />
+                    Kreditkarte
+                  </h2>
+                  
+                  {error && (
+                    <div className="mb-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                      <p className="text-red-400 text-sm">{error}</p>
+                      <button
+                        onClick={() => {
+                          setError('')
+                          setCheckoutId(null)
+                        }}
+                        className="text-red-400 hover:text-red-300 underline text-sm mt-2"
+                      >
+                        Zurück zu den Kundendaten
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="text-center py-4">
+                    <p className="text-zinc-400 mb-4">Zu zahlen: <span className="text-white font-bold text-xl">CHF {cart.total.toFixed(2)}</span></p>
+                  </div>
+                  
+                  {/* SumUp Card Widget Container */}
+                  {error ? (
+                    <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <XCircle className="w-8 h-8 text-red-500" />
+                        <p className="text-red-400 font-bold text-lg">Zahlung fehlgeschlagen</p>
+                      </div>
+                      <div className="text-white/80 mb-4 whitespace-pre-line">
+                        {error}
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        <button
+                          onClick={() => {
+                            setError('')
+                            window.location.reload()
+                          }}
+                          className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
+                        >
+                          Mit neuer Karte zahlen
+                        </button>
+                        <button
+                          onClick={() => setCheckoutId(null)}
+                          className="w-full px-4 py-3 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg"
+                        >
+                          Zurück zu den Kundendaten
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div 
+                      id="sumup-card"
+                      className="min-h-[300px] bg-white rounded-lg p-4"
+                    >
+                      {!window.SumUpCard && (
+                        <div className="flex items-center justify-center h-[300px]">
+                          <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
+                          <span className="ml-2 text-zinc-400">Lade Zahlungsformular...</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() => setCheckoutId(null)}
+                      className="text-zinc-400 hover:text-white text-sm"
+                    >
+                      ← Zurück zu den Kundendaten
+                    </button>
+                  </div>
                 </div>
               )}
-            </div>
-            
-            <button
-              type="submit"
-              disabled={submitting || cart.items.length === 0}
-              className="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-white/10 text-white font-semibold rounded-lg"
-            >
-              {submitting ? 'Wird verarbeitet...' : `Bestellung aufgeben - CHF ${cart.total?.toFixed(2) || cart.subtotal?.toFixed(2)}`}
-            </button>
-          </form>
-
-          {/* Right Column - Order Summary */}
-          <div className="lg:sticky lg:top-24 h-fit">
-            <div className="bg-neutral-900 rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5" />
-                Bestellübersicht
-              </h2>
-              
-              <div className="space-y-4 mb-6">
-                {cart.items.map((item: any) => (
-                  <div key={item.id} className="flex gap-4 p-4 bg-black/30 rounded-lg">
-                    <div className="flex-1">
-                      <p className="text-white font-medium">
-                        {item.product?.name || item.event_ticket?.name}
-                      </p>
-                      {item.selected_size && (
-                        <p className="text-white/60 text-sm">Grösse: {item.selected_size}</p>
-                      )}
-                      <p className="text-white/40 text-sm">Menge: {item.quantity}</p>
-                    </div>
-                    <p className="text-white font-semibold">
-                      CHF {((item.product?.price || item.event_ticket?.price) * item.quantity).toFixed(2)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="border-t border-white/10 pt-4 space-y-2">
-                <div className="flex justify-between text-white/60">
-                  <span>Zwischensumme</span>
-                  <span>CHF {cart.subtotal?.toFixed(2)}</span>
-                </div>
-                {cart.discountAmount > 0 && (
-                  <div className="flex justify-between text-green-500">
-                    <span>Rabatt ({cart.discount?.name})</span>
-                    <span>- CHF {cart.discountAmount?.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-white/60">
-                  <span>Versand</span>
-                  <span>Kostenlos</span>
-                </div>
-                <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-white/10">
-                  <span>Gesamt</span>
-                  <span>CHF {cart.total?.toFixed(2) || cart.subtotal?.toFixed(2)}</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

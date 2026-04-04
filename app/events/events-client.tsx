@@ -241,7 +241,7 @@ export function EventsClient({ events }: EventsClientProps) {
                             </button>
                           </div>
                           <span className="text-white font-bold">
-                            CHF {(item.event_ticket.price * item.quantity).toFixed(2)}
+                            CHF {((item.event_ticket?.price || 0) * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>

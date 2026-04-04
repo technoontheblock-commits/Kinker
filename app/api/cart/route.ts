@@ -81,14 +81,33 @@ export async function GET() {
     let discountAmount = 0
     let total = subtotal
 
+    console.log('Cart API - Discount cookie:', discountCookie)
+
     if (discountCookie) {
       try {
         discount = JSON.parse(discountCookie)
+        console.log('Cart API - Parsed discount:', discount)
+        console.log('Cart API - Discount value:', discount.value)
         
         // Calculate discount based on type
-        if (discount.type === 'discount' && discount.value?.discount_percent) {
-          discountAmount = (subtotal * discount.value.discount_percent) / 100
-          total = Math.max(0, subtotal - discountAmount)
+        if (discount.type === 'discount') {
+          // Handle both object and number formats
+          let discountPercent = 0
+          if (typeof discount.value === 'object' && discount.value?.discount_percent) {
+            discountPercent = discount.value.discount_percent
+          } else if (typeof discount.value === 'number') {
+            discountPercent = discount.value
+          } else if (typeof discount.value === 'string') {
+            discountPercent = parseInt(discount.value, 10) || 0
+          }
+          
+          console.log('Cart API - Discount percent:', discountPercent)
+          
+          if (discountPercent > 0) {
+            discountAmount = (subtotal * discountPercent) / 100
+            total = Math.max(0, subtotal - discountAmount)
+            console.log('Cart API - Calculated discount:', discountAmount, 'New total:', total)
+          }
         } else if (discount.type === 'free_ticket') {
           // Free ticket - find cheapest ticket and make it free
           const tickets = validItems.filter((item: any) => item.event_ticket)
@@ -100,8 +119,8 @@ export async function GET() {
             total = Math.max(0, subtotal - discountAmount)
           }
         }
-      } catch {
-        // Invalid discount cookie, ignore
+      } catch (error) {
+        console.error('Cart API - Error parsing discount:', error)
       }
     }
 

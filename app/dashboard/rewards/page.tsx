@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Gift, Star, Ticket, Shirt, LogIn, Loader2, Check, History } from 'lucide-react'
+import { Gift, Star, Ticket, Shirt, LogIn, Loader2, Check, History, RefreshCw } from 'lucide-react'
 
 interface Reward {
   id: string
@@ -46,6 +46,7 @@ export default function RewardsPage() {
   const [pointsHistory, setPointsHistory] = useState<PointsHistory[]>([])
   const [dailyLogin, setDailyLogin] = useState<DailyLoginStatus | null>(null)
   const [claimingDaily, setClaimingDaily] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
 
   const [countdown, setCountdown] = useState<string>('')
@@ -185,6 +186,31 @@ export default function RewardsPage() {
     }
   }
 
+  const syncPoints = async () => {
+    setSyncing(true)
+    setMessage(null)
+    try {
+      const res = await fetch('/api/rewards/sync', {
+        method: 'POST'
+      })
+      const data = await res.json()
+      
+      if (res.ok) {
+        setMessage({ 
+          type: 'success', 
+          text: `Synced! Points: ${data.points} (Earned: ${data.totalEarned}, Spent: ${data.totalSpent})` 
+        })
+        await loadRewards()
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to sync' })
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to sync points' })
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const redeemReward = async (rewardId: string) => {
     setRedeeming(rewardId)
     setMessage(null)
@@ -238,9 +264,20 @@ export default function RewardsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Rewards</h1>
-        <p className="text-white/60">Earn points with every purchase</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Rewards</h1>
+          <p className="text-white/60">Earn points with every purchase</p>
+        </div>
+        <button
+          onClick={syncPoints}
+          disabled={syncing}
+          className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white rounded-lg transition-colors text-sm"
+          title="Sync points from history"
+        >
+          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          Sync Points
+        </button>
       </div>
 
       {/* Message */}

@@ -64,8 +64,8 @@ export function EventForm({ event, onClose, onSuccess }: { event: any, onClose: 
   
   const [floors, setFloors] = useState<Floor[]>(parseExistingFloors())
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([
-    { name: 'Early Bird', price: 20, description: 'Early bird discount', max_quantity: 100, active: true },
-    { name: 'Regular', price: 25, description: 'Standard entry', max_quantity: 200, active: true }
+    { name: 'Early Bird', price: 20.00, description: 'Early bird discount', max_quantity: 100, active: true },
+    { name: 'Regular', price: 25.00, description: 'Standard entry', max_quantity: 200, active: true }
   ])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -345,7 +345,7 @@ export function EventForm({ event, onClose, onSuccess }: { event: any, onClose: 
                         if (e.target.checked) {
                           setTicketTypes([...ticketTypes, {
                             name: type.label,
-                            price: type.id === 'blind' ? 15 : type.id === 'earlybird' ? 20 : type.id === 'regular' ? 25 : 30,
+                            price: type.id === 'blind' ? 15.00 : type.id === 'earlybird' ? 20.00 : type.id === 'regular' ? 25.00 : 30.00,
                             description: type.description,
                             max_quantity: 100,
                             active: true
@@ -369,16 +369,18 @@ export function EventForm({ event, onClose, onSuccess }: { event: any, onClose: 
                       <label className="block text-white/60 text-xs mb-1">Price (CHF)</label>
                       <input
                         type="number"
+                        step="0.01"
                         value={existingTicket.price}
                         onChange={(e) => {
                           const newTypes = ticketTypes.map(t => 
-                            t.name === type.label ? { ...t, price: parseInt(e.target.value) || 0 } : t
+                            t.name === type.label ? { ...t, price: parseFloat(e.target.value) || 0 } : t
                           )
                           setTicketTypes(newTypes)
                         }}
                         className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
                         min="0"
                       />
+                      <span className="text-white/40 text-xs mt-1 block">z.B. 24.90 für 24.90 CHF</span>
                     </div>
                     <div>
                       <label className="block text-white/60 text-xs mb-1">Max Quantity</label>
