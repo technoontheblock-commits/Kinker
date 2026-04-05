@@ -266,6 +266,7 @@ export const translations = {
       rental: 'Vermietung',
       career: 'Karriere',
       merch: 'Merch',
+      forum: 'Forum',
       admin: 'Admin',
       getTickets: 'Tickets',
     },
