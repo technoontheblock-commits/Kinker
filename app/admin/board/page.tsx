@@ -873,7 +873,7 @@ export default function KanbanBoardPage() {
   // Drag and drop handlers
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
-    setActiveId(active.id as string)
+    setActiveId(String(active.id))
     
     if (active.data.current?.type === 'Card') {
       setActiveCard(active.data.current.card)
@@ -885,8 +885,8 @@ export default function KanbanBoardPage() {
     
     if (!over) return
     
-    const activeId = active.id
-    const overId = over.id
+    const activeId = String(active.id)
+    const overId = String(over.id)
     
     if (activeId === overId) return
     
@@ -938,7 +938,7 @@ export default function KanbanBoardPage() {
     if (isActiveCard && isOverList) {
       setLists((lists) => {
         const activeList = lists.find(l => l.cards.some(c => c.id === activeId))
-        const overList = lists.find(l => l.id === overId.replace('-cards', ''))
+        const overList = lists.find(l => l.id === overId.replace('-cards', '') as string)
         
         if (!activeList || !overList || activeList === overList) return lists
         
@@ -969,8 +969,8 @@ export default function KanbanBoardPage() {
     
     if (!over) return
     
-    const activeId = active.id
-    const overId = over.id
+    const activeId = String(active.id)
+    const overId = String(over.id)
     
     // Handle list reordering
     if (active.data.current?.type === 'List') {
@@ -1002,7 +1002,7 @@ export default function KanbanBoardPage() {
       const card = active.data.current.card
       const activeList = lists.find(l => l.cards.some(c => c.id === card.id))
       const overList = lists.find(l => 
-        l.cards.some(c => c.id === overId) || l.id === overId.replace('-cards', '')
+        l.cards.some(c => c.id === overId) || l.id === overId.replace('-cards', '') as string
       )
       
       if (!activeList || !overList) return
