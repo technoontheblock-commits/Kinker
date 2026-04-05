@@ -374,7 +374,7 @@ export default function PostDetailPage() {
                     </button>
                   </div>
                   <div className="text-sm text-white/50 italic bg-black/30 p-2 rounded">
-                    "{replyTo.content.substring(0, 100)}{replyTo.content.length > 100 ? '...' : ''}"
+                    &ldquo;{replyTo.content.substring(0, 100)}{replyTo.content.length > 100 ? '...' : ''}&rdquo;
                   </div>
                 </div>
               )}
@@ -492,7 +492,7 @@ export default function PostDetailPage() {
                         {/* Show parent comment quote if this is a reply */}
                         {isReply && parentComment && (
                           <div className="mb-2 p-2 bg-zinc-800/50 border-l-2 border-zinc-600 rounded-r text-sm text-white/50 italic">
-                            "{parentComment.content.substring(0, 80)}{parentComment.content.length > 80 ? '...' : ''}"
+                            &ldquo;{parentComment.content.substring(0, 80)}{parentComment.content.length > 80 ? '...' : ''}&rdquo;
                           </div>
                         )}
                         
