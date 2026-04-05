@@ -401,11 +401,11 @@ export default function RentalPage() {
           {/* Direct Contact */}
           <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-8">
             <a
-              href="mailto:backoffice@kinker.de"
+              href="mailto:backoffice@knkr.ch"
               className="flex items-center gap-3 text-white/70 hover:text-red-500 transition-colors"
             >
               <Mail className="w-5 h-5" />
-              <span>backoffice@kinker.de</span>
+              <span>backoffice@knkr.ch</span>
             </a>
             <a
               href="tel:+41611234567"

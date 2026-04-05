@@ -387,14 +387,14 @@ export async function POST(request: NextRequest) {
                         <li>Bitte bringe einen gültigen Ausweis mit</li>
                         <li>Deine Tickets sind übertragbar</li>
                         <li>Der Einlass erfolgt ab 23:00 Uhr</li>
-                        <li>Bei Fragen: support@kinker.ch</li>
+                        <li>Bei Fragen: support@knkr.ch</li>
                       </ul>
                     </div>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 30px; text-align: center; border-top: 1px solid #333; background-color: #0d0d0d;">
-                    <p style="margin: 0 0 16px; font-size: 14px; color: #6B7280;">Du hast Fragen zu deiner Bestellung?<br><a href="mailto:support@kinker.ch" style="color: #FF4D00; text-decoration: none;">support@kinker.ch</a></p>
+                    <p style="margin: 0 0 16px; font-size: 14px; color: #6B7280;">Du hast Fragen zu deiner Bestellung?<br><a href="mailto:support@knkr.ch" style="color: #FF4D00; text-decoration: none;">support@knkr.ch</a></p>
                     <p style="margin: 16px 0 0; font-size: 12px; color: #4B5563;">KINKER Basel • Steinenvorstadt 11 • 4051 Basel</p>
                   </td>
                 </tr>

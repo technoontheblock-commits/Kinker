@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
                       <li>Wir prüfen deine Bewerbung sorgfältig</li>
                       <li>Du erhältst innerhalb von 5-7 Werktagen eine Rückmeldung</li>
                       <li>Bei positivem Interesse laden wir dich zum Gespräch ein</li>
-                      <li>Fragen? Schreibe uns: jobs@kinker.ch</li>
+                      <li>Fragen? Schreibe uns: jobs@knkr.ch</li>
                     </ul>
                   </div>
                 </td>
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
                 <td style="padding: 30px; text-align: center; border-top: 1px solid #333; background-color: #0d0d0d;">
                   <p style="margin: 0 0 16px; font-size: 14px; color: #6B7280;">
                     Du hast Fragen zu deiner Bewerbung?<br>
-                    <a href="mailto:jobs@kinker.ch" style="color: #FF4D00; text-decoration: none;">jobs@kinker.ch</a>
+                    <a href="mailto:jobs@knkr.ch" style="color: #FF4D00; text-decoration: none;">jobs@knkr.ch</a>
                   </p>
                   <div style="margin: 24px 0;">
                     <a href="${process.env.NEXT_PUBLIC_SITE_URL}/jobs" style="display: inline-block; padding: 12px 24px; background-color: #FF4D00; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">Alle Jobs</a>

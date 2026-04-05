@@ -116,7 +116,7 @@ export async function POST(request: Request) {
                           KINKER Basel • Steinenvorstadt 11 • 4051 Basel
                         </p>
                         <p style="margin: 0;">
-                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #FF4D00; text-decoration: none; font-weight: 600;">kinker.ch</a>
+                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #FF4D00; text-decoration: none; font-weight: 600;">knkr.ch</a>
                         </p>
                       </td>
                     </tr>

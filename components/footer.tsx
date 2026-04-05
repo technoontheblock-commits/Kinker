@@ -43,7 +43,7 @@ export function Footer() {
                 <Facebook size={20} />
               </a>
               <a
-                href="mailto:backoffice@kinker.de"
+                href="mailto:backoffice@knkr.ch"
                 className="text-white/60 hover:text-red-500 transition-colors"
               >
                 <Mail size={20} />

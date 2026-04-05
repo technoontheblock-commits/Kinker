@@ -26,10 +26,10 @@ export default function ImpressumPage() {
           <section>
             <h2 className="text-xl font-semibold text-white mb-4">E-Mail</h2>
             <a 
-              href="mailto:info@kinker.ch" 
+              href="mailto:info@knkr.ch" 
               className="text-red-500 hover:text-red-400 transition-colors"
             >
-              info@kinker.ch
+              info@knkr.ch
             </a>
           </section>
 

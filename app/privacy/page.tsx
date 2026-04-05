@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           <section>
             <p className="text-white/60 mb-4">Last updated: March 29, 2026</p>
             <p className="leading-relaxed">
-              KNKR GmbH («KINKER», «we», «us», or «our») operates the website kinker.ch. 
+              KNKR GmbH («KINKER», «we», «us», or «our») operates the website knkr.ch. 
               This page informs you of our policies regarding the collection, use, and disclosure 
               of personal data when you use our Service and the choices you have associated with that data.
             </p>
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
               <p>Barcelona-Strasse 4</p>
               <p>4142 Münchenstein</p>
               <p>Switzerland</p>
-              <p className="pt-2">Email: <a href="mailto:info@kinker.ch" className="text-red-500 hover:text-red-400">info@kinker.ch</a></p>
+              <p className="pt-2">Email: <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a></p>
             </div>
           </section>
 
@@ -137,7 +137,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="leading-relaxed mt-4">
               If you make a request, we have one month to respond to you. If you would like to exercise 
-              any of these rights, please contact us at <a href="mailto:info@kinker.ch" className="text-red-500 hover:text-red-400">info@kinker.ch</a>.
+              any of these rights, please contact us at <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a>.
             </p>
           </section>
 
@@ -207,7 +207,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-white mb-4">Contact Us</h2>
             <p className="mb-4">If you have any questions about this Privacy Policy, please contact us:</p>
             <div className="space-y-2">
-              <p><strong>By email:</strong> <a href="mailto:info@kinker.ch" className="text-red-500 hover:text-red-400">info@kinker.ch</a></p>
+              <p><strong>By email:</strong> <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a></p>
               <p><strong>By mail:</strong></p>
               <p className="ml-4">KNKR GmbH</p>
               <p className="ml-4">Barcelona-Strasse 4</p>

@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
                             KINKER Basel | Barcelona-Strasse 4, 4142 Münchenstein
                           </p>
                           <p style="margin: 0;">
-                            <a href="https://kinker.ch" style="color: #ef4444; text-decoration: none;">kinker.ch</a>
+                            <a href="https://knkr.ch" style="color: #ef4444; text-decoration: none;">knkr.ch</a>
                           </p>
                           <p style="margin: 20px 0 0 0; font-size: 11px; color: #666666;">
                             Du erhältst diese E-Mail, weil du dich für den KINKER Newsletter angemeldet hast.

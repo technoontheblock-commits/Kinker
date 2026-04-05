@@ -86,7 +86,7 @@ export async function POST(request: Request) {
           <div style="border-top: 1px solid #333; padding-top: 20px; margin-top: 30px;">
             <p style="font-size: 12px; color: #666;">
               KINKER Basel | Barcelona-Strasse 4, 4142 Münchenstein<br>
-              <a href="https://kinker.ch" style="color: #ef4444;">kinker.ch</a>
+              <a href="https://knkr.ch" style="color: #ef4444;">knkr.ch</a>
             </p>
           </div>
         </div>

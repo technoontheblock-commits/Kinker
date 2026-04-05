@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
                           <li>Wir prüfen die Verfügbarkeit für dein gewünschtes Datum</li>
                           <li>Du erhältst innerhalb von 2-3 Werktagen eine Rückmeldung</li>
                           <li>Bei Verfügbarkeit senden wir dir ein Angebot</li>
-                          <li>Fragen? Schreibe uns: events@kinker.ch</li>
+                          <li>Fragen? Schreibe uns: events@knkr.ch</li>
                         </ul>
                       </div>
                     </td>
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
                   </tr>
                   <tr>
                     <td style="padding: 30px; text-align: center; border-top: 1px solid #333; background-color: #0d0d0d;">
-                      <p style="margin: 0 0 16px; font-size: 14px; color: #6B7280;">Du hast Fragen zu deiner Anfrage?<br><a href="mailto:events@kinker.ch" style="color: #FF4D00; text-decoration: none;">events@kinker.ch</a></p>
+                      <p style="margin: 0 0 16px; font-size: 14px; color: #6B7280;">Du hast Fragen zu deiner Anfrage?<br><a href="mailto:events@knkr.ch" style="color: #FF4D00; text-decoration: none;">events@knkr.ch</a></p>
                       <p style="margin: 16px 0 0; font-size: 12px; color: #4B5563;">KINKER Basel • Steinenvorstadt 11 • 4051 Basel</p>
                     </td>
                   </tr>

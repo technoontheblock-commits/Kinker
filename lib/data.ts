@@ -240,7 +240,7 @@ export const rentalInfo = {
     'Bar service',
   ],
   contact: {
-    email: 'backoffice@kinker.de',
+    email: 'backoffice@knkr.ch',
     phone: '+41 61 123 45 67',
   },
 };
@@ -300,6 +300,6 @@ export const careerInfo = {
     },
   ],
   contact: {
-    email: 'jobs@kinker.de',
+    email: 'jobs@knkr.ch',
   },
 };

@@ -223,7 +223,7 @@ export function TicketPDF({ ticket, qrCodeDataUrl }: {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Barcelona-Strasse 4, 4142 Münchenstein, Switzerland | www.kinker.ch
+            Barcelona-Strasse 4, 4142 Münchenstein, Switzerland | knkr.ch
           </Text>
           <Text style={styles.footerText}>
             Valid for one entry only. Present this ticket at the entrance.

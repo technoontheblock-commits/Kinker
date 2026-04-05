@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
         pay_to_email: payToEmail,
         description: `Order ${orderNumber} - KINKER Basel`,
         merchant_code: sumupMerchantCode,
-        return_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/pending?order=${orderNumber}`
+        return_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://knkr.ch'}/checkout/pending?order=${orderNumber}`
       })
     })
 

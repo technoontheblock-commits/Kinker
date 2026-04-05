@@ -125,7 +125,7 @@ export async function POST() {
         amount: 1.00,  // SumUp v0.1 expects decimal (e.g. 1.00), not cents!
         currency: 'CHF',
         description: 'Test Checkout - KINKER Basel',
-        return_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success`,
+        return_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://knkr.ch'}/checkout/success`,
         merchant_code: sumupMerchantCode,
         pay_to_email: payToEmail
       })
