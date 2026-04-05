@@ -331,12 +331,12 @@ function CardModal({
   const [isEditing, setIsEditing] = useState(false)
 
   const handleSave = async () => {
-    const updatedCard = {
+    const updatedCard: Card = {
       ...card,
       title,
       description,
-      assigned_to: assignedTo || null,
-      due_date: dueDate || null,
+      assigned_to: assignedTo || undefined,
+      due_date: dueDate || undefined,
     }
     onUpdate(updatedCard)
     setIsEditing(false)
