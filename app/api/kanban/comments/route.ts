@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get users for comments
-    const userIds = [...new Set((comments || []).map(c => c.user_id))]
+    const userIds = Array.from(new Set((comments || []).map(c => c.user_id)))
     let users: any[] = []
     if (userIds.length > 0) {
       const { data: usersData } = await supabase

@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get users for assignments
-    const userIds = [...new Set((cards || []).filter(c => c.assigned_to).map(c => c.assigned_to))]
+    const userIds = Array.from(new Set((cards || []).filter(c => c.assigned_to).map(c => c.assigned_to)))
     let users: any[] = []
     if (userIds.length > 0) {
       const { data: usersData } = await supabase

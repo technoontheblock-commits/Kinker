@@ -69,7 +69,7 @@ export async function GET(
       .order('created_at', { ascending: true })
 
     // Get users for comments
-    const commentUserIds = [...new Set((comments || []).map(c => c.user_id))]
+    const commentUserIds = Array.from(new Set((comments || []).map(c => c.user_id)))
     let commentUsers: any[] = []
     if (commentUserIds.length > 0) {
       const { data: usersData } = await supabase
