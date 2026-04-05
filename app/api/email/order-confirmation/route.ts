@@ -1,10 +1,15 @@
 import { Resend } from 'resend'
 import { NextRequest, NextResponse } from 'next/server'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
   try {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      console.warn('RESEND_API_KEY not configured, skipping email')
+      return NextResponse.json({ success: true, warning: 'Email service not configured' })
+    }
+    
+    const resend = new Resend(apiKey)
     const body = await request.json()
     
     // Support both formats:
