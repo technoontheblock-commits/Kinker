@@ -30,7 +30,9 @@ import {
   QrCode,
   Gift,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  Crown,
+  Layout
 } from 'lucide-react'
 import Link from 'next/link'
 import { getEvents } from '@/lib/events'
@@ -66,6 +68,7 @@ export default function AdminDashboard() {
   const [tickets, setTickets] = useState<any[]>([])
   const [ticketFilter, setTicketFilter] = useState('all')
   const [selectedTicket, setSelectedTicket] = useState<any>(null)
+  const [vipBookings, setVipBookings] = useState<any[]>([])
   const [showAddUser, setShowAddUser] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
   const [showAddJob, setShowAddJob] = useState(false)
@@ -133,7 +136,8 @@ export default function AdminDashboard() {
           loadJobs(),
           loadMerchandise(),
           loadOrders(),
-          loadTickets()
+          loadTickets(),
+          loadVIPBookings()
         ])
         
         setIsLoading(false)
@@ -204,6 +208,7 @@ export default function AdminDashboard() {
     { id: 'tickets', label: 'Tickets', icon: Ticket },
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'rental', label: 'Raumanfragen', icon: Building },
+    { id: 'vip-bookings', label: 'VIP Bookings', icon: Crown, href: '/admin/vip-bookings' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
     { id: 'newsletter', label: 'Newsletter', icon: Mail, href: '/admin/newsletter' },
     { id: 'email-test', label: 'Email Test', icon: Mail, href: '/admin/email-test' },
@@ -211,6 +216,7 @@ export default function AdminDashboard() {
     { id: 'merchandise', label: 'Merch', icon: ShoppingBag },
     { id: 'orders', label: 'Bestellungen', icon: Package },
     { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
+    { id: 'board', label: 'Board', icon: Layout, href: '/admin/board' },
     { id: 'rewards', label: 'Reward Validator', icon: Gift, href: '/admin/rewards' },
     { id: 'sumup', label: 'SumUp', icon: CreditCard, href: '/admin/sumup' },
   ]
@@ -472,6 +478,19 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error loading tickets:', error)
+    }
+  }
+
+  // Load VIP bookings
+  const loadVIPBookings = async () => {
+    try {
+      const response = await fetch('/api/vip-bookings')
+      if (response.ok) {
+        const data = await response.json()
+        setVipBookings(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading VIP bookings:', error)
     }
   }
 
@@ -741,6 +760,13 @@ export default function AdminDashboard() {
                     <span className="text-3xl font-bold text-white">{eventsThisMonth}</span>
                   </div>
                   <p className="text-white/60">Events This Month</p>
+                </div>
+                <div className="bg-neutral-900/50 rounded-xl p-6 border border-white/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <Crown className="w-8 h-8 text-red-500" />
+                    <span className="text-3xl font-bold text-white">{vipBookings.filter(b => b.status === 'pending').length}</span>
+                  </div>
+                  <p className="text-white/60">Pending VIP Bookings</p>
                 </div>
               </div>
 

@@ -53,6 +53,7 @@ export function Navigation() {
     { name: t.nav.rental, href: '/rental' },
     { name: t.nav.career, href: '/career' },
     { name: t.nav.merch, href: '/merch' },
+    { name: t.nav.forum || 'Forum', href: '/forum' },
   ]
 
   return (

@@ -16,6 +16,8 @@ export default function AccountPage() {
     newPassword: '',
     confirmPassword: '',
   })
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   const [notifications, setNotifications] = useState({
     events: true,
@@ -39,6 +41,7 @@ export default function AccountPage() {
           email: data.email || '',
           phone: data.phone || '',
         }))
+        setAvatarUrl(data.avatar_url || null)
         setNotifications({
           events: data.preferences?.events ?? true,
           orders: data.preferences?.orders ?? true,
@@ -78,6 +81,64 @@ export default function AccountPage() {
       setMessage({ type: 'error', text: 'An error occurred' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Please select an image file' })
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'File size must be less than 5MB' })
+      return
+    }
+
+    setUploading(true)
+    setMessage(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('avatar', file)
+
+      const res = await fetch('/api/user/avatar', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setAvatarUrl(data.avatar_url)
+        setMessage({ type: 'success', text: 'Profile photo updated!' })
+      } else {
+        const error = await res.json()
+        setMessage({ type: 'error', text: error.error || 'Failed to upload photo' })
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'An error occurred while uploading' })
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    setUploading(true)
+    try {
+      const res = await fetch('/api/user/avatar', { method: 'DELETE' })
+      if (res.ok) {
+        setAvatarUrl(null)
+        setMessage({ type: 'success', text: 'Profile photo removed' })
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to remove photo' })
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -155,13 +216,46 @@ export default function AccountPage() {
         
         {/* Avatar */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center">
-            <User className="w-10 h-10 text-white" />
+          <div className="relative">
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt="Profile" 
+                className="w-20 h-20 rounded-full object-cover border-2 border-white/20"
+              />
+            ) : (
+              <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center">
+                <User className="w-10 h-10 text-white" />
+              </div>
+            )}
+            {uploading && (
+              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              </div>
+            )}
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors">
-            <Camera className="w-4 h-4" />
-            Change Photo
-          </button>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors cursor-pointer">
+              <Camera className="w-4 h-4" />
+              Change Photo
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleAvatarChange}
+                className="hidden"
+                disabled={uploading}
+              />
+            </label>
+            {avatarUrl && (
+              <button 
+                onClick={handleRemoveAvatar}
+                disabled={uploading}
+                className="px-4 py-2 text-red-400 hover:text-red-300 transition-colors"
+              >
+                Remove
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Form */}

@@ -56,6 +56,7 @@ interface Comment {
     email: string
     avatar_url: string | null
   }
+  parent?: Comment
 }
 
 export default function PostDetailPage() {
@@ -69,7 +70,7 @@ export default function PostDetailPage() {
   const [user, setUser] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [newComment, setNewComment] = useState('')
-  const [replyTo, setReplyTo] = useState<string | null>(null)
+  const [replyTo, setReplyTo] = useState<Comment | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -122,7 +123,7 @@ export default function PostDetailPage() {
         body: JSON.stringify({
           content: newComment.trim(),
           post_id: postId,
-          parent_id: replyTo
+          parent_id: replyTo?.id || null
         })
       })
 
@@ -358,17 +359,23 @@ export default function PostDetailPage() {
           {user && !post.is_locked && (
             <form onSubmit={handleSubmitComment} className="mb-8">
               {replyTo && (
-                <div className="flex items-center justify-between mb-2 px-4 py-2 bg-zinc-800 rounded-lg">
-                  <span className="text-sm text-white/60">
-                    Antwort auf einen Kommentar
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setReplyTo(null)}
-                    className="text-zinc-500 hover:text-white"
-                  >
-                    Abbrechen
-                  </button>
+                <div className="mb-3 p-3 bg-zinc-800/80 border-l-4 border-red-500 rounded-r-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-red-400 flex items-center gap-2">
+                      <Reply className="w-4 h-4" />
+                      Antwort an {replyTo.user?.name || 'Anonym'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setReplyTo(null)}
+                      className="text-zinc-500 hover:text-white text-sm"
+                    >
+                      Abbrechen
+                    </button>
+                  </div>
+                  <div className="text-sm text-white/50 italic bg-black/30 p-2 rounded">
+                    "{replyTo.content.substring(0, 100)}{replyTo.content.length > 100 ? '...' : ''}"
+                  </div>
                 </div>
               )}
               <div className="flex gap-4">
@@ -420,64 +427,83 @@ export default function PostDetailPage() {
                 Noch keine Kommentare. Sei der Erste!
               </p>
             ) : (
-              comments.map((comment, index) => (
-                <motion.div
-                  key={comment.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="border-b border-white/10 last:border-0 pb-6 last:pb-0"
-                >
-                  <div className="flex items-start gap-4">
-                    {comment.user?.avatar_url ? (
-                      <img 
-                        src={comment.user.avatar_url} 
-                        alt={comment.user.name}
-                        className="w-10 h-10 rounded-full object-cover border border-white/20 flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-white font-medium flex-shrink-0">
-                        {comment.user?.name?.charAt(0).toUpperCase() || '?'}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-4 mb-1">
-                        <div className="flex items-center gap-3">
-                          <span className="font-medium text-white">
-                            {comment.user?.name || 'Anonym'}
-                          </span>
-                          <span className="text-zinc-500 text-sm">
-                            {formatDistanceToNow(new Date(comment.created_at))}
-                          </span>
+              comments.map((comment, index) => {
+                const isReply = comment.parent_id !== null
+                const parentComment = isReply ? comments.find(c => c.id === comment.parent_id) : null
+                
+                return (
+                  <motion.div
+                    key={comment.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`border-b border-white/10 last:border-0 pb-6 last:pb-0 ${isReply ? 'ml-12 pl-4 border-l-2 border-l-red-500/30' : ''}`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {comment.user?.avatar_url ? (
+                        <img 
+                          src={comment.user.avatar_url} 
+                          alt={comment.user.name}
+                          className="w-10 h-10 rounded-full object-cover border border-white/20 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-white font-medium flex-shrink-0">
+                          {comment.user?.name?.charAt(0).toUpperCase() || '?'}
                         </div>
-                        <div className="flex items-center gap-2">
-                          {user && !post.is_locked && (
-                            <button
-                              onClick={() => setReplyTo(comment.id)}
-                              className="p-1 text-zinc-500 hover:text-white transition-colors"
-                              title="Antworten"
-                            >
-                              <Reply className="w-4 h-4" />
-                            </button>
-                          )}
-                          {(isAdmin || user?.id === comment.user_id) && (
-                            <button
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="p-1 text-zinc-500 hover:text-red-500 transition-colors"
-                              title="Löschen"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-4 mb-1">
+                          <div className="flex items-center gap-3">
+                            <span className="font-medium text-white">
+                              {comment.user?.name || 'Anonym'}
+                            </span>
+                            <span className="text-zinc-500 text-sm">
+                              {formatDistanceToNow(new Date(comment.created_at))}
+                            </span>
+                            {isReply && (
+                              <span className="text-xs text-red-400 flex items-center gap-1">
+                                <Reply className="w-3 h-3" />
+                                Antwort an {parentComment?.user?.name || 'Anonym'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {user && !post.is_locked && (
+                              <button
+                                onClick={() => setReplyTo(comment)}
+                                className={`p-1 transition-colors ${replyTo?.id === comment.id ? 'text-red-500' : 'text-zinc-500 hover:text-white'}`}
+                                title="Antworten"
+                              >
+                                <Reply className="w-4 h-4" />
+                              </button>
+                            )}
+                            {(isAdmin || user?.id === comment.user_id) && (
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="p-1 text-zinc-500 hover:text-red-500 transition-colors"
+                                title="Löschen"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
+                        
+                        {/* Show parent comment quote if this is a reply */}
+                        {isReply && parentComment && (
+                          <div className="mb-2 p-2 bg-zinc-800/50 border-l-2 border-zinc-600 rounded-r text-sm text-white/50 italic">
+                            "{parentComment.content.substring(0, 80)}{parentComment.content.length > 80 ? '...' : ''}"
+                          </div>
+                        )}
+                        
+                        <p className="text-white/80 whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
                       </div>
-                      <p className="text-white/80 whitespace-pre-wrap">
-                        {comment.content}
-                      </p>
                     </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                )
+              })
             )}
           </div>
         </div>

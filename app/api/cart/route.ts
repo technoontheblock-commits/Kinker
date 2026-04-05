@@ -33,13 +33,10 @@ export async function GET() {
     const sessionId = getSessionId()
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    const { data, error } = await supabase
+    // Get cart items without relationships first
+    const { data: cartItems, error } = await supabase
       .from('cart_items')
-      .select(`
-        *,
-        product:merchandise(id, name, price, image),
-        event_ticket:event_tickets(id, name, price, event:events(id, name, date, image))
-      `)
+      .select('*')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false })
 
@@ -48,18 +45,56 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Filter out invalid items (products or tickets that no longer exist)
-    const validItems = (data || []).filter((item: any) => {
+    // Fetch related data manually
+    const data = await Promise.all((cartItems || []).map(async (item: any) => {
+      const result: any = { ...item }
+      
+      if (item.product_id) {
+        const { data: product } = await supabase
+          .from('merchandise')
+          .select('id, name, price, image')
+          .eq('id', item.product_id)
+          .single()
+        result.product = product
+      }
+      
+      if (item.event_ticket_id) {
+        const { data: ticket } = await supabase
+          .from('event_tickets')
+          .select('id, name, price, event:events(id, name, date)')
+          .eq('id', item.event_ticket_id)
+          .single()
+        result.event_ticket = ticket
+      }
+      
+      if (item.vip_booking_id) {
+        const { data: vip } = await supabase
+          .from('vip_bookings')
+          .select('id, package, status, event:events(id, name, date)')
+          .eq('id', item.vip_booking_id)
+          .single()
+        result.vip_booking = vip
+      }
+      
+      return result
+    }))
+
+    // Filter out invalid items (products, tickets, or vip bookings that no longer exist)
+    const validItems = data.filter((item: any) => {
       const hasProduct = item.product_id && item.product
       const hasEventTicket = item.event_ticket_id && item.event_ticket
-      return hasProduct || hasEventTicket
+      const hasVIPBooking = item.vip_booking_id && item.vip_booking
+      const hasMetadataVIP = item.metadata?.type === 'vip_booking'
+      return hasProduct || hasEventTicket || hasVIPBooking || hasMetadataVIP
     })
 
     // Remove invalid items from cart
-    const invalidItems = (data || []).filter((item: any) => {
+    const invalidItems = data.filter((item: any) => {
       const hasProduct = item.product_id && item.product
       const hasEventTicket = item.event_ticket_id && item.event_ticket
-      return !hasProduct && !hasEventTicket
+      const hasVIPBooking = item.vip_booking_id && item.vip_booking
+      const hasMetadataVIP = item.metadata?.type === 'vip_booking'
+      return !hasProduct && !hasEventTicket && !hasVIPBooking && !hasMetadataVIP
     })
 
     if (invalidItems.length > 0) {
@@ -71,7 +106,14 @@ export async function GET() {
 
     // Calculate totals
     const subtotal = validItems.reduce((sum: number, item: any) => {
-      const price = item.product?.price || item.event_ticket?.price || 0
+      let price = 0
+      if (item.product?.price) {
+        price = item.product.price
+      } else if (item.event_ticket?.price) {
+        price = item.event_ticket.price
+      } else if (item.metadata?.price) {
+        price = item.metadata.price
+      }
       return sum + (price * item.quantity)
     }, 0)
 
@@ -150,13 +192,22 @@ export async function POST(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
     // Check if item already exists in cart
-    const { data: existing } = await supabase
+    let existingQuery = supabase
       .from('cart_items')
       .select('*')
       .eq('session_id', sessionId)
-      .eq(body.product_id ? 'product_id' : 'event_ticket_id', body.product_id || body.event_ticket_id)
       .eq('selected_size', body.selected_size || 'One Size')
-      .single()
+    
+    if (body.product_id) {
+      existingQuery = existingQuery.eq('product_id', body.product_id)
+    } else if (body.event_ticket_id) {
+      existingQuery = existingQuery.eq('event_ticket_id', body.event_ticket_id)
+    } else if (body.vip_booking_id) {
+      existingQuery = existingQuery.eq('vip_booking_id', body.vip_booking_id)
+    }
+    
+    const { data: existingItems } = await existingQuery
+    const existing = existingItems && existingItems.length > 0 ? existingItems[0] : null
 
     if (existing) {
       // Update quantity
@@ -172,15 +223,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert new item
+    const insertData: any = {
+      session_id: sessionId,
+      product_id: body.product_id || null,
+      event_ticket_id: body.event_ticket_id || null,
+      vip_booking_id: body.vip_booking_id || null,
+      quantity: body.quantity || 1,
+      selected_size: body.selected_size || 'One Size',
+      metadata: body.metadata || null
+    }
+    
     const { data, error } = await supabase
       .from('cart_items')
-      .insert([{
-        session_id: sessionId,
-        product_id: body.product_id || null,
-        event_ticket_id: body.event_ticket_id || null,
-        quantity: body.quantity || 1,
-        selected_size: body.selected_size || 'One Size'
-      }])
+      .insert([insertData])
       .select()
       .single()
 

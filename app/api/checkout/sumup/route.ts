@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
       .select(`
         *,
         product:merchandise(*),
-        event_ticket:event_tickets(*, event:events(*))
+        event_ticket:event_tickets(*, event:events(*)),
+        vip_booking:vip_bookings(*, event:events(*))
       `)
       .eq('session_id', sessionId)
 
@@ -52,21 +53,47 @@ export async function POST(request: NextRequest) {
     let subtotal = 0
     const orderItems = cartItems.map((item: any) => {
       const isTicket = !!item.event_ticket
-      const price = isTicket ? item.event_ticket.price : item.product.price
-      const name = isTicket ? item.event_ticket.name : item.product.name
+      const isVIP = !!item.vip_booking || item.metadata?.type === 'vip_booking'
+      
+      let price = 0
+      let name = ''
+      let eventId = null
+      let eventName = null
+      let eventDate = null
+      
+      if (isTicket) {
+        price = item.event_ticket.price
+        name = item.event_ticket.name
+        eventId = item.event_ticket.event_id
+        eventName = item.event_ticket.event?.name
+        eventDate = item.event_ticket.event?.date
+      } else if (isVIP) {
+        price = item.metadata?.price || 0
+        name = `VIP ${item.metadata?.package || item.selected_size} Package`
+        eventId = item.vip_booking?.event_id || item.metadata?.event_id
+        eventName = item.metadata?.event_name || item.vip_booking?.event?.name
+        eventDate = item.metadata?.event_date || item.vip_booking?.event?.date
+      } else {
+        price = item.product.price
+        name = item.product.name
+      }
+      
       subtotal += price * item.quantity
 
       return {
         product_id: item.product_id,
         event_ticket_id: item.event_ticket_id,
+        vip_booking_id: item.vip_booking_id,
         name: name,
         price: price,
         quantity: item.quantity,
         selected_size: item.selected_size,
         is_ticket: isTicket,
-        event_id: isTicket ? item.event_ticket.event_id : null,
-        event_name: isTicket ? item.event_ticket.event?.name : null,
-        event_date: isTicket ? item.event_ticket.event?.date : null
+        is_vip: isVIP,
+        event_id: eventId,
+        event_name: eventName,
+        event_date: eventDate,
+        metadata: item.metadata
       }
     })
 
@@ -205,7 +232,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: itemsError.message }, { status: 500 })
     }
 
-    // Create tickets for event tickets
+    // Create tickets for event tickets and update VIP bookings
     const tickets = []
     for (const item of createdItems || []) {
       if (item.is_ticket && item.event_ticket_id) {
@@ -238,6 +265,17 @@ export async function POST(request: NextRequest) {
           .from('event_tickets')
           .update({ sold_count: supabase.rpc('increment', { x: item.quantity }) })
           .eq('id', item.event_ticket_id)
+      }
+      
+      // Update VIP booking status to approved
+      if (item.is_vip && item.vip_booking_id) {
+        await supabase
+          .from('vip_bookings')
+          .update({ 
+            status: 'approved',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', item.vip_booking_id)
       }
     }
 

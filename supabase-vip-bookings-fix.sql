@@ -1,0 +1,79 @@
+-- ============================================
+-- VIP BOOKINGS SYSTEM SCHEMA (FIXED)
+-- ============================================
+
+-- First check what type the events.id column is
+-- If it's text, we need to use text for event_id too
+
+-- Create VIP Bookings table with event_id as text (to match events table)
+CREATE TABLE IF NOT EXISTS vip_bookings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_id TEXT NOT NULL,
+  package TEXT NOT NULL CHECK (package IN ('Bronze', 'Silver', 'Gold')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Add foreign key constraint separately (optional, if events table exists)
+-- Note: This may fail if events table doesn't exist or has different structure
+DO $$
+BEGIN
+  -- Try to add foreign key, but don't fail if it doesn't work
+  BEGIN
+    ALTER TABLE vip_bookings 
+    ADD CONSTRAINT fk_vip_bookings_event 
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'Could not add foreign key constraint - events table may have different structure';
+  END;
+END $$;
+
+-- Enable RLS
+ALTER TABLE vip_bookings ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+
+-- Users can view their own bookings
+DROP POLICY IF EXISTS "Users can view own bookings" ON vip_bookings;
+CREATE POLICY "Users can view own bookings" ON vip_bookings
+  FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
+
+-- Users can create their own bookings
+DROP POLICY IF EXISTS "Users can create own bookings" ON vip_bookings;
+CREATE POLICY "Users can create own bookings" ON vip_bookings
+  FOR INSERT TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+-- Only admins can update bookings (status changes)
+DROP POLICY IF EXISTS "Admins can update bookings" ON vip_bookings;
+CREATE POLICY "Admins can update bookings" ON vip_bookings
+  FOR UPDATE TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
+  );
+
+-- Only admins can delete bookings
+DROP POLICY IF EXISTS "Admins can delete bookings" ON vip_bookings;
+CREATE POLICY "Admins can delete bookings" ON vip_bookings
+  FOR DELETE TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
+  );
+
+-- Admins can view all bookings
+DROP POLICY IF EXISTS "Admins can view all bookings" ON vip_bookings;
+CREATE POLICY "Admins can view all bookings" ON vip_bookings
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
+  );
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_vip_bookings_user_id ON vip_bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_vip_bookings_event_id ON vip_bookings(event_id);
+CREATE INDEX IF NOT EXISTS idx_vip_bookings_status ON vip_bookings(status);
+CREATE INDEX IF NOT EXISTS idx_vip_bookings_created_at ON vip_bookings(created_at DESC);

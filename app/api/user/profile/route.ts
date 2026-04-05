@@ -21,28 +21,25 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    // Get user profile
-    const { data: profile, error } = await supabase
-      .from('user_profiles')
+    // Get user data from users table
+    const { data: userData, error } = await supabase
+      .from('users')
       .select('*')
       .eq('id', user.id)
       .single()
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+    if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({
       id: user.id,
       email: user.email,
-      name: profile?.name || user.name || '',
-      phone: profile?.phone || '',
-      address: profile?.address || {},
-      preferences: profile?.preferences || {},
-      date_of_birth: profile?.date_of_birth || null,
-      newsletter_opt_in: profile?.newsletter_opt_in ?? true,
-      created_at: profile?.created_at || user.created_at,
-      updated_at: profile?.updated_at || null
+      name: userData?.name || user.name || '',
+      phone: userData?.phone || '',
+      avatar_url: userData?.avatar_url || user.avatar_url || null,
+      created_at: userData?.created_at || user.created_at,
+      updated_at: userData?.updated_at || null
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -58,7 +55,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, phone, address, preferences, date_of_birth, newsletter_opt_in } = body
+    const { name, phone, address, preferences, date_of_birth, newsletter_opt_in, avatar_url } = body
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
@@ -73,10 +70,12 @@ export async function PUT(request: NextRequest) {
     if (preferences !== undefined) updates.preferences = preferences
     if (date_of_birth !== undefined) updates.date_of_birth = date_of_birth
     if (newsletter_opt_in !== undefined) updates.newsletter_opt_in = newsletter_opt_in
+    if (avatar_url !== undefined) updates.avatar_url = avatar_url
 
     const { data, error } = await supabase
-      .from('user_profiles')
-      .upsert(updates)
+      .from('users')
+      .update(updates)
+      .eq('id', user.id)
       .select()
       .single()
 
@@ -84,9 +83,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Update session cookie if name changed
-    if (name) {
-      const updatedUser = { ...user, name }
+    // Update session cookie if name or avatar changed
+    if (name || avatar_url) {
+      const updatedUser = { ...user, name, avatar_url }
       cookies().set('user_session', JSON.stringify(updatedUser), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',

@@ -272,18 +272,40 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-semibold text-white mb-4">Bestellübersicht</h2>
                 
                 <div className="space-y-4">
-                  {cart.items.map((item: any) => (
-                    <div key={item.id} className="flex justify-between items-center py-2 border-b border-zinc-800">
-                      <div>
-                        <p className="text-white font-medium">{item.product?.name || item.event_ticket?.name}</p>
-                        {item.selected_size && (
-                          <p className="text-zinc-500 text-sm">Größe: {item.selected_size}</p>
-                        )}
-                        <p className="text-zinc-500 text-sm">Menge: {item.quantity}</p>
+                  {cart.items.map((item: any) => {
+                    // Determine item type and details
+                    let itemName = ''
+                    let itemPrice = 0
+                    let itemDetails = ''
+                    
+                    if (item.product?.name) {
+                      itemName = item.product.name
+                      itemPrice = item.product.price
+                    } else if (item.event_ticket?.name) {
+                      itemName = item.event_ticket.name
+                      itemPrice = item.event_ticket.price
+                    } else if (item.vip_booking_id || item.metadata?.type === 'vip_booking') {
+                      itemName = `VIP ${item.metadata?.package || item.selected_size} Package`
+                      itemPrice = item.metadata?.price || 0
+                      itemDetails = item.metadata?.event_name || ''
+                    }
+                    
+                    return (
+                      <div key={item.id} className="flex justify-between items-center py-2 border-b border-zinc-800">
+                        <div>
+                          <p className="text-white font-medium">{itemName}</p>
+                          {item.selected_size && !item.vip_booking_id && (
+                            <p className="text-zinc-500 text-sm">Größe: {item.selected_size}</p>
+                          )}
+                          {itemDetails && (
+                            <p className="text-zinc-500 text-sm">{itemDetails}</p>
+                          )}
+                          <p className="text-zinc-500 text-sm">Menge: {item.quantity}</p>
+                        </div>
+                        <p className="text-white">CHF {(itemPrice * item.quantity).toFixed(2)}</p>
                       </div>
-                      <p className="text-white">CHF {((item.product?.price || item.event_ticket?.price) * item.quantity).toFixed(2)}</p>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
                 
                 <div className="mt-4 pt-4 border-t border-zinc-800 space-y-2">

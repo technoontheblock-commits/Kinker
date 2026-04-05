@@ -11,6 +11,7 @@ export const translations = {
       rental: 'Rental',
       career: 'Career',
       merch: 'Merch',
+      forum: 'Forum',
       admin: 'Admin',
       getTickets: 'Get Tickets',
     },

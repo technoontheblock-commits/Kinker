@@ -84,8 +84,12 @@ export async function GET(
       .eq('id', post.user_id)
       .single()
 
-    // Increment view count
-    supabase.rpc('increment_post_view', { post_uuid: id }).catch(() => {})
+    // Increment view count (fire and forget)
+    try {
+      await supabase.rpc('increment_post_view', { post_uuid: id })
+    } catch {
+      // Ignore view count errors
+    }
 
     // Get comments
     const { data: comments, error: commentsError } = await supabase
