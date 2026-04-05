@@ -19,12 +19,48 @@ function isAdmin(user: any) {
   return user?.role === 'admin'
 }
 
+// Helper function to check if required tables exist
+async function checkTablesExist(supabase: any) {
+  try {
+    // Check if forum_subcategories table exists
+    const { error } = await supabase
+      .from('forum_subcategories')
+      .select('id')
+      .limit(1)
+    
+    if (error && error.message.includes('does not exist')) {
+      return {
+        exists: false,
+        missingTable: 'forum_subcategories',
+        message: 'Die Tabelle "forum_subcategories" existiert nicht. Bitte führe das SQL-Script "supabase-forum-hierarchical.sql" in deiner Supabase-Datenbank aus.'
+      }
+    }
+    return { exists: true }
+  } catch (e: any) {
+    return { 
+      exists: false, 
+      message: 'Fehler beim Überprüfen der Datenbanktabellen: ' + e.message 
+    }
+  }
+}
+
 // GET /api/forum/categories - Get all main categories with their subcategories
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const { searchParams } = new URL(request.url)
     const withStats = searchParams.get('stats') === 'true'
+
+    // Check if tables exist first
+    const tableCheck = await checkTablesExist(supabase)
+    if (!tableCheck.exists) {
+      console.error('Forum tables missing:', tableCheck.message)
+      return NextResponse.json({ 
+        error: 'FORUM_SCHEMA_MISSING',
+        message: tableCheck.message,
+        details: 'Das Forum-System ist noch nicht eingerichtet. Bitte führe das SQL-Script "supabase-forum-hierarchical.sql" in deiner Supabase-Datenbank aus.'
+      }, { status: 503 })
+    }
 
     // Get all categories with subcategories
     const { data: categories, error } = await supabase
@@ -41,7 +77,11 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching categories:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'DATABASE_ERROR',
+        message: error.message,
+        details: 'Fehler beim Abrufen der Kategorien aus der Datenbank.'
+      }, { status: 500 })
     }
 
     // Transform data - calculate stats
@@ -67,7 +107,11 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error in categories GET:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'SERVER_ERROR',
+      message: error.message,
+      details: 'Ein unerwarteter Fehler ist aufgetreten.'
+    }, { status: 500 })
   }
 }
 
@@ -76,7 +120,10 @@ export async function POST(request: NextRequest) {
   try {
     const user = getCurrentUser()
     if (!isAdmin(user)) {
-      return NextResponse.json({ error: 'Nur Admin' }, { status: 403 })
+      return NextResponse.json({ 
+        error: 'FORBIDDEN',
+        message: 'Nur Administratoren können Kategorien erstellen.'
+      }, { status: 403 })
     }
 
     const body = await request.json()
@@ -84,12 +131,25 @@ export async function POST(request: NextRequest) {
 
     if (!name || !slug) {
       return NextResponse.json(
-        { error: 'Name und Slug sind erforderlich' },
+        { 
+          error: 'VALIDATION_ERROR',
+          message: 'Name und Slug sind erforderlich.'
+        },
         { status: 400 }
       )
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Check if tables exist first
+    const tableCheck = await checkTablesExist(supabase)
+    if (!tableCheck.exists) {
+      return NextResponse.json({ 
+        error: 'FORUM_SCHEMA_MISSING',
+        message: tableCheck.message,
+        details: 'Das Forum-System ist noch nicht eingerichtet. Bitte führe das SQL-Script "supabase-forum-hierarchical.sql" in deiner Supabase-Datenbank aus.'
+      }, { status: 503 })
+    }
 
     const { data, error } = await supabase
       .from('forum_categories')
@@ -106,14 +166,29 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating category:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error.message.includes('unique constraint')) {
+        return NextResponse.json({ 
+          error: 'DUPLICATE_SLUG',
+          message: 'Ein Kategorie mit diesem Slug existiert bereits.',
+          details: 'Bitte wähle einen eindeutigen Slug.'
+        }, { status: 409 })
+      }
+      return NextResponse.json({ 
+        error: 'DATABASE_ERROR',
+        message: error.message,
+        details: 'Fehler beim Erstellen der Kategorie.'
+      }, { status: 500 })
     }
 
     return NextResponse.json({ category: data }, { status: 201 })
 
   } catch (error: any) {
     console.error('Error in categories POST:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'SERVER_ERROR',
+      message: error.message,
+      details: 'Ein unerwarteter Fehler ist aufgetreten.'
+    }, { status: 500 })
   }
 }
 
@@ -122,14 +197,20 @@ export async function PUT(request: NextRequest) {
   try {
     const user = getCurrentUser()
     if (!isAdmin(user)) {
-      return NextResponse.json({ error: 'Nur Admin' }, { status: 403 })
+      return NextResponse.json({ 
+        error: 'FORBIDDEN',
+        message: 'Nur Administratoren können Kategorien bearbeiten.'
+      }, { status: 403 })
     }
 
     const body = await request.json()
     const { id, name, description, icon, color, sort_order, is_active } = body
 
     if (!id) {
-      return NextResponse.json({ error: 'ID erforderlich' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'VALIDATION_ERROR',
+        message: 'ID ist erforderlich.'
+      }, { status: 400 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -150,14 +231,22 @@ export async function PUT(request: NextRequest) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'DATABASE_ERROR',
+        message: error.message,
+        details: 'Fehler beim Aktualisieren der Kategorie.'
+      }, { status: 500 })
     }
 
     return NextResponse.json({ category: data })
 
   } catch (error: any) {
     console.error('Error in categories PUT:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'SERVER_ERROR',
+      message: error.message,
+      details: 'Ein unerwarteter Fehler ist aufgetreten.'
+    }, { status: 500 })
   }
 }
 
@@ -166,14 +255,20 @@ export async function DELETE(request: NextRequest) {
   try {
     const user = getCurrentUser()
     if (!isAdmin(user)) {
-      return NextResponse.json({ error: 'Nur Admin' }, { status: 403 })
+      return NextResponse.json({ 
+        error: 'FORBIDDEN',
+        message: 'Nur Administratoren können Kategorien löschen.'
+      }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
     if (!id) {
-      return NextResponse.json({ error: 'ID erforderlich' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'VALIDATION_ERROR',
+        message: 'ID ist erforderlich.'
+      }, { status: 400 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -184,13 +279,21 @@ export async function DELETE(request: NextRequest) {
       .eq('id', id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'DATABASE_ERROR',
+        message: error.message,
+        details: 'Fehler beim Löschen der Kategorie.'
+      }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
 
   } catch (error: any) {
     console.error('Error in categories DELETE:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'SERVER_ERROR',
+      message: error.message,
+      details: 'Ein unerwarteter Fehler ist aufgetreten.'
+    }, { status: 500 })
   }
 }

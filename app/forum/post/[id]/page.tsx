@@ -95,6 +95,10 @@ export default function PostDetailPage() {
       const res = await fetch(`/api/forum/posts/${postId}`)
       const data = await res.json()
       
+      if (!res.ok) {
+        console.error('API Error:', data)
+      }
+      
       if (data.post) {
         setPost(data.post)
         setComments(data.comments || [])

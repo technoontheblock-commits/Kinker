@@ -26,7 +26,29 @@ export async function GET(
 ) {
   try {
     const { id } = params
+    console.log('Fetching post with ID:', id)
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // First check if post exists with simple query
+    const { data: simplePost, error: simpleError } = await supabase
+      .from('forum_posts')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (simpleError) {
+      console.error('Simple post query error:', simpleError)
+      return NextResponse.json({ 
+        error: 'Database error', 
+        details: simpleError.message,
+        hint: 'Post may not exist or database schema issue'
+      }, { status: 500 })
+    }
+    
+    if (!simplePost) {
+      return NextResponse.json({ error: 'Post nicht gefunden' }, { status: 404 })
+    }
 
     // Get post with subcategory and category info
     const { data: post, error: postError } = await supabase
@@ -41,8 +63,18 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (postError || !post) {
-      return NextResponse.json({ error: 'Post nicht gefunden' }, { status: 404 })
+    if (postError) {
+      console.error('Post query with relations error:', postError)
+      // Return simple post data if relation query fails
+      return NextResponse.json({
+        post: {
+          ...simplePost,
+          subcategory: null,
+          user: { name: 'Anonym', email: '', avatar_url: null }
+        },
+        comments: [],
+        warning: 'Could not load relations'
+      })
     }
 
     // Get post author
@@ -93,7 +125,10 @@ export async function GET(
 
   } catch (error: any) {
     console.error('Error in post GET:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ 
+      error: error.message,
+      stack: error.stack 
+    }, { status: 500 })
   }
 }
 

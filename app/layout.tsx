@@ -35,7 +35,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`} style={{ fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <LanguageProvider>
           <Navigation />
           <main>{children}</main>
