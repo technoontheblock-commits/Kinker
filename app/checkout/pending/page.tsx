@@ -1,11 +1,12 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader2, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
 
-export default function CheckoutPendingPage() {
+function CheckoutPendingContent() {
   const searchParams = useSearchParams()
   const orderNumber = searchParams.get('order')
   const [status, setStatus] = useState<'checking' | 'success' | 'failed'>('checking')
@@ -94,5 +95,20 @@ export default function CheckoutPendingPage() {
         <p className="text-white/40 text-sm mt-2">Bestellnummer: {orderNumber}</p>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPendingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />
+          <p className="text-white/60">Laden...</p>
+        </div>
+      </div>
+    }>
+      <CheckoutPendingContent />
+    </Suspense>
   )
 }
