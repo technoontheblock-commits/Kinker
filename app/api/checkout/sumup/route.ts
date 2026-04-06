@@ -34,20 +34,50 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    // Get cart items
-    const { data: cartItems, error: cartError } = await supabase
+    // Get cart items (simplified query to avoid join issues)
+    const { data: cartItemsRaw, error: cartError } = await supabase
       .from('cart_items')
-      .select(`
-        *,
-        product:merchandise(*),
-        event_ticket:event_tickets(*, event:events(*)),
-        vip_booking:vip_bookings(*, event:events(*))
-      `)
+      .select('*')
       .eq('session_id', sessionId)
 
-    if (cartError || !cartItems || cartItems.length === 0) {
+    if (cartError || !cartItemsRaw || cartItemsRaw.length === 0) {
+      console.error('Cart error or empty:', cartError, cartItemsRaw)
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
     }
+    
+    // Fetch related data manually
+    const cartItems = await Promise.all(cartItemsRaw.map(async (item: any) => {
+      const result: any = { ...item }
+      
+      if (item.product_id) {
+        const { data: product } = await supabase
+          .from('merchandise')
+          .select('*')
+          .eq('id', item.product_id)
+          .single()
+        result.product = product
+      }
+      
+      if (item.event_ticket_id) {
+        const { data: ticket } = await supabase
+          .from('event_tickets')
+          .select('*, event:events(*)')
+          .eq('id', item.event_ticket_id)
+          .single()
+        result.event_ticket = ticket
+      }
+      
+      if (item.vip_booking_id) {
+        const { data: vip } = await supabase
+          .from('vip_bookings')
+          .select('*, event:events(*)')
+          .eq('id', item.vip_booking_id)
+          .single()
+        result.vip_booking = vip
+      }
+      
+      return result
+    }))
 
     // Calculate totals
     let subtotal = 0
