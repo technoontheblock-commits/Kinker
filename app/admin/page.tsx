@@ -672,7 +672,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-black pt-20">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-neutral-900 min-h-screen fixed left-0 top-20 border-r border-white/10">
+        <aside className="w-64 bg-neutral-900 h-[calc(100vh-5rem)] fixed left-0 top-20 border-r border-white/10 overflow-y-auto">
           <div className="p-6">
             <h2 className="text-xl font-bold text-white mb-8">Admin Panel</h2>
             <nav className="space-y-2">
@@ -715,7 +715,7 @@ export default function AdminDashboard() {
               })}
             </nav>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-white/10">
+          <div className="p-6 border-t border-white/10 mt-auto">
             <button className="flex items-center gap-3 text-white/70 hover:text-white transition-colors">
               <LogOut className="w-5 h-5" />
               <span>Logout</span>
