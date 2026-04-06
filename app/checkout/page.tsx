@@ -90,10 +90,26 @@ export default function CheckoutPage() {
             const failedStatuses = ['FAILED', 'CANCELLED', 'DECLINED', 'ERROR', 'failed']
             
             if (successStatuses.includes(responseStr)) {
-              console.log('Payment reported successful by SumUp widget, waiting for order confirmation...')
-              // Don't redirect here - let the polling confirm the order is paid
-              // The polling useEffect will redirect when order.payment_status === 'paid'
+              console.log('Payment reported successful by SumUp widget, verifying...')
               setVerifyingPayment(true)
+              
+              // Immediately verify payment with our backend
+              fetch('/api/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderNumber, checkoutId })
+              })
+              .then(res => res.json())
+              .then(data => {
+                console.log('Payment verify response:', data)
+                if (data.verified || data.success) {
+                  setPaymentSuccess(true)
+                  window.location.href = `/checkout/success?order=${orderNumber}&checkout_id=${checkoutId}`
+                }
+              })
+              .catch(err => {
+                console.error('Error verifying payment:', err)
+              })
             } else if (failedStatuses.includes(responseStr)) {
               console.log('Payment failed:', responseStr)
               
@@ -500,7 +516,16 @@ export default function CheckoutPage() {
                     <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-8 text-center">
                       <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
                       <p className="text-green-400 font-semibold text-lg mb-2">Zahlung wird verarbeitet...</p>
-                      <p className="text-green-400/70 text-sm">Bitte warte einen Moment, während wir deine Zahlung bestätigen.</p>
+                      <p className="text-green-400/70 text-sm mb-4">Bitte warte einen Moment, während wir deine Zahlung bestätigen.</p>
+                      <button
+                        onClick={() => {
+                          // Manual redirect to success page for verification
+                          window.location.href = `/checkout/success?order=${orderNumber}&checkout_id=${checkoutId}`
+                        }}
+                        className="text-green-400 hover:text-green-300 underline text-sm"
+                      >
+                        Nichts passiert? Hier klicken um fortzufahren →
+                      </button>
                     </div>
                   ) : (
                     <div 
