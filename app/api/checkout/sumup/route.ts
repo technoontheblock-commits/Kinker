@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
         selected_size: item.selected_size,
         is_ticket: isTicket,
-        // is_vip: isVIP, // Temporarily removed - add to DB schema
+        is_vip: isVIP,
         event_id: eventId,
         event_name: eventName,
         event_date: eventDate,
