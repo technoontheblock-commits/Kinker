@@ -229,6 +229,8 @@ export default function VIPBookingPage() {
 
       const booking = await bookingRes.json()
 
+      console.log('Adding to cart:', { vip_booking_id: booking.id, selectedPackage, price })
+      
       // Add to cart via API
       const cartRes = await fetch('/api/cart', {
         method: 'POST',
@@ -248,12 +250,18 @@ export default function VIPBookingPage() {
         })
       })
 
+      console.log('Cart response status:', cartRes.status)
+      
       if (!cartRes.ok) {
         const error = await cartRes.json()
+        console.error('Cart error:', error)
         setMessage({ type: 'error', text: error.error || 'Failed to add to cart' })
         setSubmitting(false)
         return
       }
+      
+      const cartData = await cartRes.json()
+      console.log('Cart data:', cartData)
 
       // Trigger cart update event
       window.dispatchEvent(new Event('cartUpdated'))

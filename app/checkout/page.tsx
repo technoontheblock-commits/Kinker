@@ -134,10 +134,16 @@ export default function CheckoutPage() {
 
   const loadCart = async () => {
     try {
+      console.log('Loading cart...')
       const response = await fetch('/api/cart')
+      console.log('Cart response status:', response.status)
       if (response.ok) {
         const data = await response.json()
+        console.log('Cart data:', data)
         setCart(data)
+      } else {
+        const error = await response.json()
+        console.error('Cart error:', error)
       }
     } catch (error) {
       console.error('Error loading cart:', error)
