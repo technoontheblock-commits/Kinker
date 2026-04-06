@@ -234,14 +234,14 @@ export async function POST(request: NextRequest) {
         shipping_address: body.shipping_address || null,
         billing_address: body.billing_address || null,
         payment_method: 'sumup',
-        payment_status: 'pending',
+        payment_status: 'paid',
         payment_reference: sumupData.id,
         subtotal: subtotal,
         shipping_cost: shippingCost,
         discount_amount: discountAmount,
         discount_code: discountInfo?.code || null,
         total: total,
-        status: 'pending'
+        status: 'processing'
       }])
       .select()
       .single()
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
               qr_secret: ticketSecret,
               holder_name: body.name,
               holder_email: body.email,
-              payment_status: 'pending'
+              payment_status: 'paid'
             }])
             .select()
             .single()
