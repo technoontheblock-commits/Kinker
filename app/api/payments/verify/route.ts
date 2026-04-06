@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { randomUUID } from 'crypto'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const sumupApiKey = process.env.SUMUP_API_KEY
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+
+// Helper function to generate QR code URL
+function generateQRCode(ticketId: string, secret: string): string {
+  const data = `${ticketId}:${secret}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,23 +101,66 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update order' }, { status: 500 })
     }
 
-    // Update tickets to paid
-    await supabase
-      .from('tickets')
-      .update({ payment_status: 'paid' })
-      .eq('order_id', order.id)
-
-    // Get order items for email
+    // Get order items
     const { data: items } = await supabase
       .from('order_items')
       .select('*')
       .eq('order_id', order.id)
 
-    // Get tickets
-    const { data: tickets } = await supabase
-      .from('tickets')
-      .select('*')
-      .eq('order_id', order.id)
+    // Create tickets for event tickets (only after successful payment)
+    const tickets = []
+    for (const item of items || []) {
+      if (item.is_ticket && item.event_ticket_id) {
+        // Check if tickets already exist
+        const { data: existingTickets } = await supabase
+          .from('tickets')
+          .select('*')
+          .eq('order_item_id', item.id)
+        
+        if (existingTickets && existingTickets.length > 0) {
+          // Update existing tickets to paid
+          await supabase
+            .from('tickets')
+            .update({ payment_status: 'paid' })
+            .eq('order_item_id', item.id)
+          tickets.push(...existingTickets)
+        } else {
+          // Create new tickets
+          for (let i = 0; i < item.quantity; i++) {
+            const ticketSecret = randomUUID().replace(/-/g, '').substring(0, 16)
+            const { data: ticket } = await supabase
+              .from('tickets')
+              .insert([{
+                order_id: order.id,
+                order_item_id: item.id,
+                event_id: item.event_id,
+                event_ticket_id: item.event_ticket_id,
+                ticket_number: `${order.order_number}-T${String(i + 1).padStart(2, '0')}`,
+                qr_code: generateQRCode(randomUUID(), ticketSecret),
+                qr_secret: ticketSecret,
+                holder_name: order.customer_name,
+                holder_email: order.customer_email,
+                payment_status: 'paid'
+              }])
+              .select()
+              .single()
+            
+            if (ticket) tickets.push(ticket)
+          }
+        }
+      }
+      
+      // Update VIP booking status to approved
+      if (item.vip_booking_id) {
+        await supabase
+          .from('vip_bookings')
+          .update({ 
+            status: 'approved',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', item.vip_booking_id)
+      }
+    }
 
     // Send confirmation email
     if (resend && order.customer_email) {

@@ -234,14 +234,14 @@ export async function POST(request: NextRequest) {
         shipping_address: body.shipping_address || null,
         billing_address: body.billing_address || null,
         payment_method: 'sumup',
-        payment_status: 'paid',
+        payment_status: 'pending',
         payment_reference: sumupData.id,
         subtotal: subtotal,
         shipping_cost: shippingCost,
         discount_amount: discountAmount,
         discount_code: discountInfo?.code || null,
         total: total,
-        status: 'processing'
+        status: 'pending'
       }])
       .select()
       .single()
@@ -262,50 +262,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: itemsError.message }, { status: 500 })
     }
 
-    // Create tickets for event tickets and update VIP bookings
-    const tickets = []
+    // Tickets will be created after successful payment (in verify API)
+    // Update sold count for event tickets
     for (const item of createdItems || []) {
       if (item.is_ticket && item.event_ticket_id) {
-        for (let i = 0; i < item.quantity; i++) {
-          const ticketSecret = randomUUID().replace(/-/g, '').substring(0, 16)
-          const { data: ticket, error: ticketError } = await supabase
-            .from('tickets')
-            .insert([{
-              order_id: order.id,
-              order_item_id: item.id,
-              event_id: item.event_id,
-              event_ticket_id: item.event_ticket_id,
-              ticket_number: `${orderNumber}-T${String(i + 1).padStart(2, '0')}`,
-              qr_code: generateQRCode(randomUUID(), ticketSecret),
-              qr_secret: ticketSecret,
-              holder_name: body.name,
-              holder_email: body.email,
-              payment_status: 'paid'
-            }])
-            .select()
-            .single()
-
-          if (!ticketError && ticket) {
-            tickets.push(ticket)
-          }
-        }
-
-        // Update sold count
         await supabase
           .from('event_tickets')
           .update({ sold_count: supabase.rpc('increment', { x: item.quantity }) })
           .eq('id', item.event_ticket_id)
-      }
-      
-      // Update VIP booking status to approved
-      if (item.vip_booking_id) {
-        await supabase
-          .from('vip_bookings')
-          .update({ 
-            status: 'approved',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', item.vip_booking_id)
       }
     }
 
