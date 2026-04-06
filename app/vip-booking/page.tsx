@@ -183,12 +183,16 @@ export default function VIPBookingPage() {
   }
 
   const handleCheckout = async () => {
+    console.log('handleCheckout called', { user: !!user, selectedEvent, selectedPackage })
+    
     if (!user) {
+      console.log('No user, redirecting to login')
       router.push('/login?redirect=/vip-booking')
       return
     }
 
     if (!selectedEvent || !selectedPackage) {
+      console.log('Missing selection', { selectedEvent, selectedPackage })
       setMessage({ type: 'error', text: 'Please select an event and package' })
       return
     }
@@ -199,6 +203,7 @@ export default function VIPBookingPage() {
     try {
       // Get package details
       const pkg = vipPackages.find(p => p.id === selectedPackage)
+      console.log('Found package:', pkg)
       if (!pkg) {
         setMessage({ type: 'error', text: 'Invalid package selected' })
         setSubmitting(false)
@@ -208,8 +213,10 @@ export default function VIPBookingPage() {
       // Parse price (remove CHF and commas)
       const priceString = pkg.price.replace('CHF ', '').replace(',', '')
       const price = parseFloat(priceString)
+      console.log('Parsed price:', price)
 
       // First create a VIP booking record
+      console.log('Creating VIP booking...')
       const bookingRes = await fetch('/api/vip-bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,14 +227,18 @@ export default function VIPBookingPage() {
         })
       })
 
+      console.log('Booking response status:', bookingRes.status)
+
       if (!bookingRes.ok) {
         const error = await bookingRes.json()
+        console.error('Booking error:', error)
         setMessage({ type: 'error', text: error.error || 'Failed to create booking' })
         setSubmitting(false)
         return
       }
 
       const booking = await bookingRes.json()
+      console.log('Booking created:', booking)
 
       console.log('Adding to cart:', { vip_booking_id: booking.id, selectedPackage, price })
       
