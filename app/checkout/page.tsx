@@ -22,6 +22,7 @@ export default function CheckoutPage() {
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [orderNumber, setOrderNumber] = useState('')
   const [pollCount, setPollCount] = useState(0)
+  const [verifyingPayment, setVerifyingPayment] = useState(false)
   // SumUp Card Widget uses ID 'sumup-card' instead of ref
   
   const [formData, setFormData] = useState({
@@ -49,11 +50,13 @@ export default function CheckoutPage() {
             if (order.payment_status === 'paid') {
               setPaymentSuccess(true)
               clearInterval(interval)
+              // Only redirect after order is confirmed paid in database
+              window.location.href = `/checkout/success?order=${orderNumber}&checkout_id=${checkoutId}`
             }
           }
           setPollCount(c => c + 1)
-          // Stop polling after 5 minutes (60 * 5s = 300s)
-          if (pollCount > 60) {
+          // Stop polling after 10 minutes (120 * 5s = 600s)
+          if (pollCount > 120) {
             clearInterval(interval)
           }
         } catch (err) {
@@ -80,12 +83,17 @@ export default function CheckoutPage() {
             const responseStr = typeof response === 'string' ? response : response.status || response.transaction_code
             
             // Check for various success statuses
+            // NOTE: We don't redirect immediately on success - we wait for the 
+            // order status to be updated via polling to ensure the payment is 
+            // actually complete and verified on our backend
             const successStatuses = ['PAID', 'SUCCESS', 'COMPLETED', 'CAPTURED', 'success']
             const failedStatuses = ['FAILED', 'CANCELLED', 'DECLINED', 'ERROR', 'failed']
             
             if (successStatuses.includes(responseStr)) {
-              console.log('Payment successful!')
-              window.location.href = `/checkout/success?order=${orderNumber}`
+              console.log('Payment reported successful by SumUp widget, waiting for order confirmation...')
+              // Don't redirect here - let the polling confirm the order is paid
+              // The polling useEffect will redirect when order.payment_status === 'paid'
+              setVerifyingPayment(true)
             } else if (failedStatuses.includes(responseStr)) {
               console.log('Payment failed:', responseStr)
               
@@ -487,6 +495,12 @@ export default function CheckoutPage() {
                           Zurück zu den Kundendaten
                         </button>
                       </div>
+                    </div>
+                  ) : verifyingPayment ? (
+                    <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-8 text-center">
+                      <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
+                      <p className="text-green-400 font-semibold text-lg mb-2">Zahlung wird verarbeitet...</p>
+                      <p className="text-green-400/70 text-sm">Bitte warte einen Moment, während wir deine Zahlung bestätigen.</p>
                     </div>
                   ) : (
                     <div 

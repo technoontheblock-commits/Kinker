@@ -297,7 +297,7 @@ export async function POST(request: NextRequest) {
       success: true,
       order,
       items: createdItems,
-      tickets,
+      tickets: [], // Tickets created after payment verification
       sumup: {
         checkout_id: sumupData.id,
         checkout_url: sumupData.checkout_url
