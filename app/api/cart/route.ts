@@ -16,7 +16,9 @@ function getSessionId(): string {
     cookieStore.set('session_id', sessionId, { 
       maxAge: 60 * 60 * 24 * 30, // 30 days
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/'
     })
   }
   
