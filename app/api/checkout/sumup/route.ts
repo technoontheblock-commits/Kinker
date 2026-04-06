@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
         selected_size: item.selected_size,
         is_ticket: isTicket,
-        is_vip: isVIP,
+        // is_vip: isVIP, // Temporarily removed - add to DB schema
         event_id: eventId,
         event_name: eventName,
         event_date: eventDate,
@@ -298,7 +298,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Update VIP booking status to approved
-      if (item.is_vip && item.vip_booking_id) {
+      if (item.vip_booking_id) {
         await supabase
           .from('vip_bookings')
           .update({ 
