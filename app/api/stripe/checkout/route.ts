@@ -154,6 +154,7 @@ export async function POST(request: NextRequest) {
         'paypal',      // PayPal
         'bancontact',  // Belgien
         'eps',         // Österreich
+        'twint',       // Schweiz
       ],
       line_items: lineItems,
       mode: 'payment',
