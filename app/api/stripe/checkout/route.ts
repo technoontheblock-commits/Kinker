@@ -150,10 +150,12 @@ export async function POST(request: NextRequest) {
     // Create Stripe Checkout Session with activated payment methods
     const session = await stripe.checkout.sessions.create({
       payment_method_types: [
-        'card',        // Kreditkarten
+        'card',        // Kreditkarten (inkl. Apple Pay & Google Pay)
         'paypal',      // PayPal
         'bancontact',  // Belgien
       ],
+      // Apple Pay und Google Pay werden automatisch angezeigt wenn verfügbar
+      // Keine extra Konfiguration nötig - Stripe erkennt das Gerät
       line_items: lineItems,
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://knkr.ch'}/checkout/success?order=${orderNumber}&session_id={CHECKOUT_SESSION_ID}`,
