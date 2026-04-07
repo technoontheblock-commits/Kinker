@@ -51,6 +51,25 @@ export async function POST(request: NextRequest) {
         await handleCheckoutCompleted(supabase, session)
         break
 
+      // Handle SEPA and other async payment methods
+      case 'charge.succeeded':
+        const charge = event.data.object as Stripe.Charge
+        console.log('Charge succeeded:', charge.id)
+        
+        if (charge.payment_intent) {
+          await handleChargeSucceeded(supabase, charge)
+        }
+        break
+
+      case 'charge.failed':
+        const failedCharge = event.data.object as Stripe.Charge
+        console.log('Charge failed:', failedCharge.id)
+        
+        if (failedCharge.payment_intent) {
+          await handleChargeFailed(supabase, failedCharge)
+        }
+        break
+
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
@@ -122,5 +141,51 @@ async function handleCheckoutCompleted(supabase: any, session: Stripe.Checkout.S
     console.log(`Checkout session ${session.id} completed`)
   } catch (error) {
     console.error('Error handling checkout completion:', error)
+  }
+}
+
+async function handleChargeSucceeded(supabase: any, charge: Stripe.Charge) {
+  try {
+    // Find order by payment intent ID
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('payment_reference', charge.payment_intent as string)
+      .single()
+
+    if (error || !order) {
+      console.error('Order not found for charge:', charge.id)
+      return
+    }
+
+    // Update order status
+    await supabase
+      .from('orders')
+      .update({
+        payment_status: 'paid',
+        status: 'confirmed',
+        paid_at: new Date().toISOString(),
+      })
+      .eq('id', order.id)
+
+    console.log(`Order ${order.order_number} marked as paid via charge`)
+  } catch (error) {
+    console.error('Error handling charge success:', error)
+  }
+}
+
+async function handleChargeFailed(supabase: any, charge: Stripe.Charge) {
+  try {
+    await supabase
+      .from('orders')
+      .update({
+        payment_status: 'failed',
+        status: 'cancelled',
+      })
+      .eq('payment_reference', charge.payment_intent as string)
+
+    console.log(`Charge ${charge.id} marked as failed`)
+  } catch (error) {
+    console.error('Error handling charge failure:', error)
   }
 }

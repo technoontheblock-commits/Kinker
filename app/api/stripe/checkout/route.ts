@@ -147,9 +147,19 @@ export async function POST(request: NextRequest) {
       await supabase.from('cart_items').delete().eq('session_id', sessionId)
     }
 
-    // Create Stripe Checkout Session
+    // Create Stripe Checkout Session with multiple payment methods
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: [
+        'card',
+        'paypal',
+        'klarna',
+        'sepa_debit',
+        'ideal',
+        'bancontact',
+        'giropay',
+        'eps',
+        'p24',
+      ],
       line_items: lineItems,
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://knkr.ch'}/checkout/success?order=${orderNumber}&session_id={CHECKOUT_SESSION_ID}`,
@@ -158,6 +168,12 @@ export async function POST(request: NextRequest) {
       metadata: {
         order_number: orderNumber,
         order_id: order.id,
+      },
+      // Collect billing address
+      billing_address_collection: 'required',
+      // Collect shipping address for physical products
+      shipping_address_collection: {
+        allowed_countries: ['CH', 'DE', 'AT', 'FR', 'IT', 'LI'],
       },
     })
 
