@@ -147,18 +147,13 @@ export async function POST(request: NextRequest) {
       await supabase.from('cart_items').delete().eq('session_id', sessionId)
     }
 
-    // Create Stripe Checkout Session with multiple payment methods
+    // Create Stripe Checkout Session with activated payment methods
     const session = await stripe.checkout.sessions.create({
       payment_method_types: [
-        'card',
-        'paypal',
-        'klarna',
-        'sepa_debit',
-        'ideal',
-        'bancontact',
-        'giropay',
-        'eps',
-        'p24',
+        'card',        // Kreditkarten
+        'paypal',      // PayPal
+        'bancontact',  // Belgien
+        'eps',         // Österreich
       ],
       line_items: lineItems,
       mode: 'payment',
