@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Loader2, CreditCard, CheckCircle } from 'lucide-react'
+import { Loader2, CreditCard, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 
 export default function CheckoutPage() {
@@ -39,15 +38,28 @@ export default function CheckoutPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCheckout = async () => {
     setSubmitting(true)
     setError('')
 
     try {
-      // Stripe checkout will be implemented here
-      // For now, just show a message
-      alert('Stripe checkout coming soon!')
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cart,
+          customer: formData
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url
+      } else {
+        setError(data.error || 'Failed to create checkout session')
+      }
     } catch (err) {
       setError('An error occurred. Please try again.')
     } finally {
@@ -142,9 +154,9 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Right: Customer Details */}
+          {/* Right: Customer Details & Payment Button */}
           <div>
-            <form onSubmit={handleSubmit} className="bg-zinc-900 rounded-xl p-6">
+            <div className="bg-zinc-900 rounded-xl p-6">
               <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                 <CreditCard className="w-5 h-5" />
                 Kundendaten
@@ -224,9 +236,10 @@ export default function CheckoutPage() {
                 </div>
               </div>
               
+              {/* Stripe Checkout Button */}
               <button
-                type="submit"
-                disabled={submitting}
+                onClick={handleCheckout}
+                disabled={submitting || !formData.name || !formData.email || !formData.street || !formData.zip || !formData.city}
                 className="w-full mt-6 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {submitting ? (
@@ -236,12 +249,12 @@ export default function CheckoutPage() {
                   </>
                 ) : (
                   <>
+                    <ShoppingBag className="w-5 h-5" />
                     Jetzt bezahlen
-                    <CreditCard className="w-5 h-5" />
                   </>
                 )}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>

@@ -37,10 +37,13 @@ function CheckoutSuccessContent() {
           <CheckCircle className="w-12 h-12 text-green-500" />
         </div>
         
-        <h1 className="text-4xl font-bold text-white mb-4">Bestellung erfolgreich!</h1>
+        <h1 className="text-4xl font-bold text-white mb-4">Vielen Dank für deine Bestellung!</h1>
         
         <p className="text-white/60 text-lg mb-2">
-          Vielen Dank für deine Bestellung bei KINKER Basel.
+          Wir schätzen dein Geschäft! Bei Fragen schreibe uns an{' '}
+          <a href="mailto:support@knkr.ch" className="text-red-500 hover:text-red-400">
+            support@knkr.ch
+          </a>
         </p>
         
         {orderNumber && (
