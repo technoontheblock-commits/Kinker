@@ -153,14 +153,7 @@ export async function POST(request: NextRequest) {
         'card',        // Kreditkarten
         'paypal',      // PayPal
         'bancontact',  // Belgien
-        'eps',         // Österreich
       ],
-      // TWINT wird über payment_method_options konfiguriert
-      payment_method_options: {
-        twint: {
-          // TWINT ist für Schweizer Kunden verfügbar
-        },
-      },
       line_items: lineItems,
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://knkr.ch'}/checkout/success?order=${orderNumber}&session_id={CHECKOUT_SESSION_ID}`,
