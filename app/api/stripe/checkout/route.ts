@@ -148,10 +148,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Stripe Checkout Session with activated payment methods
+    // PayPal ist temporär deaktiviert - wird später wieder aktiviert
     const session = await stripe.checkout.sessions.create({
       payment_method_types: [
         'card',        // Kreditkarten (inkl. Apple Pay & Google Pay)
-        'paypal',      // PayPal
         'bancontact',  // Belgien
       ],
       // Apple Pay und Google Pay werden automatisch angezeigt wenn verfügbar
