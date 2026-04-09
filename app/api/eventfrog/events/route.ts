@@ -4,12 +4,6 @@ const EVENTFROG_API_URL = process.env.EVENTFROG_API_URL || 'https://api.eventfro
 const API_KEY = process.env.EVENTFROG_API_KEY
 const ORGANIZER_ID = process.env.EVENTFROG_ORGANIZER_ID
 
-// Check if key is Organizer API (starts with specific pattern)
-function isOrganizerApiKey(key: string): boolean {
-  // Organizer API keys are usually longer and have different format
-  return key.length > 30 || !key.includes('-')
-}
-
 // GET /api/eventfrog/events - Fetch events from Eventfrog
 export async function GET(request: NextRequest) {
   try {
@@ -26,54 +20,26 @@ export async function GET(request: NextRequest) {
     const perPage = searchParams.get('limit') || '100'
     const page = searchParams.get('page') || '1'
 
-    // Determine which API to use
-    const useOrganizerApi = isOrganizerApiKey(API_KEY)
-    console.log('Using API:', useOrganizerApi ? 'Organizer API' : 'Public API')
+    // Build params
+    const params = new URLSearchParams()
+    params.append('perPage', perPage)
+    params.append('page', page)
+    if (from) params.append('from', from)
+    if (to) params.append('to', to)
+    
+    // Use Organizer API endpoint (not Public API)
+    // The Organizer API returns events for the authenticated organizer
+    const apiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?${params.toString()}`
+    
+    console.log('Fetching from Eventfrog Organizer API:', apiUrl)
 
-    let apiUrl: string
-    let response: Response
-
-    if (useOrganizerApi && ORGANIZER_ID) {
-      // Organizer API - Use organizer-specific endpoint
-      // Try different endpoint patterns
-      const params = new URLSearchParams()
-      params.append('perPage', perPage)
-      params.append('page', page)
-      if (from) params.append('from', from)
-      if (to) params.append('to', to)
-      
-      // Organizer API endpoint
-      apiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?${params.toString()}`
-      console.log('Organizer API URL:', apiUrl)
-      
-      response = await fetch(apiUrl, {
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        next: { revalidate: 60 },
-      })
-    } else {
-      // Public API
-      const params = new URLSearchParams()
-      params.append('perPage', perPage)
-      params.append('page', page)
-      params.append('country', 'CH')
-      if (from) params.append('from', from)
-      if (to) params.append('to', to)
-      if (ORGANIZER_ID) params.append('orgId', ORGANIZER_ID)
-      
-      apiUrl = `${EVENTFROG_API_URL}/public/v1/events?${params.toString()}`
-      console.log('Public API URL:', apiUrl)
-      
-      response = await fetch(apiUrl, {
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        next: { revalidate: 60 },
-      })
-    }
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 60 },
+    })
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -83,7 +49,6 @@ export async function GET(request: NextRequest) {
           error: 'Failed to fetch events from Eventfrog',
           status: response.status,
           details: errorText,
-          apiType: useOrganizerApi ? 'Organizer API' : 'Public API',
           url: apiUrl.replace(API_KEY, '***')
         },
         { status: response.status }
@@ -123,7 +88,7 @@ export async function GET(request: NextRequest) {
       events,
       debug: {
         organizerId: ORGANIZER_ID,
-        apiType: useOrganizerApi ? 'Organizer API' : 'Public API',
+        apiType: 'Organizer API',
         totalFromApi: data.totalDatasets,
         returnedCount: events.length,
       },
