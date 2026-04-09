@@ -4,6 +4,12 @@ const EVENTFROG_API_URL = process.env.EVENTFROG_API_URL || 'https://api.eventfro
 const API_KEY = process.env.EVENTFROG_API_KEY
 const ORGANIZER_ID = process.env.EVENTFROG_ORGANIZER_ID
 
+// Check if key is Organizer API (starts with specific pattern)
+function isOrganizerApiKey(key: string): boolean {
+  // Organizer API keys are usually longer and have different format
+  return key.length > 30 || !key.includes('-')
+}
+
 // GET /api/eventfrog/events - Fetch events from Eventfrog
 export async function GET(request: NextRequest) {
   try {
@@ -15,38 +21,59 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const from = searchParams.get('from') // Optional - no default
+    const from = searchParams.get('from') 
     const to = searchParams.get('to') || ''
     const perPage = searchParams.get('limit') || '100'
     const page = searchParams.get('page') || '1'
 
-    // Build query params
-    const params = new URLSearchParams()
-    // Only add from date if provided, otherwise get all events
-    if (from) params.append('from', from)
-    if (to) params.append('to', to)
-    params.append('perPage', perPage)
-    params.append('page', page)
-    params.append('country', 'CH')
-    
-    // Filter by organizer if available
-    if (ORGANIZER_ID) {
-      params.append('orgId', ORGANIZER_ID)
-    }
+    // Determine which API to use
+    const useOrganizerApi = isOrganizerApiKey(API_KEY)
+    console.log('Using API:', useOrganizerApi ? 'Organizer API' : 'Public API')
 
-    const apiUrl = `${EVENTFROG_API_URL}/public/v1/events?${params.toString()}`
-    console.log('Fetching from Eventfrog:', apiUrl)
+    let apiUrl: string
+    let response: Response
 
-    const response = await fetch(
-      apiUrl,
-      {
+    if (useOrganizerApi && ORGANIZER_ID) {
+      // Organizer API - Use organizer-specific endpoint
+      // Try different endpoint patterns
+      const params = new URLSearchParams()
+      params.append('perPage', perPage)
+      params.append('page', page)
+      if (from) params.append('from', from)
+      if (to) params.append('to', to)
+      
+      // Organizer API endpoint
+      apiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?${params.toString()}`
+      console.log('Organizer API URL:', apiUrl)
+      
+      response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
         },
         next: { revalidate: 60 },
-      }
-    )
+      })
+    } else {
+      // Public API
+      const params = new URLSearchParams()
+      params.append('perPage', perPage)
+      params.append('page', page)
+      params.append('country', 'CH')
+      if (from) params.append('from', from)
+      if (to) params.append('to', to)
+      if (ORGANIZER_ID) params.append('orgId', ORGANIZER_ID)
+      
+      apiUrl = `${EVENTFROG_API_URL}/public/v1/events?${params.toString()}`
+      console.log('Public API URL:', apiUrl)
+      
+      response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        next: { revalidate: 60 },
+      })
+    }
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -55,7 +82,9 @@ export async function GET(request: NextRequest) {
         { 
           error: 'Failed to fetch events from Eventfrog',
           status: response.status,
-          details: errorText
+          details: errorText,
+          apiType: useOrganizerApi ? 'Organizer API' : 'Public API',
+          url: apiUrl.replace(API_KEY, '***')
         },
         { status: response.status }
       )
@@ -65,10 +94,9 @@ export async function GET(request: NextRequest) {
     console.log('Eventfrog response:', {
       totalDatasets: data.totalDatasets,
       datasetsLength: data.datasets?.length,
-      page: data.page
     })
 
-    // Transform events to match our format
+    // Transform events
     const events = data.datasets?.map((event: any) => ({
       id: event.id?.toString(),
       title: event.title?.de || event.title?.en || 'Unnamed Event',
@@ -85,7 +113,6 @@ export async function GET(request: NextRequest) {
       presaleUrl: event.presaleLink,
       soldOut: event.soldOut,
       cancelled: event.cancelled,
-      categories: event.rubricIds,
       organizer: {
         id: event.organizerId,
         name: event.organizerName,
@@ -96,9 +123,9 @@ export async function GET(request: NextRequest) {
       events,
       debug: {
         organizerId: ORGANIZER_ID,
+        apiType: useOrganizerApi ? 'Organizer API' : 'Public API',
         totalFromApi: data.totalDatasets,
         returnedCount: events.length,
-        params: params.toString(),
       },
       pagination: {
         page: data.page,
