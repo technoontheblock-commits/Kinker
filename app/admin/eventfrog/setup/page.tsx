@@ -71,11 +71,11 @@ export default function EventfrogSetupPage() {
             </div>
             <div className="flex gap-3">
               <span className="bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm flex-shrink-0">2</span>
-              <p>Klicke auf <strong>"Mein Profil"</strong> oder <strong>"Organisation"</strong></p>
+              <p>Klicke auf <strong>&quot;Mein Profil&quot;</strong> oder <strong>&quot;Organisation&quot;</strong></p>
             </div>
             <div className="flex gap-3">
               <span className="bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm flex-shrink-0">3</span>
-              <p>Die Organisator ID steht unter <strong>"API & Integration"</strong> oder im Profil</p>
+              <p>Die Organisator ID steht unter <strong>&quot;API & Integration&quot;</strong> oder im Profil</p>
             </div>
           </div>
 
