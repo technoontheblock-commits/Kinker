@@ -32,7 +32,8 @@ import {
   CreditCard,
   MessageSquare,
   Crown,
-  Layout
+  Layout,
+  ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import { getEvents } from '@/lib/events'
@@ -217,6 +218,7 @@ export default function AdminDashboard() {
     { id: 'orders', label: 'Bestellungen', icon: Package },
     { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
     { id: 'board', label: 'Board', icon: Layout, href: '/admin/board' },
+    { id: 'eventfrog', label: 'Eventfrog', icon: ExternalLink, href: '/admin/eventfrog' },
     { id: 'rewards', label: 'Reward Validator', icon: Gift, href: '/admin/rewards' },
     { id: 'sumup', label: 'SumUp', icon: CreditCard, href: '/admin/sumup' },
   ]
