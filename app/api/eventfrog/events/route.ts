@@ -15,14 +15,15 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const from = searchParams.get('from') || new Date().toISOString().split('T')[0]
+    const from = searchParams.get('from') // Optional - no default
     const to = searchParams.get('to') || ''
     const perPage = searchParams.get('limit') || '100'
     const page = searchParams.get('page') || '1'
 
     // Build query params
     const params = new URLSearchParams()
-    params.append('from', from)
+    // Only add from date if provided, otherwise get all events
+    if (from) params.append('from', from)
     if (to) params.append('to', to)
     params.append('perPage', perPage)
     params.append('page', page)
@@ -35,7 +36,6 @@ export async function GET(request: NextRequest) {
 
     const apiUrl = `${EVENTFROG_API_URL}/public/v1/events?${params.toString()}`
     console.log('Fetching from Eventfrog:', apiUrl)
-    console.log('Organizer ID:', ORGANIZER_ID)
 
     const response = await fetch(
       apiUrl,
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
         },
-        next: { revalidate: 60 }, // Cache for 1 minute during debugging
+        next: { revalidate: 60 },
       }
     )
 
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         organizerId: ORGANIZER_ID,
         totalFromApi: data.totalDatasets,
         returnedCount: events.length,
-        apiUrl: apiUrl.replace(API_KEY!, '***'),
+        params: params.toString(),
       },
       pagination: {
         page: data.page,
