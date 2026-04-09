@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         organizerName: e.organizerName,
         date: e.begin,
       })) || [],
-      allOrganizers: [...new Set(data.datasets?.map((e: any) => `${e.organizerName} (ID: ${e.organizerId})`))].slice(0, 10),
+      allOrganizers: Array.from(new Set(data.datasets?.map((e: any) => `${e.organizerName} (ID: ${e.organizerId})`))).slice(0, 10),
     })
 
   } catch (error: any) {
