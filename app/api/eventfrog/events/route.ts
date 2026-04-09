@@ -33,27 +33,40 @@ export async function GET(request: NextRequest) {
       params.append('orgId', ORGANIZER_ID)
     }
 
+    const apiUrl = `${EVENTFROG_API_URL}/public/v1/events?${params.toString()}`
+    console.log('Fetching from Eventfrog:', apiUrl)
+    console.log('Organizer ID:', ORGANIZER_ID)
+
     const response = await fetch(
-      `${EVENTFROG_API_URL}/public/v1/events?${params.toString()}`,
+      apiUrl,
       {
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
         },
-        next: { revalidate: 300 }, // Cache for 5 minutes
+        next: { revalidate: 60 }, // Cache for 1 minute during debugging
       }
     )
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Eventfrog API error:', errorText)
+      console.error('Eventfrog API error:', response.status, errorText)
       return NextResponse.json(
-        { error: 'Failed to fetch events from Eventfrog' },
+        { 
+          error: 'Failed to fetch events from Eventfrog',
+          status: response.status,
+          details: errorText
+        },
         { status: response.status }
       )
     }
 
     const data = await response.json()
+    console.log('Eventfrog response:', {
+      totalDatasets: data.totalDatasets,
+      datasetsLength: data.datasets?.length,
+      page: data.page
+    })
 
     // Transform events to match our format
     const events = data.datasets?.map((event: any) => ({
@@ -77,11 +90,16 @@ export async function GET(request: NextRequest) {
         id: event.organizerId,
         name: event.organizerName,
       },
-      raw: event, // Keep raw data for advanced use
     })) || []
 
     return NextResponse.json({
       events,
+      debug: {
+        organizerId: ORGANIZER_ID,
+        totalFromApi: data.totalDatasets,
+        returnedCount: events.length,
+        apiUrl: apiUrl.replace(API_KEY!, '***'),
+      },
       pagination: {
         page: data.page,
         perPage: data.perPage,
