@@ -6,9 +6,6 @@ const ORGANIZER_IDS = process.env.EVENTFROG_ORGANIZER_IDS?.split(',') || ['18245
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('API Key exists:', !!API_KEY)
-    console.log('Organizer IDs:', ORGANIZER_IDS)
-
     if (!API_KEY) {
       return NextResponse.json(
         { error: 'Eventfrog API key not configured' },
@@ -18,61 +15,42 @@ export async function GET(request: NextRequest) {
 
     const allEvents: any[] = []
 
-    // Try different API endpoints
+    // Use Bearer Auth as shown in EventFrog documentation
     for (const orgId of ORGANIZER_IDS) {
-      const endpoints = [
-        // Try organizer endpoint with X-API-Key header
-        {
-          url: `${EVENTFROG_API_URL}/organizer/v1/events?perPage=100`,
-          headers: { 'X-API-Key': API_KEY }
-        },
-        // Try with Authorization Bearer
-        {
-          url: `${EVENTFROG_API_URL}/organizer/v1/events?perPage=100`,
-          headers: { 'Authorization': `Bearer ${API_KEY}` }
-        },
-        // Try public endpoint
-        {
-          url: `${EVENTFROG_API_URL}/public/v1/events?organizerId=${orgId.trim()}&perPage=100`,
-          headers: { 'X-API-Key': API_KEY }
-        },
-      ]
+      try {
+        // Try the organizer endpoint with Bearer token
+        const apiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?perPage=100`
+        
+        console.log('Fetching with Bearer Auth:', apiUrl)
 
-      for (const endpoint of endpoints) {
-        try {
-          console.log('Trying:', endpoint.url)
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${API_KEY}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          next: { revalidate: 300 },
+        })
+
+        console.log('Response status:', response.status)
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Events found:', data.datasets?.length || 0)
           
-          const response = await fetch(endpoint.url, {
-            headers: {
-              ...endpoint.headers,
-              'Content-Type': 'application/json',
-            },
-            next: { revalidate: 300 },
-          })
-
-          console.log('Status:', response.status)
-
-          if (response.ok) {
-            const data = await response.json()
-            console.log('Success! Events found:', data.datasets?.length || 0)
-            
-            if (data.datasets && data.datasets.length > 0) {
-              allEvents.push(...data.datasets)
-              break // Stop trying other endpoints for this org
-            }
-          } else {
-            const errorText = await response.text()
-            console.log('Error:', errorText.substring(0, 200))
+          if (data.datasets) {
+            allEvents.push(...data.datasets)
           }
-        } catch (err) {
-          console.error('Fetch error:', err)
+        } else {
+          const errorText = await response.text()
+          console.error('API Error:', response.status, errorText.substring(0, 500))
         }
+      } catch (err) {
+        console.error(`Error fetching events:`, err)
       }
     }
 
-    console.log('Total events found:', allEvents.length)
-
-    // Remove duplicates and sort
+    // Remove duplicates and sort by date
     const uniqueEvents = allEvents
       .filter((event, index, self) => 
         index === self.findIndex((e) => e.id === event.id)
@@ -100,11 +78,12 @@ export async function GET(request: NextRequest) {
       debug: {
         organizerIds: ORGANIZER_IDS,
         apiKeyExists: !!API_KEY,
+        totalRawEvents: allEvents.length,
       }
     })
 
   } catch (error: any) {
-    console.error('Error:', error)
+    console.error('Error fetching Eventfrog events:', error)
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }
