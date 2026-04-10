@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
     // Fetch events from all organizers
     for (const orgId of ORGANIZER_IDS) {
       try {
-        // Test without date filter first
-        const apiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?orgId=${orgId.trim()}&perPage=100`
+        // Try public API endpoint instead
+        const apiUrl = `${EVENTFROG_API_URL}/public/v1/events?organizerId=${orgId.trim()}&perPage=100`
         
         console.log('Fetching from:', apiUrl.replace(API_KEY, '***'))
 
