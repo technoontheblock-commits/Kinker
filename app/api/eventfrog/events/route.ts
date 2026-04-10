@@ -6,8 +6,8 @@ const ORGANIZER_IDS = process.env.EVENTFROG_ORGANIZER_IDS?.split(',') || ['18245
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('EventFrog API Key exists:', !!API_KEY)
-    console.log('EventFrog Organizer IDs:', ORGANIZER_IDS)
+    console.log('API Key exists:', !!API_KEY)
+    console.log('Organizer IDs:', ORGANIZER_IDS)
 
     if (!API_KEY) {
       return NextResponse.json(
@@ -18,49 +18,66 @@ export async function GET(request: NextRequest) {
 
     const allEvents: any[] = []
 
-    // Fetch events from all organizers
+    // Try different API endpoints
     for (const orgId of ORGANIZER_IDS) {
-      try {
-        // Try public API endpoint instead
-        const apiUrl = `${EVENTFROG_API_URL}/public/v1/events?organizerId=${orgId.trim()}&perPage=100`
-        
-        console.log('Fetching from:', apiUrl.replace(API_KEY, '***'))
+      const endpoints = [
+        // Try organizer endpoint with X-API-Key header
+        {
+          url: `${EVENTFROG_API_URL}/organizer/v1/events?perPage=100`,
+          headers: { 'X-API-Key': API_KEY }
+        },
+        // Try with Authorization Bearer
+        {
+          url: `${EVENTFROG_API_URL}/organizer/v1/events?perPage=100`,
+          headers: { 'Authorization': `Bearer ${API_KEY}` }
+        },
+        // Try public endpoint
+        {
+          url: `${EVENTFROG_API_URL}/public/v1/events?organizerId=${orgId.trim()}&perPage=100`,
+          headers: { 'X-API-Key': API_KEY }
+        },
+      ]
 
-        const response = await fetch(apiUrl, {
-          headers: {
-            'Authorization': `Bearer ${API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          next: { revalidate: 300 },
-        })
+      for (const endpoint of endpoints) {
+        try {
+          console.log('Trying:', endpoint.url)
+          
+          const response = await fetch(endpoint.url, {
+            headers: {
+              ...endpoint.headers,
+              'Content-Type': 'application/json',
+            },
+            next: { revalidate: 300 },
+          })
 
-        console.log('Response status for org', orgId, ':', response.status)
+          console.log('Status:', response.status)
 
-        if (response.ok) {
-          const data = await response.json()
-          console.log('Events found for org', orgId, ':', data.datasets?.length || 0)
-          if (data.datasets) {
-            allEvents.push(...data.datasets)
+          if (response.ok) {
+            const data = await response.json()
+            console.log('Success! Events found:', data.datasets?.length || 0)
+            
+            if (data.datasets && data.datasets.length > 0) {
+              allEvents.push(...data.datasets)
+              break // Stop trying other endpoints for this org
+            }
+          } else {
+            const errorText = await response.text()
+            console.log('Error:', errorText.substring(0, 200))
           }
-        } else {
-          const errorText = await response.text()
-          console.error('Error for org', orgId, ':', errorText)
+        } catch (err) {
+          console.error('Fetch error:', err)
         }
-      } catch (err) {
-        console.error(`Error fetching events for org ${orgId}:`, err)
       }
     }
 
-    console.log('Total events before dedup:', allEvents.length)
+    console.log('Total events found:', allEvents.length)
 
-    // Remove duplicates and sort by date
+    // Remove duplicates and sort
     const uniqueEvents = allEvents
       .filter((event, index, self) => 
         index === self.findIndex((e) => e.id === event.id)
       )
       .sort((a, b) => new Date(a.begin).getTime() - new Date(b.begin).getTime())
-
-    console.log('Total events after dedup:', uniqueEvents.length)
 
     // Transform events
     const events = uniqueEvents.map((event: any) => ({
@@ -87,7 +104,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Error fetching Eventfrog events:', error)
+    console.error('Error:', error)
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }
