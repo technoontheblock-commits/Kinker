@@ -6,6 +6,9 @@ const ORGANIZER_IDS = process.env.EVENTFROG_ORGANIZER_IDS?.split(',') || ['18245
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('EventFrog API Key exists:', !!API_KEY)
+    console.log('EventFrog Organizer IDs:', ORGANIZER_IDS)
+
     if (!API_KEY) {
       return NextResponse.json(
         { error: 'Eventfrog API key not configured' },
@@ -18,26 +21,37 @@ export async function GET(request: NextRequest) {
     // Fetch events from all organizers
     for (const orgId of ORGANIZER_IDS) {
       try {
-        const apiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?orgId=${orgId}&perPage=100&from=${new Date().toISOString().split('T')[0]}`
+        const today = new Date().toISOString().split('T')[0]
+        const apiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?orgId=${orgId.trim()}&perPage=100&from=${today}`
         
+        console.log('Fetching from:', apiUrl.replace(API_KEY, '***'))
+
         const response = await fetch(apiUrl, {
           headers: {
             'Authorization': `Bearer ${API_KEY}`,
             'Content-Type': 'application/json',
           },
-          next: { revalidate: 300 }, // Cache for 5 minutes
+          next: { revalidate: 300 },
         })
+
+        console.log('Response status for org', orgId, ':', response.status)
 
         if (response.ok) {
           const data = await response.json()
+          console.log('Events found for org', orgId, ':', data.datasets?.length || 0)
           if (data.datasets) {
             allEvents.push(...data.datasets)
           }
+        } else {
+          const errorText = await response.text()
+          console.error('Error for org', orgId, ':', errorText)
         }
       } catch (err) {
         console.error(`Error fetching events for org ${orgId}:`, err)
       }
     }
+
+    console.log('Total events before dedup:', allEvents.length)
 
     // Remove duplicates and sort by date
     const uniqueEvents = allEvents
@@ -45,6 +59,8 @@ export async function GET(request: NextRequest) {
         index === self.findIndex((e) => e.id === event.id)
       )
       .sort((a, b) => new Date(a.begin).getTime() - new Date(b.begin).getTime())
+
+    console.log('Total events after dedup:', uniqueEvents.length)
 
     // Transform events
     const events = uniqueEvents.map((event: any) => ({
@@ -64,6 +80,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       events,
       count: events.length,
+      debug: {
+        organizerIds: ORGANIZER_IDS,
+        apiKeyExists: !!API_KEY,
+      }
     })
 
   } catch (error: any) {
