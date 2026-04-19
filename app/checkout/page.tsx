@@ -13,11 +13,6 @@ export default function CheckoutPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    street: '',
-    city: '',
-    zip: '',
-    country: 'Schweiz'
   })
 
   useEffect(() => {
@@ -191,55 +186,13 @@ export default function CheckoutPage() {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-zinc-400 text-sm mb-2">Telefon</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-zinc-400 text-sm mb-2">Strasse *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.street}
-                    onChange={(e) => setFormData({...formData, street: e.target.value})}
-                    className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-zinc-400 text-sm mb-2">PLZ *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.zip}
-                      onChange={(e) => setFormData({...formData, zip: e.target.value})}
-                      className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-zinc-400 text-sm mb-2">Ort *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.city}
-                      onChange={(e) => setFormData({...formData, city: e.target.value})}
-                      className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
+
               </div>
               
               {/* Stripe Checkout Button */}
               <button
                 onClick={handleCheckout}
-                disabled={submitting || !formData.name || !formData.email || !formData.street || !formData.zip || !formData.city}
+                disabled={submitting || !formData.name || !formData.email}
                 className="w-full mt-6 py-4 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {submitting ? (

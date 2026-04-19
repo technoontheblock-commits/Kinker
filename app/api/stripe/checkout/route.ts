@@ -82,12 +82,12 @@ export async function POST(request: NextRequest) {
         customer_email: customer.email,
         customer_name: customer.name,
         customer_phone: customer.phone || null,
-        shipping_address: {
+        shipping_address: customer.street ? {
           street: customer.street,
           city: customer.city,
           zip: customer.zip,
           country: customer.country,
-        },
+        } : null,
         payment_method: 'stripe',
         payment_status: 'pending',
         subtotal: subtotal,
