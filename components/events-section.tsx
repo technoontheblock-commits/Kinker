@@ -115,12 +115,8 @@ export function EventsSection() {
               key={event.id}
               className="group relative"
             >
-              <a
-                href={event.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden bg-neutral-900 rounded-lg">
+              <Link href={`/events/${event.id}`}>
+                <div className="relative aspect-[16/10] overflow-hidden bg-neutral-900 rounded-lg cursor-pointer">
                   {/* Image */}
                   <div 
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -168,13 +164,13 @@ export function EventsSection() {
                         </span>
                         <span className="flex items-center gap-1.5">
                           <ExternalLink size={14} className="text-red-500" />
-                          Tickets
+                          Details
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
-              </a>
+              </Link>
             </div>
           ))}
         </div>

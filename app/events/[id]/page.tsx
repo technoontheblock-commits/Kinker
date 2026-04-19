@@ -3,23 +3,19 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { Calendar, Clock, MapPin, ArrowLeft, Music, Plus, Minus, ShoppingCart, Check } from 'lucide-react'
+import {
+  Calendar, Clock, MapPin, ArrowLeft, Music, Plus, Minus,
+  ShoppingCart, Check, ExternalLink, Crown, Info
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
 
-interface DJ {
-  name: string
-  type: 'main' | 'support'
-}
+// --- Internal Event Types ---
+interface DJ { name: string; type: 'main' | 'support' }
+interface Floor { name: string; djs: DJ[]; active?: boolean }
 
-interface Floor {
-  name: string
-  djs: DJ[]
-  active?: boolean
-}
-
-interface Event {
+interface InternalEvent {
   id: string
   name: string
   date: string
@@ -34,14 +30,38 @@ interface Event {
   timetable?: Floor[]
 }
 
+// --- Eventfrog Event Type ---
+interface EventfrogEvent {
+  id: string
+  title: string
+  description: string
+  date: string
+  time: string
+  endDate?: string
+  endTime?: string
+  location: string
+  price: number
+  currency: string
+  image: string
+  url: string
+  soldOut: boolean
+  organizerId?: string
+  organizerName?: string
+}
+
+type EventData =
+  | { source: 'internal'; data: InternalEvent }
+  | { source: 'eventfrog'; data: EventfrogEvent }
+
 export default function EventDetailPage() {
   const params = useParams()
-  const [event, setEvent] = useState<Event | null>(null)
+  const [event, setEvent] = useState<EventData | null>(null)
   const [ticketTypes, setTicketTypes] = useState<any[]>([])
   const [selectedTicket, setSelectedTicket] = useState<any>(null)
   const [quantity, setQuantity] = useState(1)
   const [addedToCart, setAddedToCart] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     loadEvent()
@@ -49,24 +69,44 @@ export default function EventDetailPage() {
 
   const loadEvent = async () => {
     try {
-      // Load event
-      const eventRes = await fetch(`/api/events/${params.id}`)
-      if (eventRes.ok) {
-        const eventData = await eventRes.json()
-        setEvent(eventData)
-      }
+      setLoading(true)
+      setError('')
 
-      // Load ticket types for this event
-      const ticketsRes = await fetch(`/api/event-tickets?eventId=${params.id}`)
-      if (ticketsRes.ok) {
-        const ticketsData = await ticketsRes.json()
-        setTicketTypes(ticketsData)
-        if (ticketsData.length > 0) {
-          setSelectedTicket(ticketsData[0])
+      // 1. Try internal event first
+      const internalRes = await fetch(`/api/events/${params.id}`)
+      if (internalRes.ok) {
+        const internalData = await internalRes.json()
+        if (internalData && internalData.id) {
+          setEvent({ source: 'internal', data: internalData })
+
+          // Load ticket types
+          const ticketsRes = await fetch(`/api/event-tickets?eventId=${params.id}`)
+          if (ticketsRes.ok) {
+            const ticketsData = await ticketsRes.json()
+            setTicketTypes(ticketsData)
+            if (ticketsData.length > 0) {
+              setSelectedTicket(ticketsData[0])
+            }
+          }
+          setLoading(false)
+          return
         }
       }
-    } catch (error) {
-      console.error('Error loading event:', error)
+
+      // 2. Fallback to Eventfrog
+      const eventfrogRes = await fetch(`/api/eventfrog/event/${params.id}`)
+      if (eventfrogRes.ok) {
+        const eventfrogData = await eventfrogRes.json()
+        if (eventfrogData.event) {
+          setEvent({ source: 'eventfrog', data: eventfrogData.event })
+          setLoading(false)
+          return
+        }
+      }
+
+      setError('Event not found')
+    } catch (err: any) {
+      setError(err.message || 'Failed to load event')
     } finally {
       setLoading(false)
     }
@@ -74,7 +114,6 @@ export default function EventDetailPage() {
 
   const addToCart = async () => {
     if (!selectedTicket) return
-
     await fetch('/api/cart', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -83,15 +122,12 @@ export default function EventDetailPage() {
         quantity: quantity
       })
     })
-
     setAddedToCart(true)
     setTimeout(() => setAddedToCart(false), 2000)
   }
 
   const buyNow = async () => {
     if (!selectedTicket) return
-    
-    // Add to cart first
     await fetch('/api/cart', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -100,8 +136,6 @@ export default function EventDetailPage() {
         quantity: quantity
       })
     })
-    
-    // Redirect to checkout
     window.location.href = '/checkout'
   }
 
@@ -113,23 +147,176 @@ export default function EventDetailPage() {
     )
   }
 
-  if (!event) {
+  if (error || !event) {
     return (
       <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
-        <p className="text-white">Event not found</p>
+        <div className="text-center">
+          <p className="text-white/60 text-lg mb-4">{error || 'Event not found'}</p>
+          <Button variant="outline" asChild>
+            <Link href="/events">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Events
+            </Link>
+          </Button>
+        </div>
       </div>
     )
   }
 
-  const floors = event.timetable?.filter(f => f.active !== false) || null
+  // ==================== EVENTFROG EVENT RENDER ====================
+  if (event.source === 'eventfrog') {
+    const e = event.data
+    return (
+      <div className="min-h-screen bg-black pt-24 lg:pt-32">
+        {/* Hero Image */}
+        <section className="relative h-[50vh] lg:h-[60vh]">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url('${e.image || ''}')` }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900" />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent" />
+
+          <div className="absolute top-6 left-4 sm:left-6 lg:left-8 z-10">
+            <Button variant="ghost" size="sm" className="text-white/70 hover:text-white" asChild>
+              <Link href="/events">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Events
+              </Link>
+            </Button>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8">
+            <div className="container mx-auto">
+              <Badge variant="red" className="mb-4 uppercase tracking-wider">
+                Event
+              </Badge>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter font-display text-white mb-4">
+                {e.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-4 text-white/70">
+                <span className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-red-500" />
+                  {e.date} • {e.time}
+                </span>
+                {e.endDate && (
+                  <span className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-red-500" />
+                    End: {e.endDate} {e.endTime && `• ${e.endTime}`}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Content */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Description */}
+              {e.description && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-4 font-display">About the Event</h2>
+                  <div
+                    className="text-white/70 text-lg leading-relaxed prose prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: e.description }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Location */}
+              <div className="bg-neutral-900 rounded-lg p-6 border border-white/10">
+                <h3 className="text-xl font-bold text-white mb-4 font-display">Location</h3>
+                <div className="flex items-start gap-3 text-white/70 mb-4">
+                  <MapPin className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-white">{e.location}</p>
+                    <p>Barcelona-Strasse 4</p>
+                    <p>4142 Münchenstein</p>
+                    <p>Switzerland</p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <Link href="/location">View on Map</Link>
+                </Button>
+              </div>
+
+              {/* Tickets */}
+              <div className="bg-neutral-900 rounded-lg p-6 border border-white/10">
+                <h3 className="text-xl font-bold text-white mb-4 font-display">Tickets</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-white/60">Entry</span>
+                  <span className="text-2xl font-bold text-white">
+                    {e.price > 0 ? `${e.price.toFixed(2)} ${e.currency}` : 'Gratis'}
+                  </span>
+                </div>
+                {e.soldOut ? (
+                  <Button variant="glitch" size="lg" className="w-full" disabled>
+                    AUSVERKAUFT
+                  </Button>
+                ) : (
+                  <a
+                    href={e.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    Tickets on Eventfrog
+                  </a>
+                )}
+              </div>
+
+              {/* VIP Room Booking */}
+              <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 rounded-lg p-6 border border-yellow-500/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <Crown className="w-6 h-6 text-yellow-400" />
+                  <h3 className="text-xl font-bold text-white font-display">VIP Room</h3>
+                </div>
+                <p className="text-white/60 text-sm mb-4">
+                  Experience the ultimate luxury at Kinker Basel. Book your VIP room for an unforgettable night.
+                </p>
+                <div className="flex items-start gap-2 text-yellow-400/80 text-sm mb-4">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>Includes exclusive seating, premium service, and bottle service options.</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:text-yellow-300"
+                  asChild
+                >
+                  <Link href="/vip-booking">
+                    <Crown className="mr-2 h-4 w-4" />
+                    Book VIP Room
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  // ==================== INTERNAL EVENT RENDER (existing logic) ====================
+  const e = event.data
+  const floors = e.timetable?.filter(f => f.active !== false) || null
 
   return (
     <div className="min-h-screen bg-black pt-24 lg:pt-32">
       {/* Hero Image */}
       <section className="relative h-[50vh] lg:h-[60vh]">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('${event.image}')` }}
+          style={{ backgroundImage: `url('${e.image}')` }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900" />
         </div>
@@ -148,19 +335,19 @@ export default function EventDetailPage() {
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8">
           <div className="container mx-auto">
             <Badge variant="red" className="mb-4 uppercase tracking-wider">
-              {event.type}
+              {e.type}
             </Badge>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter font-display text-white mb-4">
-              {event.name}
+              {e.name}
             </h1>
             <div className="flex flex-wrap items-center gap-4 text-white/70">
               <span className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-red-500" />
-                {formatDate(new Date(event.date))}
+                {formatDate(new Date(e.date))}
               </span>
               <span className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-red-500" />
-                {event.time} {event.end_time && `- ${event.end_time}`}
+                {e.time} {e.end_time && `- ${e.end_time}`}
               </span>
             </div>
           </div>
@@ -172,10 +359,10 @@ export default function EventDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {event.full_description && (
+            {e.full_description && (
               <div>
                 <h2 className="text-2xl font-bold text-white mb-4 font-display">About the Event</h2>
-                <p className="text-white/70 text-lg leading-relaxed">{event.full_description}</p>
+                <p className="text-white/70 text-lg leading-relaxed">{e.full_description}</p>
               </div>
             )}
 
@@ -185,7 +372,7 @@ export default function EventDetailPage() {
                 <Music className="w-6 h-6 text-red-500" />
                 Lineup
               </h2>
-              
+
               {floors && floors.length > 0 ? (
                 <div className="space-y-6">
                   {floors.map((floor) => (
@@ -201,9 +388,9 @@ export default function EventDetailPage() {
                     </div>
                   ))}
                 </div>
-              ) : event.lineup && event.lineup.length > 0 ? (
+              ) : e.lineup && e.lineup.length > 0 ? (
                 <div className="flex flex-wrap gap-3">
-                  {event.lineup.map((artist) => (
+                  {e.lineup.map((artist) => (
                     <span key={artist} className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white">
                       {artist}
                     </span>
@@ -220,10 +407,9 @@ export default function EventDetailPage() {
             {/* Ticket Card */}
             <div className="bg-neutral-900 rounded-lg p-6 border border-white/10">
               <h3 className="text-xl font-bold text-white mb-4 font-display">Tickets</h3>
-              
+
               {ticketTypes.length > 0 ? (
                 <>
-                  {/* Ticket Type Selection */}
                   <div className="space-y-2 mb-4">
                     {ticketTypes.map((ticket) => (
                       <button
@@ -246,7 +432,6 @@ export default function EventDetailPage() {
                     ))}
                   </div>
 
-                  {/* Quantity */}
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-white/60">Quantity</span>
                     <div className="flex items-center gap-3">
@@ -266,7 +451,6 @@ export default function EventDetailPage() {
                     </div>
                   </div>
 
-                  {/* Total */}
                   <div className="flex justify-between items-center mb-4 pt-4 border-t border-white/10">
                     <span className="text-white/60">Total</span>
                     <span className="text-2xl font-bold text-white">
@@ -274,7 +458,6 @@ export default function EventDetailPage() {
                     </span>
                   </div>
 
-                  {/* Add to Cart - Full width white button */}
                   <button
                     onClick={addToCart}
                     disabled={addedToCart}
@@ -293,7 +476,6 @@ export default function EventDetailPage() {
                     )}
                   </button>
 
-                  {/* Buy Now - Red button */}
                   <button
                     onClick={buyNow}
                     className="w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 mt-3"
@@ -301,12 +483,8 @@ export default function EventDetailPage() {
                     Buy Now
                   </button>
 
-                  {/* View Cart Link */}
                   <div className="text-center mt-4">
-                    <Link 
-                      href="/cart" 
-                      className="text-white/60 hover:text-white text-sm underline"
-                    >
+                    <Link href="/cart" className="text-white/60 hover:text-white text-sm underline">
                       View Cart
                     </Link>
                   </div>
@@ -315,13 +493,39 @@ export default function EventDetailPage() {
                 <>
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-white/60">Entry</span>
-                    <span className="text-2xl font-bold text-white">{event.price}</span>
+                    <span className="text-2xl font-bold text-white">{e.price}</span>
                   </div>
                   <Button variant="glitch" size="lg" className="w-full" disabled>
                     Tickets coming soon
                   </Button>
                 </>
               )}
+            </div>
+
+            {/* VIP Room Booking */}
+            <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 rounded-lg p-6 border border-yellow-500/20">
+              <div className="flex items-center gap-3 mb-3">
+                <Crown className="w-6 h-6 text-yellow-400" />
+                <h3 className="text-xl font-bold text-white font-display">VIP Room</h3>
+              </div>
+              <p className="text-white/60 text-sm mb-4">
+                Experience the ultimate luxury at Kinker Basel. Book your VIP room for an unforgettable night.
+              </p>
+              <div className="flex items-start gap-2 text-yellow-400/80 text-sm mb-4">
+                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>Includes exclusive seating, premium service, and bottle service options.</span>
+              </div>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:text-yellow-300"
+                asChild
+              >
+                <Link href="/vip-booking">
+                  <Crown className="mr-2 h-4 w-4" />
+                  Book VIP Room
+                </Link>
+              </Button>
             </div>
 
             {/* Location Card */}

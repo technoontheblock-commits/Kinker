@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Calendar, MapPin, ExternalLink, Loader2, Ticket } from 'lucide-react'
+import { Calendar, MapPin, ExternalLink, Loader2, Ticket, ArrowRight } from 'lucide-react'
 
 interface EventfrogEvent {
   id: string
@@ -132,6 +132,14 @@ export default function EventsPage() {
                         <span className="text-green-400">Gratis</span>
                       )}
                     </div>
+                    <div className="flex items-center gap-2">
+                    <Link
+                      href={`/events/${event.id}`}
+                      className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                      Details
+                    </Link>
                     <a
                       href={event.url}
                       target="_blank"
@@ -142,6 +150,7 @@ export default function EventsPage() {
                       Tickets
                       <ExternalLink className="w-3 h-3" />
                     </a>
+                  </div>
                   </div>
                 </div>
               </motion.div>
