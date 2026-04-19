@@ -12,7 +12,7 @@ import { useLanguage } from './language-provider'
 // ============================================================
 const FEATURE_FLAGS = {
   neonGlowPulse: true,   // Idea 1: Red neon glow pulsing around text
-  textScramble: true,    // Idea 3: Characters decode from random symbols
+  textScramble: false,   // DISABLED — removed per request
   strobeFlash: true,     // Idea 8: White flash on initial page load
 } as const
 
@@ -103,7 +103,6 @@ export function HeroSection() {
   const titleClasses = [
     'block',
     'text-white',
-    'glitch',
     FEATURE_FLAGS.neonGlowPulse && scrambleDone ? 'neon-glow' : '',
   ]
     .filter(Boolean)
