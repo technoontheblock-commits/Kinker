@@ -118,15 +118,16 @@ export function EventsSection() {
               <Link href={`/events/${event.id}`}>
                 <div className="relative aspect-[16/10] overflow-hidden bg-neutral-900 rounded-lg cursor-pointer">
                   {/* Image */}
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                    style={{
-                      backgroundImage: `url('${event.image || 'https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?q=80&w=2070&auto=format&fit=crop'}')`,
-                    }}
-                  >
-                    {/* Fallback gradient if image fails */}
+                  {event.image ? (
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900" />
-                  </div>
+                  )}
                   
                   {/* Overlays */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
