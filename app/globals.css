@@ -144,9 +144,59 @@
   outline-offset: 2px;
 }
 
+/* ============================================
+   HERO EFFECTS — Toggle in hero-section.tsx
+   ============================================ */
+
+/* 1. Neon Glow Pulse */
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 5px rgba(239, 68, 68, 0.5),
+      0 0 10px rgba(239, 68, 68, 0.4),
+      0 0 20px rgba(239, 68, 68, 0.3),
+      0 0 40px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 10px rgba(239, 68, 68, 0.8),
+      0 0 20px rgba(239, 68, 68, 0.6),
+      0 0 40px rgba(239, 68, 68, 0.4),
+      0 0 80px rgba(239, 68, 68, 0.3),
+      0 0 120px rgba(239, 68, 68, 0.2);
+  }
+}
+
+.neon-glow {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+/* 2. Strobe Flash Overlay */
+@keyframes strobe-flash {
+  0% { opacity: 1; }
+  10% { opacity: 0; }
+  20% { opacity: 0.8; }
+  30% { opacity: 0; }
+  40% { opacity: 0.4; }
+  50% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.strobe-overlay {
+  animation: strobe-flash 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
 /* Reduced motion - disabled for testing */
 @media (prefers-reduced-motion: reduce) {
   .grain-overlay {
     animation: grain 0.5s steps(10) infinite !important;
+  }
+  .neon-glow {
+    animation: none;
+  }
+  .strobe-overlay {
+    animation: none;
+    opacity: 0 !important;
   }
 }
