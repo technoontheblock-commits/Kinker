@@ -170,12 +170,15 @@ export default function EventDetailPage() {
       <div className="min-h-screen bg-black pt-24 lg:pt-32">
         {/* Hero Image */}
         <section className="relative h-[50vh] lg:h-[60vh]">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url('${e.image || ''}')` }}
-          >
+          {e.image ? (
+            <img
+              src={e.image}
+              alt={e.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900" />
-          </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent" />
 
@@ -314,12 +317,15 @@ export default function EventDetailPage() {
     <div className="min-h-screen bg-black pt-24 lg:pt-32">
       {/* Hero Image */}
       <section className="relative h-[50vh] lg:h-[60vh]">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('${e.image}')` }}
-        >
+        {e.image ? (
+          <img
+            src={e.image}
+            alt={e.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900" />
-        </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent" />
 
