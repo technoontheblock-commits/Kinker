@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const EVENTFROG_API_URL = 'https://api.eventfrog.net/api/v1'
 const API_KEY = process.env.EVENTFROG_API_KEY
 const ORGANIZER_IDS = process.env.EVENTFROG_ORGANIZER_IDS?.split(',').map(id => id.trim()).filter(Boolean) || []
+const ORGANIZER_NAME_FILTER = process.env.EVENTFROG_ORGANIZER_NAME?.toLowerCase() || 'kinker'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +22,24 @@ async function fetchEvents(url: string): Promise<any[]> {
   return data.events || []
 }
 
+function transformEvent(event: any) {
+  return {
+    id: event.id?.toString(),
+    title: event.title?.de || event.title?.en || 'Unnamed Event',
+    description: event.descriptionAsHTML?.de || event.descriptionAsHTML?.en || event.shortDescription?.de || event.shortDescription?.en || '',
+    date: event.begin?.split('T')[0],
+    time: event.begin?.split('T')[1]?.slice(0, 5),
+    location: event.locationText || event.location?.name || 'KINKER, Münchenstein',
+    price: event.lowestTicketPrice || 0,
+    currency: event.currency || 'CHF',
+    image: event.emblemToShow || event.imageToShow,
+    url: event.presaleLink || event.url,
+    soldOut: event.soldOut || false,
+    organizerId: event.organizerId,
+    organizerName: event.organizerName,
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (!API_KEY) {
@@ -30,6 +49,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    const { searchParams } = new URL(request.url)
+    const debug = searchParams.get('debug') === 'true'
     const allEvents: any[] = []
     const errors: string[] = []
 
@@ -46,61 +67,71 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Strategy 2: If no events found with organizerIds, try without filter
-    if (allEvents.length === 0) {
+    // Strategy 2: If no results or in debug mode, fetch all and filter by organizer name
+    let rawEvents: any[] = []
+    if (allEvents.length === 0 || debug) {
       try {
-        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&from=${new Date().toISOString().split('T')[0]}`
-        const events = await fetchEvents(url)
-        allEvents.push(...events)
+        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&from=2025-01-01`
+        rawEvents = await fetchEvents(url)
       } catch (err: any) {
-        errors.push(`no-filter: ${err.message}`)
+        errors.push(`all-events: ${err.message}`)
       }
     }
 
-    // Strategy 3: If still no events, try with search term "kinker"
-    if (allEvents.length === 0) {
-      try {
-        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&search=kinker`
-        const events = await fetchEvents(url)
-        allEvents.push(...events)
-      } catch (err: any) {
-        errors.push(`search=kinker: ${err.message}`)
-      }
+    // Combine organizer-filtered + raw events for debug
+    const combinedEvents = [...allEvents]
+    if (debug) {
+      combinedEvents.push(...rawEvents)
     }
 
-    // Remove duplicates and sort by date
-    const uniqueEvents = allEvents
+    // If we got no events via organizerId but have raw events, filter by organizer name
+    if (allEvents.length === 0 && rawEvents.length > 0) {
+      const filteredByName = rawEvents.filter((e: any) => {
+        const orgName = (e.organizerName || '').toLowerCase()
+        return orgName.includes(ORGANIZER_NAME_FILTER)
+      })
+      combinedEvents.push(...filteredByName)
+    }
+
+    // Remove duplicates
+    const uniqueEvents = combinedEvents
       .filter((event, index, self) =>
         index === self.findIndex((e) => e.id === event.id)
       )
       .sort((a, b) => new Date(a.begin).getTime() - new Date(b.begin).getTime())
 
-    // Transform events
-    const events = uniqueEvents.map((event: any) => ({
-      id: event.id?.toString(),
-      title: event.title?.de || event.title?.en || 'Unnamed Event',
-      description: event.descriptionAsHTML?.de || event.descriptionAsHTML?.en || event.shortDescription?.de || event.shortDescription?.en || '',
-      date: event.begin?.split('T')[0],
-      time: event.begin?.split('T')[1]?.slice(0, 5),
-      location: event.locationText || event.location?.name || 'KINKER, Münchenstein',
-      price: event.lowestTicketPrice || 0,
-      currency: event.currency || 'CHF',
-      image: event.emblemToShow || event.imageToShow,
-      url: event.presaleLink || event.url,
-      soldOut: event.soldOut || false,
-      organizerId: event.organizerId,
-      organizerName: event.organizerName,
-    }))
+    const events = uniqueEvents.map(transformEvent)
 
-    return NextResponse.json({
+    // Extract unique organizers for debug
+    const organizers = new Map()
+    rawEvents.forEach((e: any) => {
+      if (e.organizerId && !organizers.has(e.organizerId)) {
+        organizers.set(e.organizerId, {
+          id: e.organizerId,
+          name: e.organizerName,
+        })
+      }
+    })
+
+    const response: any = {
       events,
       count: events.length,
-      strategies: {
+      filter: {
         organizerIdsTried: ORGANIZER_IDS.length,
-        fallbackUsed: allEvents.length > 0 && errors.length > 0,
+        organizerNameFilter: ORGANIZER_NAME_FILTER,
+        totalRawEvents: rawEvents.length,
       },
       errors: errors.length > 0 ? errors : undefined,
-    })
+    }
+
+    if (debug) {
+      response.debug = {
+        allOrganizersFound: Array.from(organizers.values()),
+        sampleRawEvents: rawEvents.slice(0, 3).map(transformEvent),
+      }
+    }
+
+    return NextResponse.json(response)
 
   } catch (error: any) {
     console.error('Error fetching Eventfrog events:', error)
