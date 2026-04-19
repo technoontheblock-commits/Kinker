@@ -22,6 +22,15 @@ async function fetchEvents(url: string): Promise<any[]> {
   return data.events || []
 }
 
+function extractImageUrl(event: any): string | undefined {
+  // Eventfrog returns image as an object { url, width, height }
+  // or as a string in emblemToShow / imageToShow
+  const img = event.image || event.emblemToShow || event.imageToShow
+  if (typeof img === 'string') return img
+  if (img && typeof img === 'object') return img.url
+  return undefined
+}
+
 function transformEvent(event: any) {
   return {
     id: event.id?.toString(),
@@ -32,7 +41,7 @@ function transformEvent(event: any) {
     location: event.locationText || event.location?.name || 'KINKER, Münchenstein',
     price: event.lowestTicketPrice || 0,
     currency: event.currency || 'CHF',
-    image: event.emblemToShow || event.imageToShow,
+    image: extractImageUrl(event),
     url: event.presaleLink || event.url,
     soldOut: event.soldOut || false,
     organizerId: event.organizerId,

@@ -47,6 +47,10 @@ export async function GET(
 
     const event = events[0]
 
+    // Extract image URL (Eventfrog returns image as object { url, width, height })
+    const img = event.image || event.emblemToShow || event.imageToShow
+    const imageUrl = typeof img === 'string' ? img : img?.url
+
     // Transform to consistent format
     const transformed = {
       id: event.id?.toString(),
@@ -59,7 +63,7 @@ export async function GET(
       location: event.locationText || event.location?.name || 'KINKER, Münchenstein',
       price: event.lowestTicketPrice || 0,
       currency: event.currency || 'CHF',
-      image: event.emblemToShow || event.imageToShow,
+      image: imageUrl,
       url: event.presaleLink || event.url,
       soldOut: event.soldOut || false,
       organizerId: event.organizerId,
