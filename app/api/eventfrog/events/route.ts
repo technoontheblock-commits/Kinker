@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const EVENTFROG_API_URL = 'https://api.eventfrog.net/api/v1'
 const API_KEY = process.env.EVENTFROG_API_KEY
-const ORGANIZER_IDS = process.env.EVENTFROG_ORGANIZER_IDS?.split(',').map(id => id.trim()).filter(Boolean) || []
+const ORGANIZER_IDS = process.env.EVENTFROG_ORGANIZER_IDS?.split(',').map(id => id.trim()).filter(Boolean) || ['2807113']
 const ORGANIZER_NAME_FILTER = process.env.EVENTFROG_ORGANIZER_NAME?.toLowerCase() || 'kinker'
 
 export const dynamic = 'force-dynamic'
