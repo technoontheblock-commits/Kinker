@@ -53,21 +53,38 @@ export async function GET(request: NextRequest) {
     const debug = searchParams.get('debug') === 'true'
     const allEvents: any[] = []
     const errors: string[] = []
+    const attempts: any[] = []
 
-    // Strategy 1: Try with each organizerId
-    if (ORGANIZER_IDS.length > 0) {
-      for (const orgId of ORGANIZER_IDS) {
+    // Strategy 1: Try organizerId with various date ranges
+    for (const orgId of ORGANIZER_IDS) {
+      const variations = [
+        { from: new Date().toISOString().split('T')[0], label: 'today' },
+        { from: '2020-01-01', label: 'all-time' },
+        { from: undefined, label: 'no-date-filter' },
+      ]
+
+      for (const variant of variations) {
         try {
-          const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&organizerId=${encodeURIComponent(orgId)}&perPage=100&from=${new Date().toISOString().split('T')[0]}`
+          let url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&organizerId=${encodeURIComponent(orgId)}&perPage=100`
+          if (variant.from) {
+            url += `&from=${variant.from}`
+          }
+
           const events = await fetchEvents(url)
-          allEvents.push(...events)
+          attempts.push({ orgId, variant: variant.label, count: events.length })
+
+          if (events.length > 0) {
+            allEvents.push(...events)
+            break // Found events for this orgId, stop trying variants
+          }
         } catch (err: any) {
-          errors.push(`organizerId=${orgId}: ${err.message}`)
+          errors.push(`organizerId=${orgId} (${variant.label}): ${err.message}`)
+          attempts.push({ orgId, variant: variant.label, error: err.message })
         }
       }
     }
 
-    // Strategy 2: If no results or in debug mode, fetch all and filter by organizer name
+    // Strategy 2: If no results, try without organizerId filter and filter by name
     let rawEvents: any[] = []
     if (allEvents.length === 0 || debug) {
       try {
@@ -117,7 +134,7 @@ export async function GET(request: NextRequest) {
       events,
       count: events.length,
       filter: {
-        organizerIdsTried: ORGANIZER_IDS.length,
+        organizerIdsTried: ORGANIZER_IDS,
         organizerNameFilter: ORGANIZER_NAME_FILTER,
         totalRawEvents: rawEvents.length,
       },
@@ -126,6 +143,7 @@ export async function GET(request: NextRequest) {
 
     if (debug) {
       response.debug = {
+        attempts,
         allOrganizersFound: Array.from(organizers.values()),
         sampleRawEvents: rawEvents.slice(0, 3).map(transformEvent),
       }
