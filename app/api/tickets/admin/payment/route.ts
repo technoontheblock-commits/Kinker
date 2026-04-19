@@ -1,31 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-// Helper to check if user is admin
-async function isAdmin() {
-  const cookieStore = cookies()
-  const sessionCookie = cookieStore.get('session')?.value
-  
-  if (!sessionCookie) return false
-  
-  try {
-    const session = JSON.parse(sessionCookie)
-    return session.user?.role === 'admin' || session.user?.role === 'staff'
-  } catch {
-    return false
-  }
-}
-
-// POST /api/tickets/admin/payment - Update ticket payment status
+// POST /api/tickets/admin/payment - Update ticket payment status (admin only)
 export async function POST(request: NextRequest) {
   try {
-    if (!await isAdmin()) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
 
     const body = await request.json()
     const { ticket_id, status } = body
@@ -52,6 +36,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, ticket: data })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

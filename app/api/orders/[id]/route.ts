@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin, requireAuth } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-// PUT /api/orders/[id] - Update order status
+// PUT /api/orders/[id] - Update order status (admin only)
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
     }
@@ -44,12 +48,15 @@ export async function PUT(
   }
 }
 
-// GET /api/orders/[id] - Get single order
+// GET /api/orders/[id] - Get single order (auth required)
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAuth()
+    if (!auth.authorized) return auth.response
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
     }
@@ -67,6 +74,11 @@ export async function GET(
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Users can only view their own orders unless admin
+    if (order && order.user_id !== auth.user.id && auth.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     return NextResponse.json(order)

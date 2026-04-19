@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-03-31.basil',
-})
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-03-31.basil',
+  })
+}
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+function getWebhookSecret() {
+  return process.env.STRIPE_WEBHOOK_SECRET!
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -19,7 +23,7 @@ export async function POST(request: NextRequest) {
     let event: Stripe.Event
 
     try {
-      event = stripe.webhooks.constructEvent(payload, signature, webhookSecret)
+      event = getStripe().webhooks.constructEvent(payload, signature, getWebhookSecret())
     } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message)
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })

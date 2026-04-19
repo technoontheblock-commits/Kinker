@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -12,12 +13,15 @@ let mockUsers = [
   { id: '4', name: 'Lisa Müller', email: 'lisa@example.com', role: 'user', status: 'inactive', created_at: '2024-03-10T00:00:00Z' },
 ]
 
-// PUT /api/users/[id] - Update user
+// PUT /api/users/[id] - Update user (admin only)
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     const body = await request.json()
     
     // Use Supabase if configured
@@ -67,12 +71,15 @@ export async function PUT(
   }
 }
 
-// DELETE /api/users/[id] - Delete user
+// DELETE /api/users/[id] - Delete user (admin only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     // Use Supabase if configured
     if (supabaseUrl && supabaseServiceKey) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)

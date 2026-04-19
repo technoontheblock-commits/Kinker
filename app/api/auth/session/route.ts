@@ -1,17 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+import { getCurrentUser, clearSessionCookie } from '@/lib/auth'
 
 // GET /api/auth/session - Get current session
 export async function GET() {
   try {
-    const session = cookies().get('user_session')?.value
-    
-    if (!session) {
-      return NextResponse.json({ user: null })
-    }
-
-    const userData = JSON.parse(session)
-    return NextResponse.json({ user: userData })
+    const user = getCurrentUser()
+    return NextResponse.json({ user })
   } catch (error) {
     return NextResponse.json({ user: null })
   }
@@ -19,6 +13,6 @@ export async function GET() {
 
 // DELETE /api/auth/session - Logout
 export async function DELETE() {
-  cookies().delete('user_session')
+  clearSessionCookie()
   return NextResponse.json({ success: true })
 }

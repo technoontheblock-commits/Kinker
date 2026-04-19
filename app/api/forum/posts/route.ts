@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { getCurrentUser } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-function getCurrentUser() {
-  const session = cookies().get('user_session')?.value
-  if (!session) return null
-  try {
-    return JSON.parse(session)
-  } catch {
-    return null
-  }
-}
 
 function isAdmin(user: any) {
   return user?.role === 'admin'
@@ -45,24 +35,36 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         console.error('Error fetching posts:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
       }
 
-      // Get user info and comment count for each post
-      const postsWithDetails = await Promise.all(
-        (posts || []).map(async (post: any) => {
-          const [{ data: userData }, { count: commentCount }] = await Promise.all([
-            supabase.from('users').select('name, email, avatar_url').eq('id', post.user_id).single(),
-            supabase.from('forum_comments').select('*', { count: 'exact', head: true }).eq('post_id', post.id)
-          ])
-          
-          return {
-            ...post,
-            user: userData || { name: 'Anonym', email: '', avatar_url: null },
-            comment_count: commentCount || 0
-          }
-        })
-      )
+      // Get user IDs and fetch all users in one query
+      const userIds = Array.from(new Set((posts || []).map((p: any) => p.user_id).filter(Boolean)))
+      const { data: allUsers } = await supabase
+        .from('users')
+        .select('id, name, email, avatar_url')
+        .in('id', userIds)
+      
+      const userMap = new Map((allUsers || []).map((u: any) => [u.id, u]))
+
+      // Get comment counts in one query
+      const postIds = (posts || []).map((p: any) => p.id)
+      const { data: commentCounts } = await supabase
+        .from('forum_comments')
+        .select('post_id', { count: 'exact' })
+        .in('post_id', postIds)
+        .eq('is_deleted', false)
+      
+      const countMap = new Map()
+      ;(commentCounts || []).forEach((c: any) => {
+        countMap.set(c.post_id, (countMap.get(c.post_id) || 0) + 1)
+      })
+
+      const postsWithDetails = (posts || []).map((post: any) => ({
+        ...post,
+        user: userMap.get(post.user_id) || { name: 'Anonym', email: '', avatar_url: null },
+        comment_count: countMap.get(post.id) || 0
+      }))
 
       return NextResponse.json({ 
         posts: postsWithDetails, 
@@ -85,30 +87,28 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching posts:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 
-    // Get user info for each post
-    const postsWithUsers = await Promise.all(
-      (posts || []).map(async (post: any) => {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('name, email, avatar_url')
-          .eq('id', post.user_id)
-          .single()
-        
-        return {
-          ...post,
-          user: userData || { name: 'Anonym', email: '', avatar_url: null }
-        }
-      })
-    )
+    // Get all users in one query
+    const userIds = Array.from(new Set((posts || []).map((p: any) => p.user_id).filter(Boolean)))
+    const { data: allUsers } = await supabase
+      .from('users')
+      .select('id, name, email, avatar_url')
+      .in('id', userIds)
+    
+    const userMap = new Map((allUsers || []).map((u: any) => [u.id, u]))
+
+    const postsWithUsers = (posts || []).map((post: any) => ({
+      ...post,
+      user: userMap.get(post.user_id) || { name: 'Anonym', email: '', avatar_url: null }
+    }))
 
     return NextResponse.json({ posts: postsWithUsers })
 
   } catch (error: any) {
     console.error('Error in posts GET:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating post:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 
     // Get user info
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error in posts POST:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -234,14 +234,14 @@ export async function PUT(request: NextRequest) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 
     return NextResponse.json({ post: data })
 
   } catch (error: any) {
     console.error('Error in posts PUT:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -284,13 +284,13 @@ export async function DELETE(request: NextRequest) {
       .eq('id', id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
 
   } catch (error: any) {
     console.error('Error in posts DELETE:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

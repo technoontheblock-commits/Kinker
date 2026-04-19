@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { setSessionCookie } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -47,21 +47,13 @@ export async function POST(request: NextRequest) {
       .update({ last_login: new Date().toISOString() })
       .eq('id', user.id)
 
-    // Set session cookie
-    const sessionData = {
+    // Set signed session cookie
+    setSessionCookie({
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
       type: 'user'
-    }
-
-    cookies().set('user_session', JSON.stringify(sessionData), {
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/'
     })
 
     return NextResponse.json({

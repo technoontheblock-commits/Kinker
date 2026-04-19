@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { getCurrentUser } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-function getCurrentUser() {
-  const session = cookies().get('user_session')?.value
-  if (!session) return null
-  return JSON.parse(session)
-}
+
 
 // GET /api/user/profile - Get user profile
 export async function GET() {

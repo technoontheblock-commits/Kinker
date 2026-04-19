@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { Resend } from 'resend'
+import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -9,20 +9,21 @@ const resendApiKey = process.env.RESEND_API_KEY
 const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 const fromName = process.env.RESEND_FROM_NAME || 'KINKER Basel'
 
-function getCurrentUser() {
-  const session = cookies().get('user_session')?.value
-  if (!session) return null
-  return JSON.parse(session)
+// Basic HTML escape to prevent XSS in newsletter emails
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
 // POST /api/admin/newsletter/send - Send newsletter to all subscribers
 export async function POST(request: NextRequest) {
   try {
-    // Check if user is admin
-    const user = getCurrentUser()
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
 
     if (!resendApiKey) {
       return NextResponse.json({ error: 'Resend not configured' }, { status: 500 })
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
                       <!-- Content -->
                       <tr>
                         <td style="padding: 40px; color: #ffffff;">
-                          ${content}
+                          ${escapeHtml(content)}
                         </td>
                       </tr>
                       

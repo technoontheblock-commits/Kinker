@@ -4,9 +4,11 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { randomUUID } from 'crypto'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-03-31.basil',
-})
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-03-31.basil',
+  })
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -149,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe Checkout Session with activated payment methods
     // PayPal und Bancontact sind temporär deaktiviert
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       payment_method_types: [
         'card',        // Kreditkarten (inkl. Apple Pay & Google Pay)
       ],

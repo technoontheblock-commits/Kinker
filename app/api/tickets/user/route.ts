@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { createHash } from 'crypto'
+import { verifySignedSession } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -23,14 +24,11 @@ async function getCurrentUser() {
     }
   }
   
-  // Try user_session cookie
+  // Try user_session cookie (signed)
   const userSessionCookie = cookieStore.get('user_session')?.value
   if (userSessionCookie) {
-    try {
-      return JSON.parse(userSessionCookie)
-    } catch {
-      // Invalid cookie
-    }
+    const user = verifySignedSession(userSessionCookie)
+    if (user) return user
   }
   
   return null

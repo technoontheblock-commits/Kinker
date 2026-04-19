@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { Resend } from 'resend'
+import { getCurrentUser } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-function getCurrentUser() {
-  const session = cookies().get('user_session')?.value
-  if (!session) return null
-  return JSON.parse(session)
-}
+
 
 // GET /api/applications - Get user's job applications
 export async function GET() {

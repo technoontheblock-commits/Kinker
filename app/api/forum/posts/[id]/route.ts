@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { getCurrentUser } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-function getCurrentUser() {
-  const session = cookies().get('user_session')?.value
-  if (!session) return null
-  try {
-    return JSON.parse(session)
-  } catch {
-    return null
-  }
-}
 
 function isAdmin(user: any) {
   return user?.role === 'admin'
@@ -91,10 +81,13 @@ export async function GET(
       // Ignore view count errors
     }
 
-    // Get comments
+    // Get comments with authors in a single query
     const { data: comments, error: commentsError } = await supabase
       .from('forum_comments')
-      .select('*')
+      .select(`
+        *,
+        user:users(name, email, avatar_url)
+      `)
       .eq('post_id', id)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true })
@@ -103,21 +96,10 @@ export async function GET(
       console.error('Error fetching comments:', commentsError)
     }
 
-    // Get comment authors
-    const commentsWithUsers = await Promise.all(
-      (comments || []).map(async (comment: any) => {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('name, email, avatar_url')
-          .eq('id', comment.user_id)
-          .single()
-        
-        return {
-          ...comment,
-          user: userData || { name: 'Anonym', email: '', avatar_url: null }
-        }
-      })
-    )
+    const commentsWithUsers = (comments || []).map((comment: any) => ({
+      ...comment,
+      user: comment.user || { name: 'Anonym', email: '', avatar_url: null }
+    }))
 
     return NextResponse.json({
       post: {
@@ -130,8 +112,7 @@ export async function GET(
   } catch (error: any) {
     console.error('Error in post GET:', error)
     return NextResponse.json({ 
-      error: error.message,
-      stack: error.stack 
+      error: 'Internal server error'
     }, { status: 500 })
   }
 }

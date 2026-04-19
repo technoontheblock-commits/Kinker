@@ -75,11 +75,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       events,
       count: events.length,
-      debug: {
-        organizerIds: ORGANIZER_IDS,
-        apiKeyExists: !!API_KEY,
-        totalRawEvents: allEvents.length,
-      }
     })
 
   } catch (error: any) {

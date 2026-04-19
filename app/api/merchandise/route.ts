@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -30,9 +31,12 @@ export async function GET() {
   }
 }
 
-// POST /api/merchandise - Create new merchandise item (Admin only)
+// POST /api/merchandise - Create new merchandise item (admin only)
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
     }

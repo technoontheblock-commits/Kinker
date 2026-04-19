@@ -9,9 +9,7 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}))
     const toEmail = body.email || 'technoontheblock@gmail.com'
     
-    console.log('API Key:', resendApiKey ? 'Found (starts with: ' + resendApiKey.substring(0, 10) + '...)' : 'NOT FOUND')
-    console.log('From Email:', fromEmail)
-    console.log('To Email:', toEmail)
+    // Removed API key logging for security
 
     if (!resendApiKey) {
       return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 })

@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-// PUT /api/merchandise/[id] - Update merchandise item
+// PUT /api/merchandise/[id] - Update merchandise item (admin only)
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
     }
@@ -48,12 +52,15 @@ export async function PUT(
   }
 }
 
-// DELETE /api/merchandise/[id] - Delete merchandise item (soft delete)
+// DELETE /api/merchandise/[id] - Delete merchandise item (soft delete) (admin only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
     }

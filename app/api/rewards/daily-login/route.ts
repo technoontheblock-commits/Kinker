@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { verifySignedSession } from '@/lib/auth'
 
 // Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic'
@@ -10,31 +11,27 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 async function getCurrentUser(supabase: any, request?: NextRequest) {
-  // Try to get from cookie - either from request cookies or cookies()
-  let session = null
+  let token = null
   
   if (request) {
-    session = request.cookies.get('user_session')?.value
+    token = request.cookies.get('user_session')?.value
   }
   
-  if (!session) {
-    session = cookies().get('user_session')?.value
+  if (!token) {
+    token = cookies().get('user_session')?.value
   }
   
-  if (session) {
-    try {
-      const user = JSON.parse(session)
-      // Verify user still exists in DB
-      const { data: dbUser } = await supabase
-        .from('users')
-        .select('id, email, name, role')
-        .eq('id', user.id)
-        .single()
-      if (dbUser) return dbUser
-    } catch {
-      // Invalid session
-    }
-  }
+  const user = token ? verifySignedSession(token) : null
+  if (!user) return null
+  
+  // Verify user still exists in DB
+  const { data: dbUser } = await supabase
+    .from('users')
+    .select('id, email, name, role')
+    .eq('id', user.id)
+    .single()
+  if (dbUser) return dbUser
+  
   return null
 }
 

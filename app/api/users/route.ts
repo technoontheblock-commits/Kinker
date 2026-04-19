@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -12,9 +13,12 @@ let mockUsers = [
   { id: '4', name: 'Lisa Müller', email: 'lisa@example.com', role: 'user', status: 'inactive', created_at: '2024-03-10T00:00:00Z' },
 ]
 
-// GET /api/users - Get all users
+// GET /api/users - Get all users (admin only)
 export async function GET() {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     // Use Supabase if configured, otherwise use mock data
     if (supabaseUrl && supabaseServiceKey) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -39,9 +43,12 @@ export async function GET() {
   }
 }
 
-// POST /api/users - Create new user
+// POST /api/users - Create new user (admin only)
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     const body = await request.json()
     
     // Use Supabase if configured

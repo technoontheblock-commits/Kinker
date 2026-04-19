@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { getCurrentUser } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
 const EVENTFROG_API_URL = process.env.EVENTFROG_API_URL || 'https://api.eventfrog.net'
 const API_KEY = process.env.EVENTFROG_API_KEY
 const ORGANIZER_ID = process.env.EVENTFROG_ORGANIZER_ID
 
-function getCurrentUser() {
-  const session = cookies().get('user_session')?.value
-  if (!session) return null
-  try {
-    return JSON.parse(session)
-  } catch {
-    return null
-  }
-}
+
 
 function isAdmin(user: any) {
   return user?.role === 'admin'

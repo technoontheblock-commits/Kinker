@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -7,6 +8,9 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 // GET /api/admin/users - Get all users
 export async function GET() {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
     }
@@ -42,6 +46,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     const data = await request.json()
     
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -81,6 +88,9 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authorized) return auth.response
+
     const { id } = await request.json()
     
     if (!supabaseUrl || !supabaseServiceKey) {
