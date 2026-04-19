@@ -8,6 +8,8 @@ export default function EventfrogDebugPage() {
   const [detailData, setDetailData] = useState<any>(null)
   const [loading, setLoading] = useState({ list: false, detail: false })
   const [eventId, setEventId] = useState('7440492341759100624')
+  const [specificEvent, setSpecificEvent] = useState<any>(null)
+  const [loadingSpecific, setLoadingSpecific] = useState(false)
 
   const testList = async (debug = false) => {
     setLoading(prev => ({ ...prev, list: true }))
@@ -35,8 +37,22 @@ export default function EventfrogDebugPage() {
     }
   }
 
+  const testSpecificEvent = async () => {
+    setLoadingSpecific(true)
+    try {
+      const res = await fetch(`/api/eventfrog/event/${eventId}`)
+      const data = await res.json()
+      setSpecificEvent(data)
+    } catch (err: any) {
+      setSpecificEvent({ error: err.message })
+    } finally {
+      setLoadingSpecific(false)
+    }
+  }
+
   useEffect(() => {
     testList(true)
+    testSpecificEvent()
   }, [])
 
   const organizers = listData?.debug?.allOrganizersFound || []
@@ -85,6 +101,69 @@ export default function EventfrogDebugPage() {
             </div>
           </div>
         )}
+
+        {/* Specific Event Test */}
+        <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-green-400">🎯 Dein Event direkt testen</h2>
+            <button
+              onClick={testSpecificEvent}
+              disabled={loadingSpecific}
+              className="px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm disabled:opacity-50"
+            >
+              {loadingSpecific ? 'Laden...' : 'Neu laden'}
+            </button>
+          </div>
+
+          {specificEvent?.event ? (
+            <div className="space-y-3">
+              <div className="bg-black/50 rounded-lg p-4 border border-green-500/30">
+                <h3 className="text-white font-semibold">{specificEvent.event.title}</h3>
+                <p className="text-white/60 text-sm">{specificEvent.event.date} • {specificEvent.event.time}</p>
+                <p className="text-white/40 text-xs mt-1">{specificEvent.event.location}</p>
+              </div>
+
+              <div className="bg-black/50 rounded-lg p-4 border border-yellow-500/30">
+                <p className="text-yellow-400 text-sm font-medium mb-2">
+                  🔑 Organizer-ID aus diesem Event:
+                </p>
+                <div className="flex items-center gap-3">
+                  <code className="bg-black px-3 py-2 rounded text-green-400 font-mono text-lg">
+                    {specificEvent.event.organizerId || 'Nicht vorhanden'}
+                  </code>
+                  {specificEvent.event.organizerId && specificEvent.event.organizerId !== '2807113' && (
+                    <span className="text-red-400 text-xs bg-red-500/10 px-2 py-1 rounded">
+                      ⚠️ Abweichend von 2807113!
+                    </span>
+                  )}
+                  {specificEvent.event.organizerId === '2807113' && (
+                    <span className="text-green-400 text-xs bg-green-500/10 px-2 py-1 rounded">
+                      ✅ Stimmt mit Vercel überein
+                    </span>
+                  )}
+                </div>
+                <p className="text-white/40 text-xs mt-2">
+                  Organizer Name: {specificEvent.event.organizerName || 'Unbekannt'}
+                </p>
+              </div>
+
+              <details>
+                <summary className="text-white/40 text-sm cursor-pointer hover:text-white/60">Vollständige Event-Daten</summary>
+                <pre className="mt-2 bg-black/50 rounded-lg p-4 text-xs text-green-400 overflow-auto max-h-96">
+                  {JSON.stringify(specificEvent.event, null, 2)}
+                </pre>
+              </details>
+            </div>
+          ) : specificEvent?.error ? (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+              <p className="text-red-400 text-sm">{specificEvent.error}</p>
+            </div>
+          ) : loadingSpecific ? (
+            <p className="text-white/40 text-sm">Lade Event...</p>
+          ) : (
+            <p className="text-white/40 text-sm">Event konnte nicht geladen werden.</p>
+          )}
+        </div>
 
         {/* Events Summary */}
         {listData && (
