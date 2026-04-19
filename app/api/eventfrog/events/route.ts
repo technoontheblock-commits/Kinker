@@ -54,32 +54,34 @@ export async function GET(request: NextRequest) {
     const errors: string[] = []
     const attempts: any[] = []
 
-    // --- STRATEGY 1: Try organizerId filter (API may ignore this parameter) ---
+    // --- STRATEGY 1: Try various parameter names for filtering by organizer ---
     let organizerFilteredEvents: any[] = []
+    const paramNames = ['organizerId', 'veranstalterId', 'organizer', 'veranstalter']
+    
     for (const orgId of ORGANIZER_IDS) {
-      try {
-        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&organizerId=${encodeURIComponent(orgId)}&perPage=100`
-        const events = await fetchEvents(url)
-        
-        // CRITICAL: Validate that returned events actually have the correct organizerId
-        // Eventfrog may ignore the organizerId parameter and return all events
-        const validEvents = events.filter((e: any) => 
-          ORGANIZER_IDS.includes(e.organizerId?.toString())
-        )
-        
-        attempts.push({ 
-          strategy: 'organizerId', 
-          orgId, 
-          rawCount: events.length, 
-          validCount: validEvents.length 
-        })
-        
-        if (validEvents.length > 0) {
-          organizerFilteredEvents.push(...validEvents)
+      for (const paramName of paramNames) {
+        try {
+          const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&${paramName}=${encodeURIComponent(orgId)}&perPage=100`
+          const events = await fetchEvents(url)
+          
+          // Validate: do returned events actually have the correct organizerId?
+          const validEvents = events.filter((e: any) => 
+            ORGANIZER_IDS.includes(e.organizerId?.toString())
+          )
+          
+          attempts.push({ 
+            strategy: paramName, 
+            orgId, 
+            rawCount: events.length, 
+            validCount: validEvents.length 
+          })
+          
+          if (validEvents.length > 0) {
+            organizerFilteredEvents.push(...validEvents)
+          }
+        } catch (err: any) {
+          attempts.push({ strategy: paramName, orgId, error: err.message })
         }
-      } catch (err: any) {
-        attempts.push({ strategy: 'organizerId', orgId, error: err.message })
-        errors.push(`organizerId=${orgId}: ${err.message}`)
       }
     }
 
