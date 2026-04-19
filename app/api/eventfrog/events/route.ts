@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const EVENTFROG_API_URL = 'https://api.eventfrog.net'
 const API_KEY = process.env.EVENTFROG_API_KEY
-const ORGANIZER_IDS = process.env.EVENTFROG_ORGANIZER_IDS?.split(',') || ['1824536', '2096700', '2807113']
+const ORGANIZER_IDS = process.env.EVENTFROG_ORGANIZER_IDS?.split(',').map(id => id.trim()).filter(Boolean) || ['1824536', '2096700', '2807113']
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,15 +16,14 @@ export async function GET(request: NextRequest) {
     }
 
     const allEvents: any[] = []
+    const errors: string[] = []
 
-    // Use Bearer Auth as shown in EventFrog documentation
+    // Try each organizer ID
     for (const orgId of ORGANIZER_IDS) {
       try {
-        // Try the organizer endpoint with Bearer token
-        const apiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?perPage=100`
+        // Public API endpoint with organizer filter
+        const apiUrl = `${EVENTFROG_API_URL}/event/v1/events?perPage=100&organizerId=${encodeURIComponent(orgId)}`
         
-        console.log('Fetching with Bearer Auth:', apiUrl)
-
         const response = await fetch(apiUrl, {
           headers: {
             'Authorization': `Bearer ${API_KEY}`,
@@ -32,21 +33,40 @@ export async function GET(request: NextRequest) {
           next: { revalidate: 300 },
         })
 
-        console.log('Response status:', response.status)
-
         if (response.ok) {
           const data = await response.json()
-          console.log('Events found:', data.datasets?.length || 0)
           
-          if (data.datasets) {
+          if (data.datasets && Array.isArray(data.datasets)) {
             allEvents.push(...data.datasets)
           }
         } else {
           const errorText = await response.text()
-          console.error('API Error:', response.status, errorText.substring(0, 500))
+          errors.push(`Public API orgId=${orgId}: ${response.status} ${errorText.substring(0, 200)}`)
+          
+          // Fallback: try organizer API endpoint
+          const orgApiUrl = `${EVENTFROG_API_URL}/organizer/v1/events?perPage=100&organizerId=${encodeURIComponent(orgId)}`
+          
+          const orgResponse = await fetch(orgApiUrl, {
+            headers: {
+              'Authorization': `Bearer ${API_KEY}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            next: { revalidate: 300 },
+          })
+          
+          if (orgResponse.ok) {
+            const orgData = await orgResponse.json()
+            if (orgData.datasets && Array.isArray(orgData.datasets)) {
+              allEvents.push(...orgData.datasets)
+            }
+          } else {
+            const orgErrorText = await orgResponse.text()
+            errors.push(`Organizer API orgId=${orgId}: ${orgResponse.status} ${orgErrorText.substring(0, 200)}`)
+          }
         }
-      } catch (err) {
-        console.error(`Error fetching events:`, err)
+      } catch (err: any) {
+        errors.push(`Fetch error orgId=${orgId}: ${err.message}`)
       }
     }
 
@@ -75,6 +95,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       events,
       count: events.length,
+      errors: errors.length > 0 ? errors : undefined,
     })
 
   } catch (error: any) {
