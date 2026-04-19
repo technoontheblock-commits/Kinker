@@ -51,67 +51,62 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const debug = searchParams.get('debug') === 'true'
-    const allEvents: any[] = []
     const errors: string[] = []
     const attempts: any[] = []
 
-    // Strategy 1: Try organizerId with various date ranges
+    // --- STRATEGY 1: Try organizerId filter (may not work for all API keys) ---
+    let organizerFilteredEvents: any[] = []
     for (const orgId of ORGANIZER_IDS) {
-      const variations = [
-        { from: new Date().toISOString().split('T')[0], label: 'today' },
-        { from: '2020-01-01', label: 'all-time' },
-        { from: undefined, label: 'no-date-filter' },
-      ]
-
-      for (const variant of variations) {
-        try {
-          let url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&organizerId=${encodeURIComponent(orgId)}&perPage=100`
-          if (variant.from) {
-            url += `&from=${variant.from}`
-          }
-
-          const events = await fetchEvents(url)
-          attempts.push({ orgId, variant: variant.label, count: events.length })
-
-          if (events.length > 0) {
-            allEvents.push(...events)
-            break // Found events for this orgId, stop trying variants
-          }
-        } catch (err: any) {
-          errors.push(`organizerId=${orgId} (${variant.label}): ${err.message}`)
-          attempts.push({ orgId, variant: variant.label, error: err.message })
+      try {
+        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&organizerId=${encodeURIComponent(orgId)}&perPage=100`
+        const events = await fetchEvents(url)
+        attempts.push({ strategy: 'organizerId', orgId, count: events.length })
+        if (events.length > 0) {
+          organizerFilteredEvents.push(...events)
         }
+      } catch (err: any) {
+        attempts.push({ strategy: 'organizerId', orgId, error: err.message })
+        errors.push(`organizerId=${orgId}: ${err.message}`)
       }
     }
 
-    // Strategy 2: If no results, try without organizerId filter and filter by name
-    let rawEvents: any[] = []
-    if (allEvents.length === 0 || debug) {
+    // --- STRATEGY 2: Fetch all events without filter and match by organizerId ---
+    let allEvents: any[] = []
+    if (organizerFilteredEvents.length === 0) {
       try {
-        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&from=2025-01-01`
-        rawEvents = await fetchEvents(url)
+        // Load multiple pages to get as many events as possible
+        const pagesToLoad = 5
+        for (let page = 1; page <= pagesToLoad; page++) {
+          const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&page=${page}&from=2020-01-01`
+          const events = await fetchEvents(url)
+          attempts.push({ strategy: 'all-events', page, count: events.length })
+          allEvents.push(...events)
+          if (events.length < 100) break // Last page
+        }
       } catch (err: any) {
         errors.push(`all-events: ${err.message}`)
       }
     }
 
-    // Combine organizer-filtered + raw events for debug
-    const combinedEvents = [...allEvents]
-    if (debug) {
-      combinedEvents.push(...rawEvents)
-    }
+    // --- FILTERING: Match events by organizerId or organizerName ---
+    let matchedEvents: any[] = []
 
-    // If we got no events via organizerId but have raw events, filter by organizer name
-    if (allEvents.length === 0 && rawEvents.length > 0) {
-      const filteredByName = rawEvents.filter((e: any) => {
-        const orgName = (e.organizerName || '').toLowerCase()
-        return orgName.includes(ORGANIZER_NAME_FILTER)
+    if (organizerFilteredEvents.length > 0) {
+      // Strategy 1 worked
+      matchedEvents = organizerFilteredEvents
+    } else if (allEvents.length > 0) {
+      // Strategy 2: Filter by organizerId
+      matchedEvents = allEvents.filter((e: any) => {
+        const eventOrgId = e.organizerId?.toString()
+        const eventOrgName = (e.organizerName || '').toLowerCase()
+        const idMatch = ORGANIZER_IDS.includes(eventOrgId)
+        const nameMatch = eventOrgName.includes(ORGANIZER_NAME_FILTER)
+        return idMatch || nameMatch
       })
-      combinedEvents.push(...filteredByName)
     }
 
-    // Remove duplicates
-    const uniqueEvents = combinedEvents
+    // Remove duplicates and sort
+    const uniqueEvents = matchedEvents
       .filter((event, index, self) =>
         index === self.findIndex((e) => e.id === event.id)
       )
@@ -119,11 +114,11 @@ export async function GET(request: NextRequest) {
 
     const events = uniqueEvents.map(transformEvent)
 
-    // Extract unique organizers for debug
-    const organizers = new Map()
-    rawEvents.forEach((e: any) => {
-      if (e.organizerId && !organizers.has(e.organizerId)) {
-        organizers.set(e.organizerId, {
+    // For debug: collect all organizers seen
+    const allOrganizers = new Map()
+    allEvents.forEach((e: any) => {
+      if (e.organizerId && !allOrganizers.has(e.organizerId)) {
+        allOrganizers.set(e.organizerId, {
           id: e.organizerId,
           name: e.organizerName,
         })
@@ -134,9 +129,10 @@ export async function GET(request: NextRequest) {
       events,
       count: events.length,
       filter: {
-        organizerIdsTried: ORGANIZER_IDS,
+        organizerIds: ORGANIZER_IDS,
         organizerNameFilter: ORGANIZER_NAME_FILTER,
-        totalRawEvents: rawEvents.length,
+        strategyUsed: organizerFilteredEvents.length > 0 ? 'organizerId-filter' : 'client-side-filter',
+        totalScanned: allEvents.length,
       },
       errors: errors.length > 0 ? errors : undefined,
     }
@@ -144,8 +140,8 @@ export async function GET(request: NextRequest) {
     if (debug) {
       response.debug = {
         attempts,
-        allOrganizersFound: Array.from(organizers.values()),
-        sampleRawEvents: rawEvents.slice(0, 3).map(transformEvent),
+        allOrganizersFound: Array.from(allOrganizers.values()),
+        sampleScannedEvents: allEvents.slice(0, 3).map(transformEvent),
       }
     }
 
