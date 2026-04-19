@@ -54,15 +54,28 @@ export async function GET(request: NextRequest) {
     const errors: string[] = []
     const attempts: any[] = []
 
-    // --- STRATEGY 1: Try organizerId filter (may not work for all API keys) ---
+    // --- STRATEGY 1: Try organizerId filter (API may ignore this parameter) ---
     let organizerFilteredEvents: any[] = []
     for (const orgId of ORGANIZER_IDS) {
       try {
         const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&organizerId=${encodeURIComponent(orgId)}&perPage=100`
         const events = await fetchEvents(url)
-        attempts.push({ strategy: 'organizerId', orgId, count: events.length })
-        if (events.length > 0) {
-          organizerFilteredEvents.push(...events)
+        
+        // CRITICAL: Validate that returned events actually have the correct organizerId
+        // Eventfrog may ignore the organizerId parameter and return all events
+        const validEvents = events.filter((e: any) => 
+          ORGANIZER_IDS.includes(e.organizerId?.toString())
+        )
+        
+        attempts.push({ 
+          strategy: 'organizerId', 
+          orgId, 
+          rawCount: events.length, 
+          validCount: validEvents.length 
+        })
+        
+        if (validEvents.length > 0) {
+          organizerFilteredEvents.push(...validEvents)
         }
       } catch (err: any) {
         attempts.push({ strategy: 'organizerId', orgId, error: err.message })
