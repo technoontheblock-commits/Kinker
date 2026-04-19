@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
@@ -11,62 +11,35 @@ import { useLanguage } from './language-provider'
 // FEATURE FLAGS — Set to false to disable any effect
 // ============================================================
 const FEATURE_FLAGS = {
-  neonGlowPulse: true,   // Idea 1: Red neon glow pulsing around text
-  textScramble: false,   // DISABLED — removed per request
-  strobeFlash: true,     // Idea 8: White flash on initial page load
+  neonGlowPulse: true,      // Red neon glow pulsing around text
+  hoverLetterSpacing: true, // Letters spread apart on hover
+  hoverGlowIntensify: true, // Neon glow gets stronger on hover
+  hover3DTilt: true,        // Text tilts toward mouse position
 } as const
 
 // ============================================================
-// IDEA 3: Text Scramble / Decode Effect
+// 3D TILT LOGIC
 // ============================================================
-const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/~`'
+function useMouseTilt(ref: React.RefObject<HTMLElement | null>) {
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 })
 
-function useTextScramble(targetText: string, enabled: boolean, delayMs = 500) {
-  const [display, setDisplay] = useState(targetText)
-  const [isDone, setIsDone] = useState(false)
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!ref.current || !FEATURE_FLAGS.hover3DTilt) return
+    const rect = ref.current.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width
+    const y = (e.clientY - rect.top) / rect.height
+    // Range: -8deg to +8deg
+    setTilt({
+      rotateY: (x - 0.5) * 16,
+      rotateX: (0.5 - y) * 16,
+    })
+  }, [ref])
 
-  useEffect(() => {
-    if (!enabled) {
-      setDisplay(targetText)
-      setIsDone(true)
-      return
-    }
+  const handleMouseLeave = useCallback(() => {
+    setTilt({ rotateX: 0, rotateY: 0 })
+  }, [])
 
-    setDisplay(targetText)
-    setIsDone(false)
-
-    const timeout = setTimeout(() => {
-      let iteration = 0
-      const maxIterations = targetText.length * 8 // Total scramble cycles
-
-      const interval = setInterval(() => {
-        setDisplay(
-          targetText
-            .split('')
-            .map((char, index) => {
-              // Reveal characters left-to-right based on iteration
-              if (char === ' ') return ' '
-              if (index < iteration / 8) return targetText[index]
-              return CHARS[Math.floor(Math.random() * CHARS.length)]
-            })
-            .join('')
-        )
-
-        iteration += 1
-        if (iteration >= maxIterations) {
-          clearInterval(interval)
-          setDisplay(targetText)
-          setIsDone(true)
-        }
-      }, 30)
-
-      return () => clearInterval(interval)
-    }, delayMs)
-
-    return () => clearTimeout(timeout)
-  }, [targetText, enabled, delayMs])
-
-  return { display, isDone }
+  return { tilt, handleMouseMove, handleMouseLeave }
 }
 
 // ============================================================
@@ -74,23 +47,9 @@ function useTextScramble(targetText: string, enabled: boolean, delayMs = 500) {
 // ============================================================
 export function HeroSection() {
   const { t } = useLanguage()
-
-  // Strobe flash state — only fires once per session
-  const [strobeActive, setStrobeActive] = useState(false)
-
-  useEffect(() => {
-    if (FEATURE_FLAGS.strobeFlash) {
-      // Small delay so the flash is noticeable after paint
-      const timer = setTimeout(() => setStrobeActive(true), 50)
-      return () => clearTimeout(timer)
-    }
-  }, [])
-
-  const { display: scrambledText, isDone: scrambleDone } = useTextScramble(
-    'KINKER',
-    FEATURE_FLAGS.textScramble,
-    600
-  )
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const [isHovered, setIsHovered] = useState(false)
+  const { tilt, handleMouseMove, handleMouseLeave } = useMouseTilt(titleRef)
 
   const scrollToEvents = () => {
     const eventsSection = document.getElementById('events')
@@ -99,24 +58,24 @@ export function HeroSection() {
     }
   }
 
-  // Build title classes dynamically based on feature flags
-  const titleClasses = [
+  // Dynamic class assembly
+  const titleWrapperClasses = [
     'block',
     'text-white',
-    FEATURE_FLAGS.neonGlowPulse && scrambleDone ? 'neon-glow' : '',
+    'cursor-default',
+    'transition-all',
+    'duration-500',
+    'ease-out',
+    'will-change-transform',
+    FEATURE_FLAGS.hoverLetterSpacing && isHovered ? 'tracking-[0.15em]' : 'tracking-tighter',
+    FEATURE_FLAGS.neonGlowPulse ? 'neon-glow' : '',
+    FEATURE_FLAGS.hoverGlowIntensify && isHovered ? 'hover-glow-intense' : '',
   ]
     .filter(Boolean)
     .join(' ')
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* ============================================================
-          IDEA 8: Strobe Flash Overlay
-          ============================================================ */}
-      {FEATURE_FLAGS.strobeFlash && strobeActive && (
-        <div className="fixed inset-0 bg-white z-[100] strobe-overlay" />
-      )}
-
       {/* Static Background Image - Club Interior */}
       <div className="absolute inset-0 z-0">
         <div
@@ -125,7 +84,6 @@ export function HeroSection() {
             backgroundImage: `url('/images/hero-bg.jpg')`,
           }}
         />
-        {/* Dark overlay for better text readability */}
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black" />
       </div>
@@ -137,9 +95,31 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
         >
-          <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter font-display mb-6">
-            <span className={titleClasses} data-text="KINKER">
-              {scrambledText}
+          <h1
+            ref={titleRef}
+            className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold font-display mb-6 inline-block"
+            style={{
+              perspective: '1000px',
+              transformStyle: 'preserve-3d',
+            }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={(e) => {
+              handleMouseLeave()
+              setIsHovered(false)
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+          >
+            <span
+              className={titleWrapperClasses}
+              style={{
+                display: 'inline-block',
+                transform: FEATURE_FLAGS.hover3DTilt
+                  ? `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale(${isHovered ? 1.05 : 1})`
+                  : undefined,
+                transformStyle: 'preserve-3d',
+              }}
+            >
+              KINKER
             </span>
           </h1>
         </motion.div>

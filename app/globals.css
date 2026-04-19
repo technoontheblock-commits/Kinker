@@ -171,6 +171,17 @@
   animation: neon-pulse 2s ease-in-out infinite;
 }
 
+/* Intensified glow on hover */
+.hover-glow-intense {
+  text-shadow:
+    0 0 15px rgba(239, 68, 68, 1),
+    0 0 30px rgba(239, 68, 68, 0.8),
+    0 0 60px rgba(239, 68, 68, 0.6),
+    0 0 100px rgba(239, 68, 68, 0.4),
+    0 0 150px rgba(239, 68, 68, 0.3) !important;
+  animation: none !important;
+}
+
 /* 2. Strobe Flash Overlay */
 @keyframes strobe-flash {
   0% { opacity: 1; }
