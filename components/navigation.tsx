@@ -50,7 +50,7 @@ export function Navigation() {
     { name: t.nav.events, href: '/events' },
     { name: t.nav.club, href: '/club' },
     { name: t.nav.location, href: '/location' },
-    { name: t.nav.rental, href: '/rental' },
+
     { name: t.nav.career, href: '/career' },
     { name: t.nav.merch, href: '/merch' },
     { name: t.nav.forum || 'Forum', href: '/forum' },
