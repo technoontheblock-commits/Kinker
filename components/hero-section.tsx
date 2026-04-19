@@ -42,7 +42,6 @@ export function HeroSection() {
             <span className="block text-white glitch" data-text="KINKER">
               KINKER
             </span>
-            <span className="block text-white/90">BASEL</span>
           </h1>
         </motion.div>
 

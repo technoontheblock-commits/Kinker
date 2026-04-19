@@ -5,7 +5,7 @@ export function Logo({ className = "" }: { className?: string }) {
     <div className={`w-[120px] h-[90px] ${className}`}>
       <Image
         src="/images/logo.png"
-        alt="KINKER BASEL"
+        alt="KINKER"
         width={120}
         height={90}
         className="w-full h-full object-contain"
@@ -20,7 +20,7 @@ export function LogoIcon({ className = "" }: { className?: string }) {
     <div className={`${className}`}>
       <Image
         src="/images/logo.png"
-        alt="KINKER BASEL"
+        alt="KINKER"
         width={100}
         height={75}
         className="w-full h-full object-contain"

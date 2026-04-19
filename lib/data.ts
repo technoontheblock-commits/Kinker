@@ -128,7 +128,7 @@ export const events: Event[] = [
 ];
 
 export const clubInfo = {
-  name: 'KINKER BASEL',
+  name: 'KINKER',
   tagline: 'HARD TECHNO IN BASEL',
   address: 'Barcelona-Strasse 4',
   city: '4142 Münchenstein',

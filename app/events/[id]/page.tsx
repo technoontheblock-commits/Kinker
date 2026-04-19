@@ -281,7 +281,7 @@ export default function EventDetailPage() {
                   <h3 className="text-xl font-bold text-white font-display">VIP Room</h3>
                 </div>
                 <p className="text-white/60 text-sm mb-4">
-                  Experience the ultimate luxury at Kinker Basel. Book your VIP room for an unforgettable night.
+                  Experience the ultimate luxury at KINKER. Book your VIP room for an unforgettable night.
                 </p>
                 <div className="flex items-start gap-2 text-yellow-400/80 text-sm mb-4">
                   <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -509,7 +509,7 @@ export default function EventDetailPage() {
                 <h3 className="text-xl font-bold text-white font-display">VIP Room</h3>
               </div>
               <p className="text-white/60 text-sm mb-4">
-                Experience the ultimate luxury at Kinker Basel. Book your VIP room for an unforgettable night.
+                Experience the ultimate luxury at KINKER. Book your VIP room for an unforgettable night.
               </p>
               <div className="flex items-start gap-2 text-yellow-400/80 text-sm mb-4">
                 <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />

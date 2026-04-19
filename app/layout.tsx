@@ -18,11 +18,11 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: 'KINKER BASEL | Hard Techno Club',
+  title: 'KINKER | Hard Techno Club',
   description: 'Hard Techno in Basel. No racism. No hate. Just music. The underground techno club experience.',
   keywords: ['techno', 'club', 'basel', 'underground', 'hard techno', 'rave', 'electronic music'],
   openGraph: {
-    title: 'KINKER BASEL',
+    title: 'KINKER',
     description: 'Hard Techno in Basel. No racism. No hate. Just music.',
     type: 'website',
   },

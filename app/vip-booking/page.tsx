@@ -312,7 +312,7 @@ export default function VIPBookingPage() {
             VIP Room <span className="text-red-500">Booking</span>
           </h1>
           <p className="text-white/60 max-w-2xl mx-auto">
-            Experience the ultimate luxury at Kinker Basel. Book your VIP room for an unforgettable night.
+            Experience the ultimate luxury at KINKER. Book your VIP room for an unforgettable night.
           </p>
         </motion.div>
 

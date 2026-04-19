@@ -111,7 +111,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/40 text-sm">
-            © {new Date().getFullYear()} KINKER BASEL. {t.footer.rights}
+            © {new Date().getFullYear()} KINKER. {t.footer.rights}
           </p>
           <div className="flex space-x-6 text-sm">
             <Link href="/impressum" className="text-white/40 hover:text-white transition-colors">

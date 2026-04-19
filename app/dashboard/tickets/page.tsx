@@ -136,7 +136,7 @@ export default function TicketsPage() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-xl font-bold text-white">{ticket.event.name}</h3>
-                <p className="text-white/60">{ticket.event.venue || 'KINKER Basel'}</p>
+                <p className="text-white/60">{ticket.event.venue || 'KINKER'}</p>
               </div>
               <span className={`px-3 py-1 text-xs rounded-full ${
                 ticket.status === 'valid' 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Impressum | KINKER Basel',
+  title: 'Impressum | KINKER',
   description: 'Impressum und rechtliche Informationen der KNKR GmbH',
 }
 

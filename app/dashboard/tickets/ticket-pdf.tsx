@@ -199,7 +199,7 @@ export function TicketPDF({ ticket, qrCodeDataUrl }: {
             <View style={styles.divider} />
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Venue</Text>
-              <Text style={styles.infoValue}>{ticket.event.venue || 'KINKER Basel'}</Text>
+              <Text style={styles.infoValue}>{ticket.event.venue || 'KINKER'}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.infoRow}>
