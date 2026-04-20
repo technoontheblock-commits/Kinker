@@ -72,6 +72,11 @@ export function Footer() {
                   {t.nav.location}
                 </Link>
               </li>
+              <li>
+                <Link href="/dj-roster" className="text-white/60 hover:text-red-500 transition-colors text-sm">
+                  DJ Roster
+                </Link>
+              </li>
             </ul>
           </div>
 
