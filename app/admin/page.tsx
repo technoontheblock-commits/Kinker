@@ -79,7 +79,7 @@ export default function AdminDashboard() {
   const [showAddEvent, setShowAddEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [djRosterFilter, setDJRosterFilter] = useState<'requests' | 'accepted'>('requests')
+  const [djRosterFilter, setDJRosterFilter] = useState<'requests' | 'accepted'>('accepted')
   
   // New user form state
   const [newUser, setNewUser] = useState({
@@ -2346,29 +2346,16 @@ export default function AdminDashboard() {
             >
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-4xl font-bold text-white">DJ Roster</h1>
-              </div>
-
-              {/* Filter Tabs */}
-              <div className="flex gap-2 mb-8">
                 <button
-                  onClick={() => setDJRosterFilter('requests')}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  onClick={() => setDJRosterFilter(djRosterFilter === 'requests' ? 'accepted' : 'requests')}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                     djRosterFilter === 'requests'
                       ? 'bg-red-500/20 text-red-500'
                       : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                   }`}
                 >
+                  <Mail className="w-4 h-4" />
                   Requests ({djApplications.filter(a => a.status === 'pending').length})
-                </button>
-                <button
-                  onClick={() => setDJRosterFilter('accepted')}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    djRosterFilter === 'accepted'
-                      ? 'bg-green-500/20 text-green-500'
-                      : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  Accepted ({djApplications.filter(a => a.status === 'accepted').length})
                 </button>
               </div>
 
