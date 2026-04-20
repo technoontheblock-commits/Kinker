@@ -55,6 +55,7 @@ export function Navigation() {
     { name: t.nav.merch, href: '/merch' },
     { name: t.nav.forum || 'Forum', href: '/forum' },
     { name: 'VIP', href: '/vip-booking' },
+    { name: 'DJ Roster', href: '/dj-roster' },
   ]
 
   return (
