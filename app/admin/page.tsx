@@ -79,6 +79,7 @@ export default function AdminDashboard() {
   const [showAddEvent, setShowAddEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [djRosterFilter, setDJRosterFilter] = useState<'requests' | 'accepted'>('requests')
   
   // New user form state
   const [newUser, setNewUser] = useState({
@@ -2345,17 +2346,40 @@ export default function AdminDashboard() {
             >
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-4xl font-bold text-white">DJ Roster</h1>
-                <span className="text-white/60">
-                  {djApplications.filter(a => a.status === 'pending').length} pending
-                </span>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex gap-2 mb-8">
+                <button
+                  onClick={() => setDJRosterFilter('requests')}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    djRosterFilter === 'requests'
+                      ? 'bg-red-500/20 text-red-500'
+                      : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  Requests ({djApplications.filter(a => a.status === 'pending').length})
+                </button>
+                <button
+                  onClick={() => setDJRosterFilter('accepted')}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    djRosterFilter === 'accepted'
+                      ? 'bg-green-500/20 text-green-500'
+                      : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  Accepted ({djApplications.filter(a => a.status === 'accepted').length})
+                </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {djApplications.map((app) => (
+                {djApplications
+                  .filter(app => djRosterFilter === 'requests' ? app.status === 'pending' : app.status === 'accepted')
+                  .map((app) => (
                   <div
                     key={app.id}
                     className={`bg-neutral-900/50 rounded-xl overflow-hidden border ${
-                      app.status === 'pending' ? 'border-red-500/20' : 'border-white/10'
+                      app.status === 'pending' ? 'border-red-500/20' : 'border-green-500/20'
                     }`}
                   >
                     {/* Image Header */}
@@ -2509,10 +2533,12 @@ export default function AdminDashboard() {
                 ))}
               </div>
 
-              {djApplications.length === 0 && (
+              {djApplications.filter(a => djRosterFilter === 'requests' ? a.status === 'pending' : a.status === 'accepted').length === 0 && (
                 <div className="text-center py-16 text-white/40">
                   <Disc className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg">No DJ applications yet</p>
+                  <p className="text-lg">
+                    {djRosterFilter === 'requests' ? 'No pending requests' : 'No accepted DJs yet'}
+                  </p>
                 </div>
               )}
             </motion.div>
