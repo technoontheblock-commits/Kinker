@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { createPrintfulOrder } from '@/lib/printful'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -90,7 +91,7 @@ async function handleSuccessfulPayment(supabase: any, paymentIntent: Stripe.Paym
     // Find order by payment intent ID
     const { data: order, error } = await supabase
       .from('orders')
-      .select('*')
+      .select('*, order_items(*)')
       .eq('payment_reference', paymentIntent.id)
       .single()
 
@@ -110,8 +111,115 @@ async function handleSuccessfulPayment(supabase: any, paymentIntent: Stripe.Paym
       .eq('id', order.id)
 
     console.log(`Order ${order.order_number} marked as paid`)
+
+    // Forward to Printful if order contains merchandise
+    await forwardToPrintful(supabase, order)
   } catch (error) {
     console.error('Error handling successful payment:', error)
+  }
+}
+
+async function forwardToPrintful(supabase: any, order: any) {
+  try {
+    // Check if Printful is configured
+    if (!process.env.PRINTFUL_API_TOKEN) {
+      console.log('Printful not configured, skipping fulfillment')
+      return
+    }
+
+    // Get shipping address from Stripe checkout session
+    const { data: sessionData } = await getStripe().checkout.sessions.list({
+      payment_intent: order.payment_reference,
+      limit: 1,
+    })
+    const session = sessionData?.[0]
+
+    const shipping = (session as any)?.shipping_details || (session as any)?.shipping
+    const address = shipping?.address
+
+    if (!shipping) {
+      console.log('No shipping details found, skipping Printful')
+      return
+    }
+
+    // Get merchandise items from order
+    const merchItems = order.order_items?.filter((item: any) =>
+      item.product_id && !item.is_ticket && !item.is_vip
+    ) || []
+
+    if (merchItems.length === 0) {
+      console.log('No merchandise items, skipping Printful')
+      return
+    }
+
+    // Get Printful variant IDs from products
+    const items = []
+    for (const item of merchItems) {
+      const { data: product } = await supabase
+        .from('printful_products')
+        .select('variants')
+        .eq('printful_id', item.product_id)
+        .single()
+
+      // Try to find matching variant by size
+      const variant = product?.variants?.find((v: any) =>
+        v.size?.toLowerCase() === item.selected_size?.toLowerCase()
+      ) || product?.variants?.[0]
+
+      if (variant) {
+        items.push({
+          variant_id: variant.id,
+          quantity: item.quantity,
+          retail_price: String(item.price),
+          name: item.name,
+        })
+      }
+    }
+
+    if (items.length === 0) {
+      console.log('No Printful variants found, skipping')
+      return
+    }
+
+    // Create Printful order
+    const pfOrder = await createPrintfulOrder({
+      external_id: order.order_number,
+      shipping: 'STANDARD',
+      recipient: {
+        name: shipping.name || order.customer_name || '',
+        address1: address?.line1 || '',
+        city: address?.city || '',
+        country_code: address?.country || 'CH',
+        zip: address?.postal_code || '',
+        email: order.customer_email || '',
+        phone: order.customer_phone || '',
+        state_code: address?.state || undefined,
+        address2: address?.line2 || undefined,
+      },
+      items,
+    })
+
+    // Save Printful order reference
+    await supabase
+      .from('orders')
+      .update({
+        printful_order_id: String(pfOrder.data?.id),
+        printful_status: pfOrder.data?.status,
+      })
+      .eq('id', order.id)
+
+    await supabase
+      .from('printful_orders')
+      .insert({
+        order_id: order.id,
+        printful_order_id: pfOrder.data?.id,
+        printful_external_id: order.order_number,
+        status: pfOrder.data?.status || 'pending',
+      })
+
+    console.log(`Order ${order.order_number} forwarded to Printful: ${pfOrder.data?.id}`)
+  } catch (error: any) {
+    console.error('Printful forwarding error:', error.message)
   }
 }
 
@@ -153,7 +261,7 @@ async function handleChargeSucceeded(supabase: any, charge: Stripe.Charge) {
     // Find order by payment intent ID
     const { data: order, error } = await supabase
       .from('orders')
-      .select('*')
+      .select('*, order_items(*)')
       .eq('payment_reference', charge.payment_intent as string)
       .single()
 
@@ -173,6 +281,9 @@ async function handleChargeSucceeded(supabase: any, charge: Stripe.Charge) {
       .eq('id', order.id)
 
     console.log(`Order ${order.order_number} marked as paid via charge`)
+
+    // Forward to Printful
+    await forwardToPrintful(supabase, order)
   } catch (error) {
     console.error('Error handling charge success:', error)
   }
