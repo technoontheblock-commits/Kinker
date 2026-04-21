@@ -14,6 +14,16 @@ interface Product {
   category: string
   sizes: string[]
   stock: number
+  type?: 'local' | 'printful'
+  variants?: Array<{
+    id: number
+    name: string
+    sku: string
+    price: string
+    size: string
+    color: string
+    image?: string
+  }>
 }
 
 export default function MerchPage() {
@@ -22,6 +32,7 @@ export default function MerchPage() {
   const [cartData, setCartData] = useState<any>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedSize, setSelectedSize] = useState('')
+  const [selectedVariant, setSelectedVariant] = useState<any>(null)
   const [showCart, setShowCart] = useState(false)
   const [loading, setLoading] = useState(true)
   const [discountCode, setDiscountCode] = useState('')
@@ -100,19 +111,28 @@ export default function MerchPage() {
   const addToCart = async () => {
     if (!selectedProduct || !selectedSize) return
 
+    const metadata: any = {}
+    if (selectedProduct.type === 'printful' && selectedVariant) {
+      metadata.printful_variant_id = selectedVariant.id
+      metadata.printful_price = selectedVariant.price
+      metadata.printful_name = selectedVariant.name
+    }
+
     await fetch('/api/cart', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         product_id: selectedProduct.id,
         quantity: 1,
-        selected_size: selectedSize
+        selected_size: selectedSize,
+        metadata
       })
     })
 
     await loadCart()
     setSelectedProduct(null)
     setSelectedSize('')
+    setSelectedVariant(null)
     setShowCart(true)
   }
 
@@ -185,6 +205,11 @@ export default function MerchPage() {
                 onClick={() => {
                   setSelectedProduct(product)
                   setSelectedSize(product.sizes[0] || '')
+                  if (product.type === 'printful' && product.variants?.length) {
+                    setSelectedVariant(product.variants[0])
+                  } else {
+                    setSelectedVariant(null)
+                  }
                 }}
                 className="bg-neutral-900 rounded-xl overflow-hidden cursor-pointer hover:border-red-500/50 border border-white/10 transition-all"
               >
@@ -199,7 +224,12 @@ export default function MerchPage() {
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-white">{product.name}</h3>
-                  <p className="text-red-500 font-bold mt-1">CHF {product.price}</p>
+                  <p className="text-red-500 font-bold mt-1">
+                    CHF {selectedVariant && product.type === 'printful' ? selectedVariant.price : product.price}
+                  </p>
+                  {product.type === 'printful' && (
+                    <span className="text-white/40 text-xs">Print on Demand</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -235,7 +265,34 @@ export default function MerchPage() {
               
               <p className="text-white/60 text-sm mb-4">{selectedProduct.description}</p>
               
-              {selectedProduct.sizes.length > 0 && (
+              {selectedProduct.type === 'printful' && selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                <div className="mb-4">
+                  <label className="text-white/70 text-sm mb-2 block">Variante</label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProduct.variants.map((variant: any) => (
+                      <button
+                        key={variant.id}
+                        onClick={() => {
+                          setSelectedVariant(variant)
+                          setSelectedSize(variant.size || 'One Size')
+                        }}
+                        className={`px-3 py-2 rounded-lg border text-sm ${
+                          selectedVariant?.id === variant.id
+                            ? 'border-red-500 bg-red-500/20 text-white'
+                            : 'border-white/20 text-white/70'
+                        }`}
+                      >
+                        {variant.size}{variant.color ? ` / ${variant.color}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedVariant && (
+                    <p className="text-red-500 font-bold mt-2">CHF {selectedVariant.price}</p>
+                  )}
+                </div>
+              )}
+
+              {selectedProduct.type !== 'printful' && selectedProduct.sizes.length > 0 && (
                 <div className="mb-4">
                   <label className="text-white/70 text-sm mb-2 block">Grösse</label>
                   <div className="flex flex-wrap gap-2">
@@ -258,7 +315,7 @@ export default function MerchPage() {
               
               <button
                 onClick={addToCart}
-                disabled={!selectedSize}
+                disabled={!selectedSize || (selectedProduct.type === 'printful' && !selectedVariant)}
                 className="w-full py-3 bg-red-500 hover:bg-red-600 disabled:bg-white/10 text-white font-semibold rounded-lg"
               >
                 In den Warenkorb

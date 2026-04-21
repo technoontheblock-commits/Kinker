@@ -138,7 +138,11 @@ export async function POST(request: NextRequest) {
         is_ticket: isTicket,
         is_vip: isVIP,
         event_id: eventId,
-        metadata: item.metadata,
+        metadata: {
+          ...item.metadata,
+          printful_variant_id: item.metadata?.printful_variant_id || null,
+          printful_price: item.metadata?.printful_price || null,
+        },
       }
     })
 

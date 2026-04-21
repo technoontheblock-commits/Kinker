@@ -152,23 +152,13 @@ async function forwardToPrintful(supabase: any, order: any) {
       return
     }
 
-    // Get Printful variant IDs from products
+    // Build Printful items from order_items metadata
     const items = []
     for (const item of merchItems) {
-      const { data: product } = await supabase
-        .from('printful_products')
-        .select('variants')
-        .eq('printful_id', item.product_id)
-        .single()
-
-      // Try to find matching variant by size
-      const variant = product?.variants?.find((v: any) =>
-        v.size?.toLowerCase() === item.selected_size?.toLowerCase()
-      ) || product?.variants?.[0]
-
-      if (variant) {
+      const variantId = item.metadata?.printful_variant_id
+      if (variantId) {
         items.push({
-          variant_id: variant.id,
+          variant_id: variantId,
           quantity: item.quantity,
           retail_price: String(item.price),
           name: item.name,
@@ -177,7 +167,7 @@ async function forwardToPrintful(supabase: any, order: any) {
     }
 
     if (items.length === 0) {
-      console.log('No Printful variants found, skipping')
+      console.log('No Printful variants in order items, skipping')
       return
     }
 

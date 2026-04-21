@@ -52,12 +52,33 @@ export async function GET() {
       const result: any = { ...item }
       
       if (item.product_id) {
+        // Try local merchandise first
         const { data: product } = await supabase
           .from('merchandise')
           .select('id, name, price, image')
           .eq('id', item.product_id)
           .single()
-        result.product = product
+
+        if (product) {
+          result.product = product
+        } else {
+          // Try printful_products
+          const { data: printfulProduct } = await supabase
+            .from('printful_products')
+            .select('id, name, variants, thumbnail_url')
+            .eq('id', item.product_id)
+            .single()
+
+          if (printfulProduct) {
+            const variant = (printfulProduct as any).variants?.find((v: any) => v.id === item.metadata?.printful_variant_id)
+            result.product = {
+              id: printfulProduct.id,
+              name: printfulProduct.name,
+              price: parseFloat(variant?.price || (printfulProduct as any).variants?.[0]?.price || 0),
+              image: variant?.image || (printfulProduct as any).thumbnail_url,
+            }
+          }
+        }
       }
       
       if (item.event_ticket_id) {

@@ -5,7 +5,7 @@ import { requireAdmin } from '@/lib/auth'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-// GET /api/merchandise - Get all merchandise items
+// GET /api/merchandise - Get all merchandise items (local + Printful)
 export async function GET() {
   try {
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -13,18 +13,52 @@ export async function GET() {
     }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    const { data, error } = await supabase
+
+    // Get local merchandise
+    const { data: localProducts, error: localError } = await supabase
       .from('merchandise')
       .select('*')
       .eq('active', true)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('GET merchandise error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (localError) {
+      console.error('GET merchandise error:', localError)
     }
 
-    return NextResponse.json(data || [])
+    // Get Printful products
+    const { data: printfulProducts, error: printfulError } = await supabase
+      .from('printful_products')
+      .select('*')
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+
+    if (printfulError) {
+      console.error('GET printful products error:', printfulError)
+    }
+
+    // Transform Printful products to match local format
+    const transformedPrintful = (printfulProducts || []).map((p: any) => ({
+      id: p.id,
+      printful_id: p.printful_id,
+      name: p.name,
+      description: p.description,
+      price: p.variants?.[0]?.price || 0,
+      image: p.thumbnail_url,
+      category: 'printful',
+      sizes: p.variants?.map((v: any) => `${v.size}${v.color ? ` / ${v.color}` : ''}`).filter(Boolean) || [],
+      variants: p.variants || [],
+      stock: 999,
+      type: 'printful',
+      active: p.active,
+    }))
+
+    // Transform local products
+    const transformedLocal = (localProducts || []).map((p: any) => ({
+      ...p,
+      type: 'local',
+    }))
+
+    return NextResponse.json([...transformedLocal, ...transformedPrintful])
   } catch (error: any) {
     console.error('GET merchandise exception:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
