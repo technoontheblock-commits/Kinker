@@ -36,7 +36,8 @@ import {
   ExternalLink,
   Disc,
   Shirt,
-  Loader2
+  Loader2,
+  Code
 } from 'lucide-react'
 import Link from 'next/link'
 import { getEvents } from '@/lib/events'
@@ -230,9 +231,7 @@ export default function AdminDashboard() {
     { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
     { id: 'board', label: 'Board', icon: Layout, href: '/admin/board' },
     { id: 'dj-roster', label: 'DJ Roster', icon: Disc },
-    { id: 'printful', label: 'Printful', icon: Shirt },
-    { id: 'eventfrog', label: 'Eventfrog', icon: ExternalLink, href: '/admin/eventfrog' },
-    { id: 'rewards', label: 'Reward Validator', icon: Gift, href: '/admin/rewards' },
+    { id: 'developer', label: 'Developer', icon: Code },
   ]
 
   const unreadCount = notifications.filter(n => !n.read).length
@@ -2791,6 +2790,83 @@ export default function AdminDashboard() {
                 </form>
               </motion.div>
             </div>
+          )}
+
+          {/* Developer */}
+          {activeTab === 'developer' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h1 className="text-4xl font-bold text-white">Developer</h1>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <button
+                  onClick={() => setActiveTab('events')}
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left"
+                >
+                  <Calendar className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Events</h3>
+                  <p className="text-white/50 text-sm mt-1">Events verwalten</p>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('tickets')}
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left"
+                >
+                  <Ticket className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Tickets</h3>
+                  <p className="text-white/50 text-sm mt-1">Tickets verwalten</p>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('rental')}
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left"
+                >
+                  <Building className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Raumanfragen</h3>
+                  <p className="text-white/50 text-sm mt-1">Raumanfragen verwalten</p>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('printful')}
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left"
+                >
+                  <Shirt className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Printful</h3>
+                  <p className="text-white/50 text-sm mt-1">Produkte synchronisieren</p>
+                </button>
+
+                <a
+                  href="/admin/eventfrog"
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left block"
+                >
+                  <ExternalLink className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Eventfrog</h3>
+                  <p className="text-white/50 text-sm mt-1">Eventfrog Integration</p>
+                </a>
+
+                <a
+                  href="/admin/rewards"
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left block"
+                >
+                  <Gift className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Reward Validator</h3>
+                  <p className="text-white/50 text-sm mt-1">Rewards verifizieren</p>
+                </a>
+
+                <a
+                  href="/admin/email-test"
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left block"
+                >
+                  <Mail className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Email Test</h3>
+                  <p className="text-white/50 text-sm mt-1">E-Mails testen</p>
+                </a>
+              </div>
+            </motion.div>
           )}
         </main>
       </div>
