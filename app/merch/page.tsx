@@ -265,12 +265,22 @@ export default function MerchPage() {
             onClick={e => e.stopPropagation()}
           >
             {/* Image */}
-            <div className="relative h-56 sm:h-64 bg-neutral-800 rounded-t-2xl">
-              {selectedProduct.image ? (
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover rounded-t-2xl" />
+            <div className="relative h-64 sm:h-72 bg-white rounded-t-2xl">
+              {(selectedProduct.type === 'printful' && selectedVariant?.image) ? (
+                <img 
+                  src={selectedVariant.image} 
+                  alt={selectedVariant.name} 
+                  className="w-full h-full object-contain rounded-t-2xl p-4" 
+                />
+              ) : selectedProduct.image ? (
+                <img 
+                  src={selectedProduct.image} 
+                  alt={selectedProduct.name} 
+                  className="w-full h-full object-contain rounded-t-2xl p-4" 
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <ShoppingBag className="w-16 h-16 text-white/20" />
+                  <ShoppingBag className="w-16 h-16 text-neutral-300" />
                 </div>
               )}
               <button 
