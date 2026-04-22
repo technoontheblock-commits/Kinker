@@ -27,7 +27,7 @@ export function Footer() {
             </p>
             <div className="flex space-x-4">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/kinker_club/?hl=de"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-red-500 transition-colors"
@@ -35,7 +35,7 @@ export function Footer() {
                 <Instagram size={20} />
               </a>
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/kinkerbasel/?locale=de_DE"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-red-500 transition-colors"
@@ -43,7 +43,7 @@ export function Footer() {
                 <Facebook size={20} />
               </a>
               <a
-                href="mailto:backoffice@knkr.ch"
+                href="mailto:Backoffice@kinker.ch"
                 className="text-white/60 hover:text-red-500 transition-colors"
               >
                 <Mail size={20} />
