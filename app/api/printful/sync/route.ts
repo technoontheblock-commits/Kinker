@@ -15,7 +15,7 @@ export async function POST() {
     if (!auth.authorized) return auth.response
 
     const productsData = await getPrintfulProducts()
-    const products = productsData.data || []
+    const products = productsData.result || []
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const synced = []
@@ -23,25 +23,27 @@ export async function POST() {
     for (const product of products) {
       // Get full product details with variants
       const detail = await getPrintfulProduct(product.id)
-      const fullProduct = detail.data
+      const syncProduct = detail.result?.sync_product || {}
+      const syncVariants = detail.result?.sync_variants || []
 
-      const variants = fullProduct.variants?.map((v: any) => ({
+      const variants = syncVariants.map((v: any) => ({
         id: v.id,
+        variant_id: v.variant_id,
         name: v.name,
         sku: v.sku,
         price: v.retail_price,
-        size: v.size,
-        color: v.color,
-        image: v.preview_url || v.file?.preview_url,
-      })) || []
+        size: v.size || '',
+        color: v.color || '',
+        image: v.product?.image || v.files?.[0]?.preview_url || product.thumbnail_url,
+      }))
 
       const { data, error } = await supabase
         .from('printful_products')
         .upsert({
           printful_id: product.id,
           name: product.name,
-          description: fullProduct.description || '',
-          thumbnail_url: product.thumbnail_url || fullProduct.thumbnail_url,
+          description: syncProduct.description || '',
+          thumbnail_url: product.thumbnail_url,
           variants: variants,
           synced_at: new Date().toISOString(),
         }, { onConflict: 'printful_id' })

@@ -155,10 +155,10 @@ async function forwardToPrintful(supabase: any, order: any) {
     // Build Printful items from order_items metadata
     const items = []
     for (const item of merchItems) {
-      const variantId = item.metadata?.printful_variant_id
-      if (variantId) {
+      const syncVariantId = item.metadata?.printful_variant_id
+      if (syncVariantId) {
         items.push({
-          variant_id: variantId,
+          sync_variant_id: syncVariantId,
           quantity: item.quantity,
           retail_price: String(item.price),
           name: item.name,

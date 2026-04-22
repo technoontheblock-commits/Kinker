@@ -1,5 +1,5 @@
-// Printful API v2 Helper
-const PRINTFUL_API_URL = 'https://api.printful.com/v2'
+// Printful API v1 Helper
+const PRINTFUL_API_URL = 'https://api.printful.com'
 
 function getHeaders() {
   const token = process.env.PRINTFUL_API_TOKEN
@@ -50,20 +50,20 @@ export async function printfulPost(endpoint: string, body: any) {
   return res.json()
 }
 
-// Get store products
+// Get store products (v1)
 export async function getPrintfulProducts() {
   return printfulGet('/store/products')
 }
 
-// Get product details with variants
+// Get product details with variants (v1)
 export async function getPrintfulProduct(id: number) {
   return printfulGet(`/store/products/${id}`)
 }
 
-// Create order
+// Create order (v1)
 export async function createPrintfulOrder(orderData: {
   external_id?: string
-  shipping: string
+  shipping?: string
   recipient: {
     name: string
     address1: string
@@ -76,7 +76,8 @@ export async function createPrintfulOrder(orderData: {
     address2?: string
   }
   items: Array<{
-    variant_id: number
+    sync_variant_id?: number
+    variant_id?: number
     quantity: number
     retail_price?: string
     name?: string
@@ -85,12 +86,12 @@ export async function createPrintfulOrder(orderData: {
   return printfulPost('/orders', orderData)
 }
 
-// Get order by ID
+// Get order by ID (v1)
 export async function getPrintfulOrder(id: number) {
   return printfulGet(`/orders/${id}`)
 }
 
-// Get all orders
+// Get all orders (v1)
 export async function getPrintfulOrders() {
   return printfulGet('/orders')
 }
