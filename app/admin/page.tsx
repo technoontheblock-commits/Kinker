@@ -2804,6 +2804,33 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <button
+                  onClick={() => setActiveTab('events')}
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left"
+                >
+                  <Calendar className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Events</h3>
+                  <p className="text-white/50 text-sm mt-1">Events verwalten</p>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('tickets')}
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left"
+                >
+                  <Ticket className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Tickets</h3>
+                  <p className="text-white/50 text-sm mt-1">Tickets verwalten</p>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('rental')}
+                  className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left"
+                >
+                  <Building className="w-8 h-8 text-red-500 mb-3" />
+                  <h3 className="text-white font-semibold">Raumanfragen</h3>
+                  <p className="text-white/50 text-sm mt-1">Raumanfragen verwalten</p>
+                </button>
+
+                <button
                   onClick={() => setActiveTab('printful')}
                   className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left"
                 >
