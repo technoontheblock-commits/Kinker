@@ -85,6 +85,7 @@ export default function AdminDashboard() {
   const [printfulProducts, setPrintfulProducts] = useState<any[]>([])
   const [printfulOrders, setPrintfulOrders] = useState<any[]>([])
   const [printfulLoading, setPrintfulLoading] = useState(false)
+  const [printfulError, setPrintfulError] = useState('')
   
   // New user form state
   const [newUser, setNewUser] = useState({
@@ -569,13 +570,18 @@ export default function AdminDashboard() {
 
   const syncPrintfulProducts = async () => {
     setPrintfulLoading(true)
+    setPrintfulError('')
     try {
       const res = await fetch('/api/printful/sync', { method: 'POST' })
+      const data = await res.json()
       if (res.ok) {
         await loadPrintfulData()
+      } else {
+        setPrintfulError(data.error || 'Sync failed')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error syncing Printful:', error)
+      setPrintfulError(error.message || 'Network error')
     } finally {
       setPrintfulLoading(false)
     }
@@ -2592,6 +2598,9 @@ export default function AdminDashboard() {
                   Sync Products
                 </button>
               </div>
+              {printfulError && (
+                <p className="text-red-400 text-sm mb-4">{printfulError}</p>
+              )}
 
               {/* Products */}
               <div className="mb-12">

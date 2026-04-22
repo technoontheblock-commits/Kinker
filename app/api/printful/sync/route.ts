@@ -14,8 +14,22 @@ export async function POST() {
     const auth = await requireAdmin()
     if (!auth.authorized) return auth.response
 
+    // Check env vars
+    if (!process.env.PRINTFUL_API_TOKEN) {
+      console.error('PRINTFUL_API_TOKEN not set')
+      return NextResponse.json({ error: 'Printful API token not configured on server' }, { status: 500 })
+    }
+    if (!process.env.PRINTFUL_STORE_ID) {
+      console.error('PRINTFUL_STORE_ID not set')
+      return NextResponse.json({ error: 'Printful Store ID not configured on server' }, { status: 500 })
+    }
+
     const productsData = await getPrintfulProducts()
     const products = productsData.result || []
+
+    if (products.length === 0) {
+      return NextResponse.json({ success: true, synced: 0, products: [] })
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const synced = []
@@ -50,7 +64,9 @@ export async function POST() {
         .select()
         .single()
 
-      if (!error) {
+      if (error) {
+        console.error('Sync insert error:', error)
+      } else {
         synced.push(data)
       }
     }
@@ -62,6 +78,6 @@ export async function POST() {
     })
   } catch (error: any) {
     console.error('Printful sync error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Sync failed' }, { status: 500 })
   }
 }
