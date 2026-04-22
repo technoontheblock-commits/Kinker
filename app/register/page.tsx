@@ -84,9 +84,9 @@ export default function RegisterPage() {
       }
 
       setSuccess(true)
-      // Redirect to login after 2 seconds
+      // Redirect to email verification after 2 seconds
       setTimeout(() => {
-        router.push('/login')
+        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
       }, 2000)
     } catch (err: any) {
       setError(err.message)

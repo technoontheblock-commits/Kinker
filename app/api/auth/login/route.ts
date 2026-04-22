@@ -41,6 +41,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
+    // Check if email is verified
+    if (!user.email_verified) {
+      return NextResponse.json({
+        error: 'Email not verified',
+        needsVerification: true,
+        email: user.email
+      }, { status: 403 })
+    }
+
     // Update last login
     await supabase
       .from('users')
