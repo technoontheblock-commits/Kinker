@@ -217,14 +217,10 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'events', label: 'Events', icon: Calendar },
-    { id: 'tickets', label: 'Tickets', icon: Ticket },
     { id: 'users', label: 'User Management', icon: Users },
-    { id: 'rental', label: 'Raumanfragen', icon: Building },
     { id: 'vip-bookings', label: 'VIP Bookings', icon: Crown, href: '/admin/vip-bookings' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
     { id: 'newsletter', label: 'Newsletter', icon: Mail, href: '/admin/newsletter' },
-    { id: 'email-test', label: 'Email Test', icon: Mail, href: '/admin/email-test' },
     { id: 'careers', label: 'Careers', icon: Briefcase },
     { id: 'merchandise', label: 'Merch', icon: ShoppingBag },
     { id: 'orders', label: 'Bestellungen', icon: Package },
