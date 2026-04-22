@@ -569,6 +569,7 @@ export default function AdminDashboard() {
   }
 
   const syncPrintfulProducts = async () => {
+    console.log('[Printful] Sync button clicked')
     setPrintfulLoading(true)
     setPrintfulError('')
     try {
