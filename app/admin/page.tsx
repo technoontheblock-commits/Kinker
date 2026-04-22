@@ -233,7 +233,6 @@ export default function AdminDashboard() {
     { id: 'printful', label: 'Printful', icon: Shirt },
     { id: 'eventfrog', label: 'Eventfrog', icon: ExternalLink, href: '/admin/eventfrog' },
     { id: 'rewards', label: 'Reward Validator', icon: Gift, href: '/admin/rewards' },
-    { id: 'sumup', label: 'SumUp', icon: CreditCard, href: '/admin/sumup' },
   ]
 
   const unreadCount = notifications.filter(n => !n.read).length
