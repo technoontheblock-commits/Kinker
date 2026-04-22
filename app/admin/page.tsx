@@ -569,6 +569,7 @@ export default function AdminDashboard() {
   }
 
   const syncPrintfulProducts = async () => {
+    alert('Sync clicked!')
     console.log('[Printful] Sync button clicked')
     setPrintfulLoading(true)
     setPrintfulError('')
@@ -2587,7 +2588,8 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-4xl font-bold text-white">Printful</h1>
                 <button
-                  onClick={syncPrintfulProducts}
+                  type="button"
+                  onClick={() => { alert('Button clicked!'); syncPrintfulProducts() }}
                   disabled={printfulLoading}
                   className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-lg transition-colors"
                 >
