@@ -84,7 +84,12 @@ export async function POST() {
         .single()
 
       if (error) {
-        return NextResponse.json({ error: 'Supabase upsert failed', detail: error }, { status: 500 })
+        return NextResponse.json({ 
+          error: 'Supabase upsert failed', 
+          detail: error?.message || error?.details || JSON.stringify(error),
+          code: error?.code,
+          hint: error?.hint,
+        }, { status: 500 })
       }
       synced.push(data)
     }
