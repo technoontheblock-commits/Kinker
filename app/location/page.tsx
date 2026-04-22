@@ -40,7 +40,7 @@ export default function LocationPage() {
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2689.6!2d7.605!3d47.5306!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4791b9654ac4b901%3A0xf0d3e3918eff88e9!2sKinker!5e0!3m2!1sen!2sch!4v1711130400000!5m2!1sen!2sch"
             width="100%"
             height="100%"
-            style={{ border: 0, filter: 'grayscale(100%) invert(92%) contrast(83%)' }}
+            style={{ border: 0, filter: 'grayscale(60%) brightness(1.05)' }}
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
