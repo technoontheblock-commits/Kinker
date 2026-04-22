@@ -109,7 +109,14 @@ export default function MerchPage() {
   }
 
   const addToCart = async () => {
-    if (!selectedProduct || !selectedSize) return
+    if (!selectedProduct || !selectedSize) {
+      alert('Bitte Grösse/Variante wählen')
+      return
+    }
+    if (selectedProduct.type === 'printful' && !selectedVariant) {
+      alert('Bitte Variante wählen')
+      return
+    }
 
     const metadata: any = {}
     if (selectedProduct.type === 'printful' && selectedVariant) {
@@ -118,22 +125,32 @@ export default function MerchPage() {
       metadata.printful_name = selectedVariant.name
     }
 
-    await fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        product_id: selectedProduct.id,
-        quantity: 1,
-        selected_size: selectedSize,
-        metadata
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: selectedProduct.id,
+          quantity: 1,
+          selected_size: selectedSize,
+          metadata
+        })
       })
-    })
+      
+      if (!res.ok) {
+        const err = await res.json()
+        alert('Fehler: ' + (err.error || 'Unbekannter Fehler'))
+        return
+      }
 
-    await loadCart()
-    setSelectedProduct(null)
-    setSelectedSize('')
-    setSelectedVariant(null)
-    setShowCart(true)
+      await loadCart()
+      setSelectedProduct(null)
+      setSelectedSize('')
+      setSelectedVariant(null)
+      setShowCart(true)
+    } catch (e: any) {
+      alert('Netzwerkfehler: ' + e.message)
+    }
   }
 
   const updateQuantity = async (itemId: string, delta: number) => {
