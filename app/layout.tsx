@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { Navigation } from '@/components/navigation'
+import { FooterWrapper } from '@/components/footer-wrapper'
 import { LanguageProvider } from '@/components/language-provider'
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
@@ -38,6 +39,7 @@ export default function RootLayout({
         <LanguageProvider>
           <Navigation />
           <main>{children}</main>
+          <FooterWrapper />
           <SpeedInsights />
         </LanguageProvider>
       </body>
