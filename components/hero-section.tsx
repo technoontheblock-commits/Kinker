@@ -95,33 +95,37 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
         >
-          <h1
+          <div
             ref={titleRef}
-            className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold font-display mb-6 inline-block"
-            style={{
-              perspective: '1000px',
-              transformStyle: 'preserve-3d',
-            }}
+            className="inline-block py-16 px-24 sm:py-20 sm:px-32 md:py-24 md:px-40"
             onMouseMove={handleMouseMove}
-            onMouseLeave={(e) => {
+            onMouseLeave={() => {
               handleMouseLeave()
               setIsHovered(false)
             }}
             onMouseEnter={() => setIsHovered(true)}
           >
-            <span
-              className={titleWrapperClasses}
+            <h1
+              className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold font-display mb-6 inline-block"
               style={{
-                display: 'inline-block',
-                transform: FEATURE_FLAGS.hover3DTilt
-                  ? `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale(${isHovered ? 1.05 : 1})`
-                  : undefined,
+                perspective: '1000px',
                 transformStyle: 'preserve-3d',
               }}
             >
-              KINKER
-            </span>
-          </h1>
+              <span
+                className={titleWrapperClasses}
+                style={{
+                  display: 'inline-block',
+                  transform: FEATURE_FLAGS.hover3DTilt
+                    ? `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale(${isHovered ? 1.05 : 1})`
+                    : undefined,
+                  transformStyle: 'preserve-3d',
+                }}
+              >
+                KINKER
+              </span>
+            </h1>
+          </div>
         </motion.div>
 
         <motion.p
