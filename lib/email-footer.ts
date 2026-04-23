@@ -26,12 +26,9 @@ export function getLightFooter(): string {
       <p style="margin: 0 0 16px; font-size: 14px; color: #999999; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <strong style="color: #dc2626;">KINKER</strong>
       </p>
-      <p style="margin: 0 0 4px; font-size: 12px; color: #bbbbbb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <p style="margin: 0 0 16px; font-size: 12px; color: #bbbbbb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         ${commonInfo.address}<br>
         ${commonInfo.city}, ${commonInfo.country}
-      </p>
-      <p style="margin: 0 0 12px; font-size: 12px; color: #bbbbbb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        ${commonInfo.friday} &nbsp;|&nbsp; ${commonInfo.saturday}
       </p>
       <p style="margin: 0 0 16px; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <a href="mailto:${commonInfo.supportEmail}" style="color: #dc2626; text-decoration: none;">${commonInfo.supportEmail}</a>
@@ -56,11 +53,8 @@ export function getDarkFooter(): string {
         Du hast Fragen?<br>
         <a href="mailto:${commonInfo.supportEmail}" style="color: #FF4D00; text-decoration: none;">${commonInfo.supportEmail}</a>
       </p>
-      <p style="margin: 0 0 12px; font-size: 12px; color: #4B5563; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        ${commonInfo.address} • ${commonInfo.city}, ${commonInfo.country}
-      </p>
       <p style="margin: 0 0 16px; font-size: 12px; color: #4B5563; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        ${commonInfo.friday} &nbsp;|&nbsp; ${commonInfo.saturday}
+        ${commonInfo.address} • ${commonInfo.city}, ${commonInfo.country}
       </p>
       <p style="margin: 0; font-size: 12px; color: #4B5563; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <a href="${commonInfo.instagram}" style="color: #FF4D00; text-decoration: none; margin: 0 8px;">Instagram</a>
