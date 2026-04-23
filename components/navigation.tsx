@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Globe } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { LogoIcon } from './logo'
@@ -15,7 +15,7 @@ export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const { language, setLanguage, t } = useLanguage()
+  const { t } = useLanguage()
   const pathname = usePathname()
 
   useEffect(() => {
@@ -39,11 +39,6 @@ export function Navigation() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
-  const toggleLanguage = () => {
-    const newLang = language === 'EN' ? 'DE' : 'EN'
-    setLanguage(newLang)
-  }
 
   const navItems = [
     { name: t.nav.home, href: '/' },
@@ -83,16 +78,6 @@ export function Navigation() {
                 {item.name}
               </Link>
             ))}
-            {/* Language Toggle */}
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white transition-colors"
-              title="Switch language"
-            >
-              <Globe className="w-4 h-4" />
-              <span>{language}</span>
-            </button>
-            
             <Button
               variant="glitch"
               size="sm"
@@ -134,18 +119,6 @@ export function Navigation() {
                 </Link>
               </div>
             ))}
-            
-            {/* Mobile Language Toggle */}
-            <button
-              onClick={() => {
-                toggleLanguage()
-                setIsOpen(false)
-              }}
-              className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-            >
-              <Globe className="w-5 h-5" />
-              <span className="text-lg font-medium">{language === 'EN' ? 'English' : 'Deutsch'}</span>
-            </button>
             
             <div>
               <Button
