@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 import { NextRequest, NextResponse } from 'next/server'
-import { getDarkFooter } from '@/lib/email-footer'
+import { wrapEmail } from '@/lib/email-layout'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,110 +9,76 @@ export async function POST(request: NextRequest) {
       console.warn('RESEND_API_KEY not configured, skipping email')
       return NextResponse.json({ success: true, warning: 'Email service not configured' })
     }
-    
+
     const resend = new Resend(apiKey)
     const { to, name, jobTitle, department, applicationId } = await request.json()
 
-    const html = `
-    <!DOCTYPE html>
-    <html lang="de">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Bewerbung bestätigt</title>
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-        <tr>
-          <td align="center">
-            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); border-radius: 16px; overflow: hidden; border: 1px solid #333;">
-              
-              <!-- Header -->
-              <tr>
-                <td style="padding: 40px 30px 20px; text-align: center; border-bottom: 2px solid #FF4D00;">
-                  <h1 style="margin: 0; font-size: 32px; font-weight: 800; color: #FF4D00; letter-spacing: 2px;">KINKER</h1>
-                  <p style="margin: 8px 0 0; font-size: 14px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 4px;">BASEL</p>
-                </td>
-              </tr>
-              
-              <!-- Success Message -->
-              <tr>
-                <td style="padding: 40px 30px; text-align: center;">
-                  <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #10B981, #059669); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; font-size: 32px;">
-                    ✓
-                  </div>
-                  <h2 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: #ffffff;">
-                    Bewerbung eingereicht!
-                  </h2>
-                  <p style="margin: 0; font-size: 16px; color: #9CA3AF;">
-                    Vielen Dank für dein Interesse an KINKER Basel.
-                  </p>
-                </td>
-              </tr>
-              
-              <!-- Application Details -->
-              <tr>
-                <td style="padding: 0 30px 40px;">
-                  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a1a; border-radius: 12px; overflow: hidden;">
-                    <tr style="background-color: #262626;">
-                      <td colspan="2" style="padding: 16px; text-align: center;">
-                        <span style="font-size: 12px; text-transform: uppercase; color: #9CA3AF; letter-spacing: 1px;">Bewerbungsdetails</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 16px; border-bottom: 1px solid #333; color: #9CA3AF; font-size: 14px;">Bewerbungs-ID</td>
-                      <td style="padding: 16px; border-bottom: 1px solid #333; color: #FF4D00; font-family: monospace; font-weight: 600; text-align: right;">
-                        #${applicationId?.slice(-8).toUpperCase() || 'N/A'}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 16px; border-bottom: 1px solid #333; color: #9CA3AF; font-size: 14px;">Position</td>
-                      <td style="padding: 16px; border-bottom: 1px solid #333; color: #ffffff; font-weight: 600; text-align: right;">
-                        ${jobTitle}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 16px; border-bottom: 1px solid #333; color: #9CA3AF; font-size: 14px;">Abteilung</td>
-                      <td style="padding: 16px; border-bottom: 1px solid #333; color: #ffffff; text-align: right;">
-                        ${department || 'N/A'}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 16px; color: #9CA3AF; font-size: 14px;">Bewerber</td>
-                      <td style="padding: 16px; color: #ffffff; text-align: right;">
-                        ${name}
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-              
-              <!-- Next Steps -->
-              <tr>
-                <td style="padding: 0 30px 40px;">
-                  <div style="background: linear-gradient(135deg, rgba(255, 77, 0, 0.1), rgba(255, 77, 0, 0.05)); border: 1px solid rgba(255, 77, 0, 0.3); border-radius: 12px; padding: 24px;">
-                    <h3 style="margin: 0 0 16px; font-size: 16px; color: #FF4D00; font-weight: 600;">
-                      Was passiert als Nächstes?
-                    </h3>
-                    <ul style="margin: 0; padding-left: 20px; color: #D1D5DB; font-size: 14px; line-height: 1.8;">
-                      <li>Wir prüfen deine Bewerbung sorgfältig</li>
-                      <li>Du erhältst innerhalb von 5-7 Werktagen eine Rückmeldung</li>
-                      <li>Bei positivem Interesse laden wir dich zum Gespräch ein</li>
-                      <li>Fragen? Schreibe uns: jobs@knkr.ch</li>
-                    </ul>
-                  </div>
-                </td>
-              </tr>
-              
-              ${getDarkFooter()}
-              
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-    `
+    const contentHtml = `
+      <tr>
+        <td style="padding: 40px 32px; text-align: center;">
+          <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #10B981, #059669); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #ffffff;">
+            ✓
+          </div>
+          <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #111111; font-family: sans-serif;">
+            Bewerbung eingereicht!
+          </h2>
+          <p style="margin: 0; font-size: 15px; color: #666666; font-family: sans-serif;">
+            Vielen Dank für dein Interesse an KINKER.
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 0 32px 32px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fafafa; border-radius: 12px; overflow: hidden; border: 1px solid #e5e5e5;">
+            <tr style="background-color: #f5f5f5;">
+              <td colspan="2" style="padding: 16px; text-align: center;">
+                <span style="font-size: 12px; text-transform: uppercase; color: #666666; letter-spacing: 1px; font-family: sans-serif; font-weight: 600;">Bewerbungsdetails</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 16px; border-bottom: 1px solid #e5e5e5; color: #666666; font-size: 14px; font-family: sans-serif;">Bewerbungs-ID</td>
+              <td style="padding: 16px; border-bottom: 1px solid #e5e5e5; color: #dc2626; font-family: monospace; font-weight: 600; text-align: right; font-size: 14px;">
+                #${applicationId?.slice(-8).toUpperCase() || 'N/A'}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 16px; border-bottom: 1px solid #e5e5e5; color: #666666; font-size: 14px; font-family: sans-serif;">Position</td>
+              <td style="padding: 16px; border-bottom: 1px solid #e5e5e5; color: #111111; font-weight: 600; text-align: right; font-size: 14px; font-family: sans-serif;">
+                ${jobTitle}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 16px; border-bottom: 1px solid #e5e5e5; color: #666666; font-size: 14px; font-family: sans-serif;">Abteilung</td>
+              <td style="padding: 16px; border-bottom: 1px solid #e5e5e5; color: #111111; text-align: right; font-size: 14px; font-family: sans-serif;">
+                ${department || 'N/A'}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 16px; color: #666666; font-size: 14px; font-family: sans-serif;">Bewerber</td>
+              <td style="padding: 16px; color: #111111; text-align: right; font-size: 14px; font-family: sans-serif;">
+                ${name}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 0 32px 32px;">
+          <div style="background: #fafafa; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
+            <h3 style="margin: 0 0 16px; font-size: 16px; color: #dc2626; font-weight: 600; font-family: sans-serif;">
+              Was passiert als Nächstes?
+            </h3>
+            <ul style="margin: 0; padding-left: 20px; color: #555555; font-size: 14px; line-height: 1.8; font-family: sans-serif;">
+              <li>Wir prüfen deine Bewerbung sorgfältig</li>
+              <li>Du erhältst innerhalb von 5-7 Werktagen eine Rückmeldung</li>
+              <li>Bei positivem Interesse laden wir dich zum Gespräch ein</li>
+              <li>Fragen? Schreibe uns: <a href="mailto:jobs@knkr.ch" style="color: #dc2626; text-decoration: none;">jobs@knkr.ch</a></li>
+            </ul>
+          </div>
+        </td>
+      </tr>`
+
+    const html = wrapEmail(contentHtml, 'Bewerbung bestätigt')
 
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',

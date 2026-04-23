@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
-import { getDarkFooter } from '@/lib/email-footer'
+import { wrapEmail } from '@/lib/email-layout'
 
 const resendApiKey = process.env.RESEND_API_KEY
 const DUMMY_EMAIL = 'technoontheblock@gmail.com'
 
 export async function POST(request: Request) {
-  // Check if Resend is configured
   if (!resendApiKey) {
     console.error('RESEND_API_KEY not configured')
     return NextResponse.json(
@@ -34,9 +33,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Send email to club
+    // Send email to club (simple internal notification)
     await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
       to: DUMMY_EMAIL,
       subject: `Contact Form: ${subject}`,
       replyTo: email,
@@ -66,27 +65,30 @@ export async function POST(request: Request) {
     })
 
     // Send confirmation to user
-    await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: DUMMY_EMAIL,
-      subject: 'We received your message',
-      html: `
-        <div style="background: #000; color: #fff; font-family: system-ui, sans-serif; padding: 40px; max-width: 600px;">
-          <h1 style="font-size: 32px; margin-bottom: 20px;">KINKER<span style="color: #ef4444;">.</span></h1>
-          <h2 style="font-size: 24px; margin-bottom: 20px;">Thanks for reaching out!</h2>
-          <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-            Hi ${name},
+    const contentHtml = `
+      <tr>
+        <td style="padding: 40px 32px; text-align: center;">
+          <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #111111; font-family: sans-serif;">
+            Thanks for reaching out!
+          </h2>
+          <p style="margin: 0 0 8px; font-size: 15px; color: #666666; font-family: sans-serif;">
+            Hi <strong style="color: #111111;">${name}</strong>,
           </p>
-          <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+          <p style="margin: 0 0 32px; font-size: 15px; color: #666666; line-height: 1.5; font-family: sans-serif;">
             We've received your message and will get back to you as soon as possible.
           </p>
-          <div style="background: #111; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; color: #666; font-size: 14px;">Your message:</p>
-            <p style="margin: 10px 0 0 0; font-style: italic;">${subject}</p>
+          <div style="background-color: #fafafa; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
+            <p style="margin: 0 0 8px; color: #888888; font-size: 13px; font-family: sans-serif;">Your message:</p>
+            <p style="margin: 0; font-size: 15px; color: #111111; font-style: italic; font-family: sans-serif;">${subject}</p>
           </div>
-          ${getDarkFooter()}
-        </div>
-      `,
+        </td>
+      </tr>`
+
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+      to: DUMMY_EMAIL,
+      subject: 'We received your message',
+      html: wrapEmail(contentHtml, 'Message Received')
     })
 
     return NextResponse.json(

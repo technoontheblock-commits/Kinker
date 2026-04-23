@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { getDarkFooter } from '@/lib/email-footer'
+import { wrapEmail } from '@/lib/email-layout'
 import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -67,85 +67,27 @@ export async function POST(request: NextRequest) {
     const results = []
     for (const email of recipients) {
       try {
+        const contentHtml = `
+          <tr>
+            <td style="padding: 40px 32px; color: #111111; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              ${escapeHtml(content)}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 32px 24px; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #888888; font-family: sans-serif;">
+                Du erhältst diese E-Mail, weil du dich für den KINKER Newsletter angemeldet hast.
+              </p>
+            </td>
+          </tr>`
+
+        const html = wrapEmail(contentHtml, subject)
+
         await resend.emails.send({
           from: `${fromName} <${fromEmail}>`,
           to: email,
           subject: subject,
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <meta name="color-scheme" content="dark">
-              <meta name="supported-color-schemes" content="dark">
-              <title>${subject}</title>
-              <style>
-                :root {
-                  color-scheme: dark;
-                }
-                body {
-                  margin: 0;
-                  padding: 0;
-                  background-color: #000000 !important;
-                  color: #ffffff !important;
-                }
-                .container {
-                  background-color: #111111 !important;
-                  border: 1px solid #333333 !important;
-                }
-                .header {
-                  border-bottom: 1px solid #333333 !important;
-                }
-                .footer {
-                  border-top: 1px solid #333333 !important;
-                  color: #666666 !important;
-                }
-                a {
-                  color: #ef4444 !important;
-                }
-              </style>
-            </head>
-            <body style="margin: 0; padding: 0; background-color: #000000; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
-              <!-- Wrapper -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #000000;">
-                <tr>
-                  <td align="center" style="padding: 40px 20px;">
-                    <!-- Main Container -->
-                    <table width="600" cellpadding="0" cellspacing="0" border="0" class="container" style="max-width: 600px; width: 100%; background-color: #111111; border-radius: 16px; border: 1px solid #333333;">
-                      
-                      <!-- Header -->
-                      <tr>
-                        <td class="header" style="padding: 40px; text-align: center; border-bottom: 1px solid #333333;">
-                          <h1 style="margin: 0; font-size: 32px; font-weight: bold; color: #ffffff; letter-spacing: -1px;">
-                            KINKER<span style="color: #ef4444;">.</span>
-                          </h1>
-                        </td>
-                      </tr>
-                      
-                      <!-- Content -->
-                      <tr>
-                        <td style="padding: 40px; color: #ffffff;">
-                          ${escapeHtml(content)}
-                        </td>
-                      </tr>
-                      
-                      ${getDarkFooter().replace('</td>', '</td>')}
-                      <tr>
-                        <td style="padding: 0 30px 20px; text-align: center; background-color: #0d0d0d;">
-                          <p style="margin: 0; font-size: 11px; color: #666666;">
-                            Du erhältst diese E-Mail, weil du dich für den KINKER Newsletter angemeldet hast.
-                          </p>
-                        </td>
-                      </tr>
-                      
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </body>
-            </html>
-          `
+          html
         })
         results.push({ email, status: 'sent' })
       } catch (error) {
