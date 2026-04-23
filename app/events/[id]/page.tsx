@@ -277,31 +277,33 @@ export default function EventDetailPage() {
                 )}
               </div>
 
-              {/* VIP Room Booking */}
-              <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 rounded-lg p-6 border border-yellow-500/20">
-                <div className="flex items-center gap-3 mb-3">
-                  <Crown className="w-6 h-6 text-yellow-400" />
-                  <h3 className="text-xl font-bold text-white font-display">VIP Room</h3>
+              {/* VIP Room Booking - temporarily hidden */}
+              {false && (
+                <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 rounded-lg p-6 border border-yellow-500/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Crown className="w-6 h-6 text-yellow-400" />
+                    <h3 className="text-xl font-bold text-white font-display">VIP Room</h3>
+                  </div>
+                  <p className="text-white/60 text-sm mb-4">
+                    Experience the ultimate luxury at KINKER. Book your VIP room for an unforgettable night.
+                  </p>
+                  <div className="flex items-start gap-2 text-yellow-400/80 text-sm mb-4">
+                    <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>Includes exclusive seating, premium service, and bottle service options.</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:text-yellow-300"
+                    asChild
+                  >
+                    <Link href="/vip-booking">
+                      <Crown className="mr-2 h-4 w-4" />
+                      Book VIP Room
+                    </Link>
+                  </Button>
                 </div>
-                <p className="text-white/60 text-sm mb-4">
-                  Experience the ultimate luxury at KINKER. Book your VIP room for an unforgettable night.
-                </p>
-                <div className="flex items-start gap-2 text-yellow-400/80 text-sm mb-4">
-                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>Includes exclusive seating, premium service, and bottle service options.</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:text-yellow-300"
-                  asChild
-                >
-                  <Link href="/vip-booking">
-                    <Crown className="mr-2 h-4 w-4" />
-                    Book VIP Room
-                  </Link>
-                </Button>
-              </div>
+              )}
             </div>
           </div>
         </section>
@@ -508,31 +510,33 @@ export default function EventDetailPage() {
               )}
             </div>
 
-            {/* VIP Room Booking */}
-            <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 rounded-lg p-6 border border-yellow-500/20">
-              <div className="flex items-center gap-3 mb-3">
-                <Crown className="w-6 h-6 text-yellow-400" />
-                <h3 className="text-xl font-bold text-white font-display">VIP Room</h3>
+            {/* VIP Room Booking - temporarily hidden */}
+            {false && (
+              <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 rounded-lg p-6 border border-yellow-500/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <Crown className="w-6 h-6 text-yellow-400" />
+                  <h3 className="text-xl font-bold text-white font-display">VIP Room</h3>
+                </div>
+                <p className="text-white/60 text-sm mb-4">
+                  Experience the ultimate luxury at KINKER. Book your VIP room for an unforgettable night.
+                </p>
+                <div className="flex items-start gap-2 text-yellow-400/80 text-sm mb-4">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>Includes exclusive seating, premium service, and bottle service options.</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:text-yellow-300"
+                  asChild
+                >
+                  <Link href="/vip-booking">
+                    <Crown className="mr-2 h-4 w-4" />
+                    Book VIP Room
+                  </Link>
+                </Button>
               </div>
-              <p className="text-white/60 text-sm mb-4">
-                Experience the ultimate luxury at KINKER. Book your VIP room for an unforgettable night.
-              </p>
-              <div className="flex items-start gap-2 text-yellow-400/80 text-sm mb-4">
-                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Includes exclusive seating, premium service, and bottle service options.</span>
-              </div>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:text-yellow-300"
-                asChild
-              >
-                <Link href="/vip-booking">
-                  <Crown className="mr-2 h-4 w-4" />
-                  Book VIP Room
-                </Link>
-              </Button>
-            </div>
+            )}
 
             {/* Location Card */}
             <div className="bg-neutral-900 rounded-lg p-6 border border-white/10">
