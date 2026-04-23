@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const contentHtml = `
       <tr>
         <td style="padding: 40px 32px; text-align: center;">
-          <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #10B981, #059669); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #ffffff;">
+          <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #10B981, #059669); border-radius: 50%; margin: 0 auto 24px; text-align: center; line-height: 64px; font-size: 32px; color: #ffffff;">
             ✓
           </div>
           <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #111111; font-family: sans-serif;">
