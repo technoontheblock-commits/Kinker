@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
             </td>
           </tr>`
 
-        const html = wrapEmail(contentHtml, subject)
+        const html = wrapEmail(contentHtml, subject, email)
 
         await resend.emails.send({
           from: `${fromName} <${fromEmail}>`,

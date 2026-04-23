@@ -7,8 +7,9 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kinker.ch'
 
 /**
  * Wraps email content in the standard KINKER light-themed HTML layout.
+ * @param unsubscribeEmail - If provided, adds an unsubscribe link to the footer.
  */
-export function wrapEmail(contentHtml: string, pageTitle?: string): string {
+export function wrapEmail(contentHtml: string, pageTitle?: string, unsubscribeEmail?: string): string {
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -37,7 +38,7 @@ export function wrapEmail(contentHtml: string, pageTitle?: string): string {
             </td>
           </tr>
           ${contentHtml}
-          ${getStandardFooter()}
+          ${getStandardFooter(unsubscribeEmail)}
         </table>
       </td>
     </tr>
@@ -46,7 +47,16 @@ export function wrapEmail(contentHtml: string, pageTitle?: string): string {
 </html>`
 }
 
-function getStandardFooter(): string {
+function getStandardFooter(unsubscribeEmail?: string): string {
+  const unsubscribeRow = unsubscribeEmail ? `
+  <tr>
+    <td style="padding:0 32px 16px;text-align:center;background-color:#fafafa">
+      <a href="${siteUrl}/unsubscribe?email=${encodeURIComponent(unsubscribeEmail)}" style="display:inline-block;padding:8px 20px;background-color:#ffffff;border:1px solid #dc2626;border-radius:8px;color:#dc2626;text-decoration:none;font-size:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:600;">
+        Vom Newsletter abmelden
+      </a>
+    </td>
+  </tr>` : ''
+
   return `
   <tr>
     <td style="padding:32px;text-align:center;background-color:#fafafa;border-top:1px solid #e5e5e5">
@@ -66,5 +76,5 @@ function getStandardFooter(): string {
         <a href="https://www.facebook.com/kinkerbasel/" style="color:#dc2626;text-decoration:none;margin:0 8px;">Facebook</a>
       </p>
     </td>
-  </tr>`
+  </tr>${unsubscribeRow}`
 }
