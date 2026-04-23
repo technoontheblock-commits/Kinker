@@ -6,8 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     const apiKey = process.env.RESEND_API_KEY
     if (!apiKey) {
-      console.warn('RESEND_API_KEY not configured, skipping email')
-      return NextResponse.json({ success: true, warning: 'Email service not configured' })
+      console.warn('RESEND_API_KEY nicht konfiguriert, E-Mail wird übersprungen')
+      return NextResponse.json({ success: true, warning: 'E-Mail-Service nicht konfiguriert' })
     }
 
     const resend = new Resend(apiKey)
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Application confirmation email error:', error)
     return NextResponse.json(
-      { error: 'Failed to send email' },
+      { error: 'E-Mail konnte nicht gesendet werden' },
       { status: 500 }
     )
   }

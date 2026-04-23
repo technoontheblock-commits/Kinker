@@ -8,19 +8,19 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await requireAdmin()
     if (!auth.authorized) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const body = await request.json()
     const { email } = body
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
+      return NextResponse.json({ error: 'Gültige E-Mail erforderlich' }, { status: 400 })
     }
 
     const apiKey = process.env.RESEND_API_KEY
     if (!apiKey) {
-      return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 })
+      return NextResponse.json({ error: 'RESEND_API_KEY nicht konfiguriert' }, { status: 500 })
     }
 
     const resend = new Resend(apiKey)
@@ -84,6 +84,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, code: testCode })
   } catch (error: any) {
     console.error('Test verification email error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to send' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Senden fehlgeschlagen' }, { status: 500 })
   }
 }

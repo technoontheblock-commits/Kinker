@@ -403,7 +403,7 @@ export async function POST(request: NextRequest) {
           html
         })
       } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError)
+        console.error('Bestätigungs-E-Mail konnte nicht gesendet werden:', emailError)
       }
     }
 

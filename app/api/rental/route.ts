@@ -28,7 +28,7 @@ export async function GET() {
     return NextResponse.json(data || [])
   } catch (error: any) {
     console.error('GET rental inquiries exception:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Interner Serverfehler' }, { status: 500 })
   }
 }
 
@@ -159,13 +159,13 @@ export async function POST(request: NextRequest) {
           html
         })
       } catch (emailError) {
-        console.error('Failed to send rental confirmation email:', emailError)
+        console.error('Raumbestätigung konnte nicht gesendet werden:', emailError)
       }
     }
 
     return NextResponse.json(data)
   } catch (error: any) {
     console.error('POST rental inquiry exception:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Interner Serverfehler' }, { status: 500 })
   }
 }
