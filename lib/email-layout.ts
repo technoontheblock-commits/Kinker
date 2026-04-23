@@ -48,14 +48,8 @@ export function wrapEmail(contentHtml: string, pageTitle?: string, unsubscribeEm
 }
 
 function getStandardFooter(unsubscribeEmail?: string): string {
-  const unsubscribeRow = unsubscribeEmail ? `
-  <tr>
-    <td style="padding:0 32px 16px;text-align:center;background-color:#fafafa">
-      <a href="${siteUrl}/unsubscribe?email=${encodeURIComponent(unsubscribeEmail)}" style="display:inline-block;padding:8px 20px;background-color:#ffffff;border:1px solid #dc2626;border-radius:8px;color:#dc2626;text-decoration:none;font-size:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:600;">
-        Vom Newsletter abmelden
-      </a>
-    </td>
-  </tr>` : ''
+  const unsubscribeLink = unsubscribeEmail ? `
+        <a href="${siteUrl}/unsubscribe?email=${encodeURIComponent(unsubscribeEmail)}" style="color:#bbbbbb;text-decoration:underline;font-size:10px;">Abmelden</a>` : ''
 
   return `
   <tr>
@@ -70,11 +64,14 @@ function getStandardFooter(unsubscribeEmail?: string): string {
       <p style="margin:0 0 16px;font-size:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
         <a href="mailto:support@kinker.ch" style="color:#dc2626;text-decoration:none;">support@kinker.ch</a>
       </p>
-      <p style="margin:0;font-size:12px;color:#bbbbbb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+      <p style="margin:0 0 8px;font-size:12px;color:#bbbbbb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
         <a href="https://www.instagram.com/kinker_club/" style="color:#dc2626;text-decoration:none;margin:0 8px;">Instagram</a>
         |
         <a href="https://www.facebook.com/kinkerbasel/" style="color:#dc2626;text-decoration:none;margin:0 8px;">Facebook</a>
       </p>
+      <p style="margin:0;font-size:10px;color:#bbbbbb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+        ${unsubscribeLink}
+      </p>
     </td>
-  </tr>${unsubscribeRow}`
+  </tr>`
 }
