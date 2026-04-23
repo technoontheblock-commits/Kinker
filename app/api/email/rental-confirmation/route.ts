@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
               <li>Wir prüfen die Verfügbarkeit für dein gewünschtes Datum</li>
               <li>Du erhältst innerhalb von 2-3 Werktagen eine Rückmeldung</li>
               <li>Bei Verfügbarkeit senden wir dir ein Angebot</li>
-              <li>Fragen? Schreibe uns: <a href="mailto:events@knkr.ch" style="color: #dc2626; text-decoration: none;">events@knkr.ch</a></li>
+              <li>Fragen? Schreibe uns: <a href="mailto:support@kinker.ch" style="color: #dc2626; text-decoration: none;">support@kinker.ch</a></li>
             </ul>
           </div>
         </td>

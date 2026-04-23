@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
               <li>Wir prüfen deine Bewerbung sorgfältig</li>
               <li>Du erhältst innerhalb von 5-7 Werktagen eine Rückmeldung</li>
               <li>Bei positivem Interesse laden wir dich zum Gespräch ein</li>
-              <li>Fragen? Schreibe uns: <a href="mailto:jobs@knkr.ch" style="color: #dc2626; text-decoration: none;">jobs@knkr.ch</a></li>
+              <li>Fragen? Schreibe uns: <a href="mailto:support@kinker.ch" style="color: #dc2626; text-decoration: none;">support@kinker.ch</a></li>
             </ul>
           </div>
         </td>
