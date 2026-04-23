@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
+import { getDarkFooter } from '@/lib/email-footer'
 
 const resendApiKey = process.env.RESEND_API_KEY
 const DUMMY_EMAIL = 'technoontheblock@gmail.com'
@@ -109,17 +110,7 @@ export async function POST(request: Request) {
                       </td>
                     </tr>
                     
-                    <!-- Footer -->
-                    <tr>
-                      <td style="padding: 30px; text-align: center; border-top: 1px solid #333; background-color: #0d0d0d;">
-                        <p style="margin: 0 0 8px; color: #6B7280; font-size: 14px;">
-                          KINKER Basel • Steinenvorstadt 11 • 4051 Basel
-                        </p>
-                        <p style="margin: 0;">
-                          <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #FF4D00; text-decoration: none; font-weight: 600;">knkr.ch</a>
-                        </p>
-                      </td>
-                    </tr>
+                    ${getDarkFooter()}
                     
                   </table>
                 </td>

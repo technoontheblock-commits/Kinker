@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { getDarkFooter } from '@/lib/email-footer'
 import { requireAdmin } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -129,16 +130,10 @@ export async function POST(request: NextRequest) {
                         </td>
                       </tr>
                       
-                      <!-- Footer -->
+                      ${getDarkFooter().replace('</td>', '</td>')}
                       <tr>
-                        <td class="footer" style="padding: 30px 40px; text-align: center; border-top: 1px solid #333333; color: #666666; font-size: 12px;">
-                          <p style="margin: 0 0 10px 0; color: #666666;">
-                            KINKER Basel | Barcelona-Strasse 4, 4142 Münchenstein
-                          </p>
-                          <p style="margin: 0;">
-                            <a href="https://knkr.ch" style="color: #ef4444; text-decoration: none;">knkr.ch</a>
-                          </p>
-                          <p style="margin: 20px 0 0 0; font-size: 11px; color: #666666;">
+                        <td style="padding: 0 30px 20px; text-align: center; background-color: #0d0d0d;">
+                          <p style="margin: 0; font-size: 11px; color: #666666;">
                             Du erhältst diese E-Mail, weil du dich für den KINKER Newsletter angemeldet hast.
                           </p>
                         </td>

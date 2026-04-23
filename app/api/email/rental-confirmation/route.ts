@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { NextRequest, NextResponse } from 'next/server'
+import { getDarkFooter } from '@/lib/email-footer'
 
 export async function POST(request: NextRequest) {
   try {
@@ -122,21 +123,7 @@ export async function POST(request: NextRequest) {
                 </td>
               </tr>
               
-              <!-- Footer -->
-              <tr>
-                <td style="padding: 30px; text-align: center; border-top: 1px solid #333; background-color: #0d0d0d;">
-                  <p style="margin: 0 0 16px; font-size: 14px; color: #6B7280;">
-                    Du hast Fragen zu deiner Anfrage?<br>
-                    <a href="mailto:events@knkr.ch" style="color: #FF4D00; text-decoration: none;">events@knkr.ch</a>
-                  </p>
-                  <div style="margin: 24px 0;">
-                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/rental" style="display: inline-block; padding: 12px 24px; background-color: #FF4D00; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">Rental Info</a>
-                  </div>
-                  <p style="margin: 16px 0 0; font-size: 12px; color: #4B5563;">
-                    KINKER Basel • Steinenvorstadt 11 • 4051 Basel
-                  </p>
-                </td>
-              </tr>
+              ${getDarkFooter()}
               
             </table>
           </td>

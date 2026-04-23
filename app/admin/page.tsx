@@ -83,6 +83,9 @@ export default function AdminDashboard() {
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [djRosterFilter, setDJRosterFilter] = useState<'requests' | 'accepted'>('accepted')
+  const [testEmail, setTestEmail] = useState('')
+  const [testEmailLoading, setTestEmailLoading] = useState(false)
+  const [testEmailResult, setTestEmailResult] = useState<{ success?: boolean; message?: string; code?: string } | null>(null)
   const [printfulProducts, setPrintfulProducts] = useState<any[]>([])
   const [printfulOrders, setPrintfulOrders] = useState<any[]>([])
   const [printfulLoading, setPrintfulLoading] = useState(false)
@@ -578,6 +581,33 @@ export default function AdminDashboard() {
       setPrintfulError(error.message || 'Network error')
     } finally {
       setPrintfulLoading(false)
+    }
+  }
+
+  // Send test verification email
+  const sendTestVerificationEmail = async () => {
+    if (!testEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
+      setTestEmailResult({ success: false, message: 'Please enter a valid email address' })
+      return
+    }
+    setTestEmailLoading(true)
+    setTestEmailResult(null)
+    try {
+      const res = await fetch('/api/email/test-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: testEmail })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setTestEmailResult({ success: true, message: 'Test email sent successfully!', code: data.code })
+      } else {
+        setTestEmailResult({ success: false, message: data.error || 'Failed to send' })
+      }
+    } catch (error: any) {
+      setTestEmailResult({ success: false, message: error.message || 'Network error' })
+    } finally {
+      setTestEmailLoading(false)
     }
   }
 
@@ -2861,6 +2891,41 @@ export default function AdminDashboard() {
                   <h3 className="text-white font-semibold">Email Test</h3>
                   <p className="text-white/50 text-sm mt-1">E-Mails testen</p>
                 </a>
+              </div>
+
+              {/* Test Verification Email */}
+              <div className="mt-8 p-6 bg-neutral-900/50 rounded-xl border border-white/10">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-red-500" />
+                  Test Verification Email
+                </h3>
+                <p className="text-white/50 text-sm mb-4">
+                  Send a test verification email to any address to preview how it looks in the inbox.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="test@example.com"
+                    className="flex-1 px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
+                  />
+                  <button
+                    onClick={sendTestVerificationEmail}
+                    disabled={testEmailLoading}
+                    className="px-6 py-3 bg-red-500 hover:bg-red-600 disabled:bg-white/10 disabled:text-white/30 text-white font-medium rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    {testEmailLoading ? 'Sending...' : 'Send Test Email'}
+                  </button>
+                </div>
+                {testEmailResult && (
+                  <div className={`mt-4 p-3 rounded-lg text-sm ${testEmailResult.success ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+                    {testEmailResult.message}
+                    {testEmailResult.code && (
+                      <p className="mt-1 font-mono text-lg tracking-widest">Code: {testEmailResult.code}</p>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { getDarkFooter } from '@/lib/email-footer'
 
 const resendApiKey = process.env.RESEND_API_KEY
 const DUMMY_EMAIL = 'technoontheblock@gmail.com'
@@ -83,12 +84,7 @@ export async function POST(request: Request) {
             <p style="margin: 0; color: #666; font-size: 14px;">Your message:</p>
             <p style="margin: 10px 0 0 0; font-style: italic;">${subject}</p>
           </div>
-          <div style="border-top: 1px solid #333; padding-top: 20px; margin-top: 30px;">
-            <p style="font-size: 12px; color: #666;">
-              KINKER Basel | Barcelona-Strasse 4, 4142 Münchenstein<br>
-              <a href="https://knkr.ch" style="color: #ef4444;">knkr.ch</a>
-            </p>
-          </div>
+          ${getDarkFooter()}
         </div>
       `,
     })

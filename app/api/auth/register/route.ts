@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import bcrypt from 'bcryptjs'
+import { getLightFooter } from '@/lib/email-footer'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -18,6 +19,7 @@ async function sendVerificationEmail(email: string, code: string, name: string) 
   }
 
   const resend = new Resend(apiKey)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kinker.ch'
 
   const html = `<!DOCTYPE html>
 <html lang="de">
@@ -46,9 +48,8 @@ async function sendVerificationEmail(email: string, code: string, name: string) 
         <table class="card" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e5e5e5;">
           <!-- Header -->
           <tr>
-            <td style="padding: 48px 32px 24px; text-align: center;">
-              <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #dc2626; letter-spacing: 3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">KINKER</h1>
-              <p style="margin: 6px 0 0; font-size: 12px; color: #999999; text-transform: uppercase; letter-spacing: 4px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">BASEL</p>
+            <td style="padding: 40px 32px 16px; text-align: center;">
+              <img src="${siteUrl}/images/logo.png" alt="KINKER" width="100" height="75" style="display:block;margin:0 auto;">
             </td>
           </tr>
           <!-- Divider -->
@@ -70,13 +71,7 @@ async function sendVerificationEmail(email: string, code: string, name: string) 
               <p class="text-muted" style="margin: 0; font-size: 13px; color: #888888; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Falls du dich nicht registriert hast, kannst du diese E-Mail ignorieren.</p>
             </td>
           </tr>
-          <!-- Footer -->
-          <tr>
-            <td class="footer" style="padding: 24px 32px; text-align: center; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0 0 4px; font-size: 13px; color: #999999; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">KINKER Basel</p>
-              <p style="margin: 0; font-size: 12px; color: #bbbbbb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Barcelona-Strasse 4, 4142 Münchenstein</p>
-            </td>
-          </tr>
+          ${getLightFooter()}
         </table>
       </td>
     </tr>
