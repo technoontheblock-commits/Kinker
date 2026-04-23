@@ -12,20 +12,15 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('EN')
+  const [language] = useState<Language>('EN')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    const savedLang = localStorage.getItem('kinker-language') as Language
-    if (savedLang && (savedLang === 'EN' || savedLang === 'DE')) {
-      setLanguageState(savedLang)
-    }
   }, [])
 
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang)
-    localStorage.setItem('kinker-language', lang)
+  const setLanguage = (_lang: Language) => {
+    // Language switcher removed — site is English only
   }
 
   const t = translations[language]
