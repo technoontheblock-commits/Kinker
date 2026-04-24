@@ -27,7 +27,6 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<any>(null)
 
   useEffect(() => {
     loadTickets()
@@ -47,7 +46,7 @@ export default function TicketsPage() {
       const data = await res.json()
       console.log('API Response:', data)
       setTickets(data.tickets || [])
-      setDebugInfo(data.debug)
+
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -121,14 +120,6 @@ export default function TicketsPage() {
         <h1 className="text-3xl font-bold text-white mb-2">My Tickets</h1>
         <p className="text-white/60">Manage your event tickets</p>
       </div>
-
-      {/* Debug Info */}
-      {debugInfo && (
-        <div className="bg-neutral-800 rounded-lg p-4 text-xs font-mono text-white/70">
-          <h3 className="font-bold text-white mb-2">Debug Info:</h3>
-          <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {tickets.map((ticket) => (
