@@ -87,28 +87,105 @@ export interface Database {
           id: string
           name: string
           email: string
+          password_hash: string
           role: 'admin' | 'user' | 'moderator'
           status: 'active' | 'inactive'
           created_at: string
           updated_at: string
+          email_verified: boolean
+          verification_code: string | null
+          verification_expires: string | null
+          reset_token: string | null
+          reset_expires: string | null
+          totp_secret: string | null
+          totp_enabled: boolean
+          totp_backup_codes: string[]
+          totp_verified_at: string | null
+          last_login: string | null
+          avatar_url: string | null
+          phone: string | null
+          preferences: Json
+          newsletter_opt_in: boolean
         }
         Insert: {
           id?: string
           name: string
           email: string
+          password_hash: string
           role?: 'admin' | 'user' | 'moderator'
           status?: 'active' | 'inactive'
           created_at?: string
           updated_at?: string
+          email_verified?: boolean
+          verification_code?: string | null
+          verification_expires?: string | null
+          reset_token?: string | null
+          reset_expires?: string | null
+          totp_secret?: string | null
+          totp_enabled?: boolean
+          totp_backup_codes?: string[]
+          totp_verified_at?: string | null
+          last_login?: string | null
+          avatar_url?: string | null
+          phone?: string | null
+          preferences?: Json
+          newsletter_opt_in?: boolean
         }
         Update: {
           id?: string
           name?: string
           email?: string
+          password_hash?: string
           role?: 'admin' | 'user' | 'moderator'
           status?: 'active' | 'inactive'
           created_at?: string
           updated_at?: string
+          email_verified?: boolean
+          verification_code?: string | null
+          verification_expires?: string | null
+          reset_token?: string | null
+          reset_expires?: string | null
+          totp_secret?: string | null
+          totp_enabled?: boolean
+          totp_backup_codes?: string[]
+          totp_verified_at?: string | null
+          last_login?: string | null
+          avatar_url?: string | null
+          phone?: string | null
+          preferences?: Json
+          newsletter_opt_in?: boolean
+        }
+      }
+      user_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          session_token: string
+          device_info: string | null
+          ip_address: string | null
+          created_at: string
+          last_active_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          session_token: string
+          device_info?: string | null
+          ip_address?: string | null
+          created_at?: string
+          last_active_at?: string
+          expires_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          session_token?: string
+          device_info?: string | null
+          ip_address?: string | null
+          created_at?: string
+          last_active_at?: string
+          expires_at?: string
         }
       }
       notifications: {

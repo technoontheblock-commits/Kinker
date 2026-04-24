@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LogoIcon } from '@/components/logo'
 
@@ -21,6 +21,9 @@ function LoginForm() {
     email: '',
     password: ''
   })
+  const [needs2FA, setNeeds2FA] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [twoFactorCode, setTwoFactorCode] = useState('')
 
   // Check if already logged in
   useEffect(() => {
@@ -61,7 +64,42 @@ function LoginForm() {
         throw new Error(data.error || 'Login failed')
       }
 
+      // Check if 2FA is required
+      if (data.needs2FA && data.email) {
+        setNeeds2FA(true)
+        setPendingEmail(data.email)
+        setIsLoading(false)
+        return
+      }
+
       // Redirect to dashboard or requested page
+      router.push(redirect)
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/auth/2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail, code: twoFactorCode })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid code')
+      }
+
       router.push(redirect)
       router.refresh()
     } catch (err: any) {
@@ -100,86 +138,139 @@ function LoginForm() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                className="w-full bg-black/50 border border-white/10 rounded-lg py-3 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
-                placeholder="you@example.com"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-                className="w-full bg-black/50 border border-white/10 rounded-lg py-3 pl-12 pr-12 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Forgot Password */}
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-3 text-white/60 cursor-pointer group">
-              <div className="relative flex items-center">
-                <input type="checkbox" className="peer sr-only" />
-                <div className="w-5 h-5 rounded border-2 border-white/30 bg-black/50 peer-checked:bg-red-500 peer-checked:border-red-500 transition-all flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
+        {needs2FA ? (
+          <form onSubmit={handle2FASubmit} className="space-y-5">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Shield className="w-6 h-6 text-red-500" />
               </div>
-              <span className="group-hover:text-white/80 transition-colors">Remember me</span>
-            </label>
-            <Link href="/forgot-password" className="text-red-500 hover:text-red-400">
-              Forgot password?
-            </Link>
-          </div>
+              <h2 className="text-lg font-bold text-white">Two-Factor Authentication</h2>
+              <p className="text-white/60 text-sm mt-1">Enter the 6-digit code from your authenticator app</p>
+            </div>
 
-          {/* Submit */}
-          <Button
-            type="submit"
-            variant="glitch"
-            size="lg"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                Sign In
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </>
-            )}
-          </Button>
-        </form>
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Authentication Code
+              </label>
+              <input
+                type="text"
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                required
+                maxLength={6}
+                autoFocus
+                className="w-full bg-black/50 border border-white/10 rounded-lg py-3 px-4 text-white text-center text-2xl tracking-[0.5em] placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
+                placeholder="000000"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="glitch"
+              size="lg"
+              className="w-full"
+              disabled={isLoading || twoFactorCode.length !== 6}
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  Verify
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </>
+              )}
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => { setNeeds2FA(false); setTwoFactorCode(''); setPendingEmail(''); }}
+              className="w-full text-center text-white/40 hover:text-white text-sm transition-colors"
+            >
+              Back to login
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  className="w-full bg-black/50 border border-white/10 rounded-lg py-3 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
+                  placeholder="you@example.com"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                  className="w-full bg-black/50 border border-white/10 rounded-lg py-3 pl-12 pr-12 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Forgot Password */}
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-3 text-white/60 cursor-pointer group">
+                <div className="relative flex items-center">
+                  <input type="checkbox" className="peer sr-only" />
+                  <div className="w-5 h-5 rounded border-2 border-white/30 bg-black/50 peer-checked:bg-red-500 peer-checked:border-red-500 transition-all flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <span className="group-hover:text-white/80 transition-colors">Remember me</span>
+              </label>
+              <Link href="/forgot-password" className="text-red-500 hover:text-red-400">
+                Forgot password?
+              </Link>
+            </div>
+
+            {/* Submit */}
+            <Button
+              type="submit"
+              variant="glitch"
+              size="lg"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </>
+              )}
+            </Button>
+          </form>
+        )}
 
         {/* Divider */}
         <div className="relative my-8">

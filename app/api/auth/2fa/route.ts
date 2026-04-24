@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { setSessionCookie, createSignedSession } from '@/lib/auth'
-import bcrypt from 'bcryptjs'
+import speakeasy from 'speakeasy'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -15,7 +15,7 @@ function getDeviceInfo(request: NextRequest): string {
   return 'Browser'
 }
 
-// POST /api/auth/login - Login user
+// POST /api/auth/2fa - Verify 2FA code during login
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -23,15 +23,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password } = body
+    const { email, code } = body
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+    if (!email || !code) {
+      return NextResponse.json({ error: 'Email and code required' }, { status: 400 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Find user by email
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -40,32 +39,35 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (userError || !user) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+      return NextResponse.json({ error: 'Invalid request' }, { status: 401 })
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash)
-    
-    if (!isValidPassword) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+    if (!user.totp_enabled || !user.totp_secret) {
+      return NextResponse.json({ error: '2FA not enabled' }, { status: 400 })
     }
 
-    // Check if email is verified
-    if (!user.email_verified) {
-      return NextResponse.json({
-        error: 'Email not verified',
-        needsVerification: true,
-        email: user.email
-      }, { status: 403 })
-    }
+    // Check backup code
+    const isBackupCode = user.totp_backup_codes?.includes(code.toUpperCase())
+    let verified = false
 
-    // Check if 2FA is enabled
-    if (user.totp_enabled) {
-      return NextResponse.json({
-        success: false,
-        needs2FA: true,
-        email: user.email
+    if (isBackupCode) {
+      verified = true
+      const newBackupCodes = user.totp_backup_codes.filter((c: string) => c !== code.toUpperCase())
+      await supabase
+        .from('users')
+        .update({ totp_backup_codes: newBackupCodes })
+        .eq('id', user.id)
+    } else {
+      verified = speakeasy.totp.verify({
+        secret: user.totp_secret,
+        encoding: 'base32',
+        token: code,
+        window: 2
       })
+    }
+
+    if (!verified) {
+      return NextResponse.json({ error: 'Invalid code' }, { status: 401 })
     }
 
     // Update last login
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
       .update({ last_login: new Date().toISOString() })
       .eq('id', user.id)
 
-    // Create session token and cookie
+    // Create session
     const sessionUser = {
       id: user.id,
       email: user.email,
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error: any) {
-    console.error('Login error:', error)
+    console.error('2FA verification error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

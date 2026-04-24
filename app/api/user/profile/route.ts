@@ -36,7 +36,8 @@ export async function GET() {
       phone: userData?.phone || '',
       avatar_url: userData?.avatar_url || user.avatar_url || null,
       created_at: userData?.created_at || user.created_at,
-      updated_at: userData?.updated_at || null
+      updated_at: userData?.updated_at || null,
+      totp_enabled: userData?.totp_enabled || false
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
