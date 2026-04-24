@@ -94,13 +94,13 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-black pt-20">
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-20 left-0 right-0 z-40 bg-neutral-950 border-b border-white/10 px-4 py-3 flex items-center justify-between">
-        <span className="text-white font-semibold">Dashboard</span>
+      <div className="md:hidden fixed top-20 left-0 right-0 z-40 bg-neutral-950 border-b border-white/10 px-3 py-2 flex items-center justify-between">
+        <span className="text-white font-medium text-sm">Dashboard</span>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 text-white/60 hover:text-white"
+          className="p-1.5 text-white/60 hover:text-white"
         >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
@@ -124,9 +124,9 @@ export default function DashboardLayout({
           transition-transform duration-300 ease-in-out
           md:left-0 md:top-20 md:w-64 md:h-[calc(100vh-5rem)] md:translate-x-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          top-[5.5rem] left-0 w-72 h-[calc(100vh-5.5rem)]
+          top-[4.5rem] left-0 w-64 h-[calc(100vh-4.5rem)]
         `}>
-          <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+          <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
@@ -136,7 +136,7 @@ export default function DashboardLayout({
                   key={item.id}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm ${
                     isActive 
                       ? 'bg-white/10 text-white' 
                       : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -181,28 +181,28 @@ export default function DashboardLayout({
           </nav>
 
           {/* User Profile */}
-          <div className="p-4 border-t border-white/10 bg-neutral-950">
-            <div className="flex items-center gap-3 px-4 py-3 mb-2">
-              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+          <div className="p-3 border-t border-white/10 bg-neutral-950">
+            <div className="flex items-center gap-2 px-3 py-2 mb-1">
+              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">{user?.name || 'User'}</p>
-                <p className="text-white/40 text-sm truncate">{user?.email}</p>
+                <p className="text-white font-medium text-sm truncate">{user?.name || 'User'}</p>
+                <p className="text-white/40 text-xs truncate">{user?.email}</p>
               </div>
             </div>
             <button 
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 w-full text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+              className="flex items-center gap-2 px-3 py-2 w-full text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer text-sm"
             >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium uppercase tracking-wider text-sm">Sign Out</span>
+              <LogOut className="w-4 h-4" />
+              <span className="font-medium uppercase tracking-wider">Sign Out</span>
             </button>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 md:ml-64 p-4 md:p-8 min-h-[calc(100vh-5rem)] mt-12 md:mt-0">
+        <main className="flex-1 md:ml-64 p-3 md:p-8 min-h-[calc(100vh-5rem)] mt-10 md:mt-0">
           {children}
         </main>
       </div>

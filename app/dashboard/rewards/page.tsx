@@ -263,10 +263,10 @@ export default function RewardsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Rewards</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Rewards</h1>
           <p className="text-white/60">Earn points with every purchase</p>
         </div>
         <button
@@ -289,20 +289,20 @@ export default function RewardsPage() {
 
       {/* Daily Login Card */}
       {dailyLogin && (
-        <div className={`rounded-2xl p-6 border-2 ${
+        <div className={`rounded-2xl p-4 md:p-6 border-2 ${
           dailyLogin.canClaim 
             ? 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-400' 
             : 'bg-neutral-900 border-white/10'
         }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+              <div className={`w-11 h-11 md:w-14 md:h-14 rounded-xl flex items-center justify-center ${
                 dailyLogin.canClaim ? 'bg-white/20' : 'bg-white/5'
               }`}>
-                <LogIn className={`w-7 h-7 ${dailyLogin.canClaim ? 'text-white' : 'text-white/40'}`} />
+                <LogIn className={`w-5 h-5 md:w-7 md:h-7 ${dailyLogin.canClaim ? 'text-white' : 'text-white/40'}`} />
               </div>
               <div>
-                <h3 className={`font-bold text-lg ${dailyLogin.canClaim ? 'text-white' : 'text-white/60'}`}>
+                <h3 className={`font-bold text-base md:text-lg ${dailyLogin.canClaim ? 'text-white' : 'text-white/60'}`}>
                   Daily Login Reward
                 </h3>
                 <p className={dailyLogin.canClaim ? 'text-white/80' : 'text-white/40'}>
@@ -316,7 +316,7 @@ export default function RewardsPage() {
             <button
               onClick={claimDailyLogin}
               disabled={!dailyLogin.canClaim || claimingDaily}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              className={`px-4 py-2 md:px-6 md:py-3 rounded-xl font-semibold transition-all text-sm md:text-base ${
                 dailyLogin.canClaim
                   ? 'bg-white text-green-600 hover:bg-white/90'
                   : 'bg-white/10 text-white/40 cursor-not-allowed'
@@ -335,11 +335,11 @@ export default function RewardsPage() {
       )}
 
       {/* Points Card */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-8">
+      <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-5 md:p-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-              <Gift className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <Gift className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <div>
               <span className="text-white/80">Your Points</span>
@@ -347,7 +347,7 @@ export default function RewardsPage() {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-4xl font-bold text-white">{points}</p>
+            <p className="text-3xl md:text-4xl font-bold text-white">{points}</p>
             {nextTier && (
               <p className="text-white/60 text-sm">{nextTier.min - lifetimePoints} to {nextTier.name}</p>
             )}
@@ -379,7 +379,7 @@ export default function RewardsPage() {
         {allRewards.length === 0 ? (
           <p className="text-white/60">No rewards available at the moment.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             {allRewards.map((reward) => {
               const Icon = getRewardIcon(reward.reward_type)
               const canAfford = points >= reward.points_cost
@@ -387,14 +387,14 @@ export default function RewardsPage() {
               return (
                 <div 
                   key={reward.id} 
-                  className={`p-6 rounded-xl border transition-all ${
+                  className={`p-4 md:p-6 rounded-xl border transition-all ${
                     canAfford 
                       ? 'bg-neutral-900 border-white/10 hover:border-red-500/50' 
                       : 'bg-neutral-900/50 border-white/5 opacity-50'
                   }`}
                 >
-                  <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 text-red-500" />
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-red-500/20 rounded-lg flex items-center justify-center mb-3 md:mb-4">
+                    <Icon className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
                   </div>
                   <h3 className="text-white font-medium mb-1">{reward.name}</h3>
                   <p className="text-white/60 text-sm mb-4">{reward.description}</p>
@@ -425,14 +425,14 @@ export default function RewardsPage() {
 
       {/* Points History */}
       {pointsHistory.length > 0 && (
-        <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
+        <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <History className="w-5 h-5 text-red-500" />
             Points History
           </h2>
           <div className="space-y-3">
             {pointsHistory.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 bg-black/30 rounded-lg">
+              <div key={item.id} className="flex items-center justify-between p-3 md:p-4 bg-black/30 rounded-lg">
                 <div>
                   <p className="text-white font-medium">{item.reason}</p>
                   <p className="text-white/60 text-sm">{new Date(item.created_at).toLocaleDateString('de-CH')}</p>
@@ -450,14 +450,14 @@ export default function RewardsPage() {
 
       {/* Redemption History */}
       {history.length > 0 && (
-        <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
+        <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Gift className="w-5 h-5 text-red-500" />
             Your Redemptions
           </h2>
           <div className="space-y-3">
             {history.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 bg-black/30 rounded-lg">
+              <div key={item.id} className="flex items-center justify-between p-3 md:p-4 bg-black/30 rounded-lg">
                 <div>
                   <p className="text-white font-medium">{item.rewards.name}</p>
                   <p className="text-white/60 text-sm">Code: <span className="font-mono text-red-500">{item.code}</span></p>
@@ -477,30 +477,30 @@ export default function RewardsPage() {
       )}
 
       {/* How to Earn */}
-      <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
-        <h2 className="text-xl font-bold text-white mb-4">How to Earn Points</h2>
-        <div className="space-y-4">
-          <div className="flex items-center p-4 bg-black/30 rounded-lg">
-            <div className="flex items-center gap-4">
-              <Ticket className="w-6 h-6 text-red-500" />
+      <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
+        <h2 className="text-lg md:text-xl font-bold text-white mb-4">How to Earn Points</h2>
+        <div className="space-y-3 md:space-y-4">
+          <div className="flex items-center p-3 md:p-4 bg-black/30 rounded-lg">
+            <div className="flex items-center gap-3 md:gap-4">
+              <Ticket className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
               <div>
                 <p className="text-white font-medium">Buy Event Tickets</p>
                 <p className="text-white/60 text-sm">1 CHF spent = 1 point</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center p-4 bg-black/30 rounded-lg">
-            <div className="flex items-center gap-4">
-              <Shirt className="w-6 h-6 text-red-500" />
+          <div className="flex items-center p-3 md:p-4 bg-black/30 rounded-lg">
+            <div className="flex items-center gap-3 md:gap-4">
+              <Shirt className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
               <div>
                 <p className="text-white font-medium">Shop Merchandise</p>
                 <p className="text-white/60 text-sm">1 CHF spent = 2 points</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center p-4 bg-black/30 rounded-lg">
-            <div className="flex items-center gap-4">
-              <LogIn className="w-6 h-6 text-red-500" />
+          <div className="flex items-center p-3 md:p-4 bg-black/30 rounded-lg">
+            <div className="flex items-center gap-3 md:gap-4">
+              <LogIn className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
               <div>
                 <p className="text-white font-medium">Daily Login</p>
                 <p className="text-white/60 text-sm">10 points per day</p>

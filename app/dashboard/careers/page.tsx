@@ -62,22 +62,22 @@ export default function CareersPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">My Applications</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">My Applications</h1>
         <p className="text-white/60">Track your job applications</p>
       </div>
 
       <div className="space-y-4">
         {applications.map((app) => (
-          <div key={app.id} className="bg-neutral-900 rounded-xl p-6 border border-white/10">
+          <div key={app.id} className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
-                  <Briefcase className="w-6 h-6 text-red-500" />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                  <Briefcase className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">{app.job?.title || 'Unknown Position'}</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-white">{app.job?.title || 'Unknown Position'}</h3>
                   <div className="flex items-center gap-4 text-white/60 mt-2">
                     <span className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
@@ -90,7 +90,7 @@ export default function CareersPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-black/30 rounded-lg">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-black/30 rounded-lg text-sm">
                 {getStatusIcon(app.status)}
                 <span className="text-white font-medium">{getStatusText(app.status)}</span>
               </div>
@@ -107,10 +107,10 @@ export default function CareersPage() {
       </div>
 
       {/* Open Positions CTA */}
-      <div className="bg-gradient-to-r from-red-500/20 to-purple-500/20 rounded-xl p-6 border border-red-500/30">
-        <h3 className="text-xl font-bold text-white mb-2">Looking for a job?</h3>
+      <div className="bg-gradient-to-r from-red-500/20 to-purple-500/20 rounded-xl p-4 md:p-6 border border-red-500/30">
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2">Looking for a job?</h3>
         <p className="text-white/60 mb-4">Join the KINKER team and be part of the underground.</p>
-        <a href="/career" className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors">
+        <a href="/career" className="inline-flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors text-sm md:text-base">
           View Open Positions
         </a>
       </div>

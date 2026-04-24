@@ -91,9 +91,9 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">My Orders</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">My Orders</h1>
         <p className="text-white/60">View your order history</p>
       </div>
 
@@ -146,7 +146,7 @@ export default function OrdersPage() {
             {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-white/10">
               {orders.map((order) => (
-                <div key={order.id} className="p-4 space-y-3">
+                <div key={order.id} className="p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-white font-medium">{order.order_number}</span>
                     <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
@@ -181,10 +181,10 @@ export default function OrdersPage() {
 
       {/* Order Detail Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-neutral-900 rounded-xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
               <div>
                 <h2 className="text-xl font-bold text-white">Order {selectedOrder.order_number}</h2>
                 <p className="text-white/60 text-sm mt-1">
@@ -204,7 +204,7 @@ export default function OrdersPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
               {/* Status */}
               <div className="flex items-center gap-4">
                 <span className={`px-4 py-2 rounded-full text-sm ${getStatusColor(selectedOrder.status)}`}>

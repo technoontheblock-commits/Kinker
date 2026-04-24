@@ -197,9 +197,9 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Account Settings</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Account Settings</h1>
         <p className="text-white/60">Manage your profile and preferences</p>
       </div>
 
@@ -211,8 +211,8 @@ export default function AccountPage() {
       )}
 
       {/* Profile Section */}
-      <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
-        <h2 className="text-xl font-bold text-white mb-6">Profile</h2>
+      <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
+        <h2 className="text-lg md:text-xl font-bold text-white mb-4 md:mb-6">Profile</h2>
         
         {/* Avatar */}
         <div className="flex items-center gap-4 mb-6">
@@ -224,8 +224,8 @@ export default function AccountPage() {
                 className="w-20 h-20 rounded-full object-cover border-2 border-white/20"
               />
             ) : (
-              <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center">
-                <User className="w-10 h-10 text-white" />
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-red-500 rounded-full flex items-center justify-center">
+                <User className="w-8 h-8 md:w-10 md:h-10 text-white" />
               </div>
             )}
             {uploading && (
@@ -302,8 +302,8 @@ export default function AccountPage() {
       </div>
 
       {/* Password Section */}
-      <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+      <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
+        <h2 className="text-lg md:text-xl font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
           <Lock className="w-5 h-5 text-red-500" />
           Change Password
         </h2>
@@ -313,21 +313,21 @@ export default function AccountPage() {
             placeholder="Current Password"
             value={formData.currentPassword}
             onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-            className="px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
+            className="px-4 py-2.5 md:py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
           />
           <input
             type="password"
             placeholder="New Password"
             value={formData.newPassword}
             onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-            className="px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
+            className="px-4 py-2.5 md:py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
           />
           <input
             type="password"
             placeholder="Confirm New Password"
             value={formData.confirmPassword}
             onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            className="px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
+            className="px-4 py-2.5 md:py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40"
           />
         </div>
         <div className="mt-4 flex justify-end">
@@ -342,8 +342,8 @@ export default function AccountPage() {
       </div>
 
       {/* Notifications */}
-      <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+      <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
+        <h2 className="text-lg md:text-xl font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
           <Bell className="w-5 h-5 text-red-500" />
           Notifications
         </h2>
@@ -363,13 +363,13 @@ export default function AccountPage() {
       </div>
 
       {/* Security */}
-      <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+      <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
+        <h2 className="text-lg md:text-xl font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
           <Shield className="w-5 h-5 text-red-500" />
           Security
         </h2>
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-black/30 rounded-lg">
+          <div className="flex items-center justify-between p-3 md:p-4 bg-black/30 rounded-lg text-sm md:text-base">
             <div>
               <p className="text-white font-medium">Two-Factor Authentication</p>
               <p className="text-white/60 text-sm">Add an extra layer of security</p>
@@ -395,7 +395,7 @@ export default function AccountPage() {
         <button 
           onClick={saveProfile}
           disabled={saving}
-          className="px-8 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="px-6 py-2.5 md:px-8 md:py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 text-sm md:text-base"
         >
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
           Save Changes

@@ -89,9 +89,9 @@ export default function TicketsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-5 md:space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">My Tickets</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">My Tickets</h1>
           <p className="text-white/60">Manage your event tickets</p>
         </div>
         <div className="flex items-center justify-center py-16">
@@ -105,7 +105,7 @@ export default function TicketsPage() {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">My Tickets</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">My Tickets</h1>
           <p className="text-white/60">Manage your event tickets</p>
         </div>
         <div className="text-center py-16">
@@ -130,12 +130,12 @@ export default function TicketsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {tickets.map((ticket) => (
-          <div key={ticket.id} className="bg-neutral-900 rounded-xl p-6 border border-white/10">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-white">{ticket.event.name}</h3>
+          <div key={ticket.id} className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
+            <div className="flex items-start justify-between mb-3 md:mb-4">
+              <div className="min-w-0">
+                <h3 className="text-lg md:text-xl font-bold text-white truncate">{ticket.event.name}</h3>
                 <p className="text-white/60">{ticket.event.venue || 'KINKER'}</p>
               </div>
               <span className={`px-3 py-1 text-xs rounded-full ${
@@ -149,13 +149,13 @@ export default function TicketsPage() {
               </span>
             </div>
 
-            <div className="flex items-center gap-4 text-white/60 mb-6">
+            <div className="flex items-center gap-4 text-white/60 mb-4 md:mb-6">
               <Calendar className="w-4 h-4" />
               <span>{new Date(ticket.event.date).toLocaleDateString('de-CH')}</span>
               <span>{ticket.event.time}</span>
             </div>
 
-            <div className="bg-white p-4 rounded-lg mb-4">
+            <div className="bg-white p-3 md:p-4 rounded-lg mb-3 md:mb-4">
               <div className="flex items-center justify-center">
                 <TicketQRCode value={ticket.qr_data} size={128} />
               </div>
@@ -165,7 +165,7 @@ export default function TicketsPage() {
             <button 
               onClick={() => downloadTicket(ticket)}
               disabled={downloadingId === ticket.id}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-red-500 hover:bg-red-600 disabled:bg-red-500/50 text-white rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 md:py-3 bg-red-500 hover:bg-red-600 disabled:bg-red-500/50 text-white rounded-lg transition-colors text-sm md:text-base"
             >
               {downloadingId === ticket.id ? (
                 <>
