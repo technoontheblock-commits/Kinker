@@ -341,27 +341,6 @@ export default function AccountPage() {
         </div>
       </div>
 
-      {/* Notifications */}
-      <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
-        <h2 className="text-lg md:text-xl font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
-          <Bell className="w-5 h-5 text-red-500" />
-          Notifications
-        </h2>
-        <div className="space-y-4">
-          {Object.entries(notifications).map(([key, value]) => (
-            <label key={key} className="flex items-center justify-between p-4 bg-black/30 rounded-lg cursor-pointer">
-              <span className="text-white capitalize">{key} Notifications</span>
-              <input
-                type="checkbox"
-                checked={value}
-                onChange={(e) => setNotifications({ ...notifications, [key]: e.target.checked })}
-                className="w-5 h-5 accent-red-500"
-              />
-            </label>
-          ))}
-        </div>
-      </div>
-
       {/* Security */}
       <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-white/10">
         <h2 className="text-lg md:text-xl font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
