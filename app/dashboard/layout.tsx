@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Home, 
   LayoutDashboard, 
@@ -14,7 +14,9 @@ import {
   Shield, 
   LogOut,
   Ticket,
-  Loader2
+  Loader2,
+  Menu,
+  X
 } from 'lucide-react'
 
 const menuItems = [
@@ -41,10 +43,16 @@ export default function DashboardLayout({
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     checkAuth()
   }, [])
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [pathname])
 
   const checkAuth = async () => {
     try {
@@ -85,9 +93,39 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-black pt-20">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-20 left-0 right-0 z-40 bg-neutral-950 border-b border-white/10 px-4 py-3 flex items-center justify-between">
+        <span className="text-white font-semibold">Dashboard</span>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 text-white/60 hover:text-white"
+        >
+          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="md:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-neutral-950 h-[calc(100vh-5rem)] fixed left-0 top-20 border-r border-white/10 flex flex-col z-40">
+        {/* Sidebar - Desktop: fixed, Mobile: slide-in overlay */}
+        <aside className={`
+          fixed z-50 bg-neutral-950 border-r border-white/10 flex flex-col
+          transition-transform duration-300 ease-in-out
+          md:left-0 md:top-20 md:w-64 md:h-[calc(100vh-5rem)] md:translate-x-0
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          top-[5.5rem] left-0 w-72 h-[calc(100vh-5.5rem)]
+        `}>
           <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon
@@ -97,6 +135,7 @@ export default function DashboardLayout({
                 <Link
                   key={item.id}
                   href={item.href}
+                  onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     isActive 
                       ? 'bg-white/10 text-white' 
@@ -128,6 +167,7 @@ export default function DashboardLayout({
                       <Link
                         key={item.id}
                         href={item.href}
+                        onClick={() => setSidebarOpen(false)}
                         className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all"
                       >
                         <Icon className="w-5 h-5" />
@@ -162,7 +202,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 ml-64 p-8 min-h-[calc(100vh-5rem)]">
+        <main className="flex-1 md:ml-64 p-4 md:p-8 min-h-[calc(100vh-5rem)] mt-12 md:mt-0">
           {children}
         </main>
       </div>

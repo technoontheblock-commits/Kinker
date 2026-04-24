@@ -99,45 +99,78 @@ export default function OrdersPage() {
 
       <div className="bg-neutral-900 rounded-xl border border-white/10 overflow-hidden">
         {orders.length > 0 ? (
-          <table className="w-full">
-            <thead className="bg-black/30">
-              <tr>
-                <th className="text-left text-white/60 font-medium px-6 py-4">Order</th>
-                <th className="text-left text-white/60 font-medium px-6 py-4">Date</th>
-                <th className="text-left text-white/60 font-medium px-6 py-4">Items</th>
-                <th className="text-left text-white/60 font-medium px-6 py-4">Total</th>
-                <th className="text-left text-white/60 font-medium px-6 py-4">Status</th>
-                <th className="text-left text-white/60 font-medium px-6 py-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-black/30">
+                  <tr>
+                    <th className="text-left text-white/60 font-medium px-6 py-4">Order</th>
+                    <th className="text-left text-white/60 font-medium px-6 py-4">Date</th>
+                    <th className="text-left text-white/60 font-medium px-6 py-4">Items</th>
+                    <th className="text-left text-white/60 font-medium px-6 py-4">Total</th>
+                    <th className="text-left text-white/60 font-medium px-6 py-4">Status</th>
+                    <th className="text-left text-white/60 font-medium px-6 py-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order.id} className="border-t border-white/10">
+                      <td className="px-6 py-4 text-white font-medium">{order.order_number}</td>
+                      <td className="px-6 py-4 text-white/60">{new Date(order.created_at).toLocaleDateString('de-CH')}</td>
+                      <td className="px-6 py-4 text-white/60">
+                        {order.items?.length > 0 
+                          ? `${order.items.length} Artikel` 
+                          : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-white">CHF {order.total?.toFixed(2)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
+                          {getStatusLabel(order.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button 
+                          onClick={() => setSelectedOrder(order)}
+                          className="p-2 text-white/60 hover:text-white"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y divide-white/10">
               {orders.map((order) => (
-                <tr key={order.id} className="border-t border-white/10">
-                  <td className="px-6 py-4 text-white font-medium">{order.order_number}</td>
-                  <td className="px-6 py-4 text-white/60">{new Date(order.created_at).toLocaleDateString('de-CH')}</td>
-                  <td className="px-6 py-4 text-white/60">
-                    {order.items?.length > 0 
-                      ? `${order.items.length} Artikel` 
-                      : '-'}
-                  </td>
-                  <td className="px-6 py-4 text-white">CHF {order.total?.toFixed(2)}</td>
-                  <td className="px-6 py-4">
+                <div key={order.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white font-medium">{order.order_number}</span>
                     <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
                       {getStatusLabel(order.status)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button 
-                      onClick={() => setSelectedOrder(order)}
-                      className="p-2 text-white/60 hover:text-white"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/60">{new Date(order.created_at).toLocaleDateString('de-CH')}</span>
+                    <span className="text-white font-semibold">CHF {order.total?.toFixed(2)}</span>
+                  </div>
+                  {order.items?.length > 0 && (
+                    <p className="text-white/60 text-sm">{order.items.length} items</p>
+                  )}
+                  <button 
+                    onClick={() => setSelectedOrder(order)}
+                    className="flex items-center gap-2 text-red-500 hover:text-red-400 text-sm font-medium"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View Details
+                  </button>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         ) : (
           <div className="text-center py-16">
             <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />

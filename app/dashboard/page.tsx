@@ -120,13 +120,13 @@ export default function DashboardPage() {
                 <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
                   <Calendar className="w-6 h-6 text-red-500" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-white font-medium">{ticket.event?.name || ticket.event_name || 'Event'}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium truncate">{ticket.event?.name || ticket.event_name || 'Event'}</p>
                   <p className="text-white/60 text-sm">
                     {new Date(ticket.event?.date || ticket.event_date).toLocaleDateString('de-CH')}
                   </p>
                 </div>
-                <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(ticket.status)}`}>
+                <span className={`px-3 py-1 text-xs rounded-full shrink-0 ${getStatusColor(ticket.status)}`}>
                   {ticket.status}
                 </span>
               </div>
@@ -153,12 +153,12 @@ export default function DashboardPage() {
           <div className="space-y-4">
             {recentOrders.map((order) => (
               <div key={order.id} className="flex items-center gap-4 p-4 bg-black/30 rounded-lg">
-                <div className="flex-1">
-                  <p className="text-white font-medium">{order.order_number || order.id?.slice(0, 8)}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium truncate">{order.order_number || order.id?.slice(0, 8)}</p>
                   <p className="text-white/60 text-sm">{new Date(order.created_at).toLocaleDateString('de-CH')}</p>
                 </div>
-                <p className="text-white font-semibold">CHF {(order.total || 0).toFixed(2)}</p>
-                <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}>
+                <p className="text-white font-semibold shrink-0">CHF {(order.total || 0).toFixed(2)}</p>
+                <span className={`px-3 py-1 text-xs rounded-full shrink-0 ${getStatusColor(order.status)}`}>
                   {order.status}
                 </span>
               </div>
