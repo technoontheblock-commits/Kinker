@@ -13,7 +13,6 @@ import {
   User, 
   Shield, 
   LogOut,
-  Ticket,
   Loader2,
   Menu,
   X
@@ -25,7 +24,6 @@ const menuItems = [
   { id: 'rewards', label: 'Rewards', icon: Gift, href: '/dashboard/rewards' },
   { id: 'careers', label: 'Careers', icon: Briefcase, href: '/dashboard/careers' },
   { id: 'orders', label: 'Orders', icon: Package, href: '/dashboard/orders' },
-  { id: 'tickets', label: 'My Tickets', icon: Ticket, href: '/dashboard/tickets' },
   { id: 'account', label: 'Account', icon: User, href: '/dashboard/account' },
 ]
 
