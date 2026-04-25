@@ -376,51 +376,11 @@ export default function RewardsPage() {
       {/* Available Rewards */}
       <div>
         <h2 className="text-xl font-bold text-white mb-4">Available Rewards</h2>
-        {allRewards.length === 0 ? (
-          <p className="text-white/60">No rewards available at the moment.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-            {allRewards.map((reward) => {
-              const Icon = getRewardIcon(reward.reward_type)
-              const canAfford = points >= reward.points_cost
-              
-              return (
-                <div 
-                  key={reward.id} 
-                  className={`p-4 md:p-6 rounded-xl border transition-all ${
-                    canAfford 
-                      ? 'bg-neutral-900 border-white/10 hover:border-red-500/50' 
-                      : 'bg-neutral-900/50 border-white/5 opacity-50'
-                  }`}
-                >
-                  <div className="w-10 h-10 md:w-12 md:h-12 bg-red-500/20 rounded-lg flex items-center justify-center mb-3 md:mb-4">
-                    <Icon className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
-                  </div>
-                  <h3 className="text-white font-medium mb-1">{reward.name}</h3>
-                  <p className="text-white/60 text-sm mb-4">{reward.description}</p>
-                  <p className="text-red-500 font-bold mb-4">{reward.points_cost} points</p>
-                  <button 
-                    onClick={() => canAfford && redeemReward(reward.id)}
-                    disabled={!canAfford || redeeming === reward.id}
-                    className={`w-full py-2 rounded-lg font-medium transition-colors ${
-                      canAfford
-                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                        : 'bg-white/10 text-white/40 cursor-not-allowed'
-                    }`}
-                  >
-                    {redeeming === reward.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                    ) : canAfford ? (
-                      'Redeem'
-                    ) : (
-                      'Not enough points'
-                    )}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        )}
+        <div className="bg-neutral-900 rounded-xl p-8 border border-white/10 text-center">
+          <Gift className="w-12 h-12 text-white/20 mx-auto mb-4" />
+          <p className="text-white font-medium mb-2">Coming Soon</p>
+          <p className="text-white/60 text-sm">Rewards redemption will be available shortly.</p>
+        </div>
       </div>
 
       {/* Points History */}
