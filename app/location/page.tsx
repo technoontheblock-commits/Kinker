@@ -128,7 +128,7 @@ export default function LocationPage() {
                 Public Transport
               </h3>
               <p className="text-white/60 leading-relaxed">
-                Take tram line 10 or 17 and exit at &quot;Dreispitz&quot;.
+                Take tram line 10 or 11 and exit at &quot;Dreispitz&quot;.
                 From there it&apos;s a 15-minute walk to the club.
                 Night buses SN1-SN5 operate on weekends.
               </p>
