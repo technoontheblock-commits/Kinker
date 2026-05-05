@@ -13,8 +13,6 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 export const dynamic = 'force-dynamic'
 
 function parseSafeJson(text: string): any {
-  // Eventfrog returns very large IDs (e.g. 7456707453478002840) which exceed
-  // JavaScript's Number.MAX_SAFE_INTEGER. We convert them to strings.
   const safeText = text
     .replace(/"id"\s*:\s*(\d{16,})/g, '"id":"$1"')
     .replace(/"organizerId"\s*:\s*(\d{16,})/g, '"organizerId":"$1"')
@@ -47,22 +45,15 @@ function extractImageUrl(event: any): string {
 function getValidDate(begin: string | undefined): { date: string; time: string } {
   if (!begin) {
     const now = new Date()
-    return {
-      date: now.toISOString().split('T')[0],
-      time: '22:00',
-    }
+    return { date: now.toISOString().split('T')[0], time: '22:00' }
   }
   const dateStr = begin.split('T')[0]
   const timeStr = begin.split('T')[1]?.slice(0, 5) || '22:00'
-  // Validate date format YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     return { date: dateStr, time: timeStr }
   }
   const now = new Date()
-  return {
-    date: now.toISOString().split('T')[0],
-    time: '22:00',
-  }
+  return { date: now.toISOString().split('T')[0], time: '22:00' }
 }
 
 function transformEvent(event: any) {
@@ -88,8 +79,26 @@ function transformEvent(event: any) {
   }
 }
 
+function isKinkerEvent(event: any): boolean {
+  const eventOrgId = event.organizerId?.toString() || ''
+  const eventOrgName = (event.organizerName || '').toLowerCase()
+  const eventLocation = (event.locationText || event.location?.name || '').toLowerCase()
+  const title = (event.title?.de || event.title?.en || event.title || '').toLowerCase()
+
+  const idMatch = ORGANIZER_IDS.includes(eventOrgId)
+  const nameMatch = eventOrgName.includes(ORGANIZER_NAME_FILTER)
+  const locationMatch = eventLocation.includes('kinker') || eventLocation.includes('münchenstein')
+  const titleMatch = title.includes('kinker')
+
+  return idMatch || nameMatch || locationMatch || titleMatch
+}
+
 async function upsertEvent(supabase: any, event: any) {
   const transformed = transformEvent(event)
+  if (!transformed.name || transformed.name === 'Unnamed Event') {
+    return { action: 'skipped', error: null }
+  }
+
   const { data: existing } = await supabase
     .from('events')
     .select('id')
@@ -180,90 +189,118 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // --- FULL SYNC (all events) ---
-    let organizerFilteredEvents: any[] = []
+    // --- FULL SYNC: Try multiple strategies to find ALL Kinker events ---
+    const allRawEvents: any[] = []
     const errors: string[] = []
+    const attempts: any[] = []
 
+    // Strategy 1: orgId parameter
     for (const orgId of ORGANIZER_IDS) {
       try {
         const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&orgId=${encodeURIComponent(orgId)}&perPage=100`
         const events = await fetchEvents(url)
-        const validEvents = events.filter((e: any) =>
-          ORGANIZER_IDS.includes(e.organizerId?.toString())
-        )
-        if (validEvents.length > 0) {
-          organizerFilteredEvents.push(...validEvents)
-        }
+        attempts.push({ strategy: 'orgId', orgId, count: events.length })
+        allRawEvents.push(...events)
       } catch (err: any) {
+        attempts.push({ strategy: 'orgId', orgId, error: err.message })
         errors.push(`orgId=${orgId}: ${err.message}`)
       }
     }
 
-    let allEvents: any[] = []
-    if (organizerFilteredEvents.length === 0) {
+    // Strategy 2: organizerId parameter (alternative name)
+    for (const orgId of ORGANIZER_IDS) {
       try {
-        const pagesToLoad = 20
-        for (let page = 1; page <= pagesToLoad; page++) {
-          const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&page=${page}`
-          const events = await fetchEvents(url)
-          allEvents.push(...events)
-          if (events.length < 100) break
-        }
+        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&organizerId=${encodeURIComponent(orgId)}&perPage=100`
+        const events = await fetchEvents(url)
+        attempts.push({ strategy: 'organizerId', orgId, count: events.length })
+        allRawEvents.push(...events)
       } catch (err: any) {
-        errors.push(`all-events: ${err.message}`)
+        attempts.push({ strategy: 'organizerId', orgId, error: err.message })
+        errors.push(`organizerId=${orgId}: ${err.message}`)
       }
     }
 
-    let matchedEvents: any[] = []
-    if (organizerFilteredEvents.length > 0) {
-      matchedEvents = organizerFilteredEvents
-    } else if (allEvents.length > 0) {
-      matchedEvents = allEvents.filter((e: any) => {
-        const eventOrgId = e.organizerId?.toString()
-        const eventOrgName = (e.organizerName || '').toLowerCase()
-        const idMatch = ORGANIZER_IDS.includes(eventOrgId)
-        const nameMatch = eventOrgName.includes(ORGANIZER_NAME_FILTER)
-        return idMatch || nameMatch
-      })
+    // Strategy 3: Load all events without filter (many pages)
+    // We load events from 2020 to 2027 in chunks to cover all Kinker events
+    const years = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027]
+    for (const year of years) {
+      try {
+        const fromDate = `${year}-01-01`
+        const toDate = `${year}-12-31`
+        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&from=${fromDate}&to=${toDate}&perPage=100`
+        const events = await fetchEvents(url)
+        attempts.push({ strategy: 'year-range', year, count: events.length })
+        allRawEvents.push(...events)
+      } catch (err: any) {
+        attempts.push({ strategy: 'year-range', year, error: err.message })
+      }
     }
 
-    const uniqueEvents = matchedEvents
-      .filter((event, index, self) =>
-        index === self.findIndex((e) => e.id === event.id)
-      )
-      .sort((a, b) => new Date(a.begin).getTime() - new Date(b.begin).getTime())
+    // Strategy 4: Fallback - load recent pages without date filter
+    try {
+      for (let page = 1; page <= 30; page++) {
+        const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&page=${page}`
+        const events = await fetchEvents(url)
+        attempts.push({ strategy: 'all-pages', page, count: events.length })
+        allRawEvents.push(...events)
+        if (events.length < 100) break
+      }
+    } catch (err: any) {
+      errors.push(`all-pages: ${err.message}`)
+    }
 
-    const transformedEvents = uniqueEvents.map(transformEvent)
+    // Deduplicate by ID
+    const eventMap = new Map<string, any>()
+    for (const event of allRawEvents) {
+      const id = event.id?.toString()
+      if (id && !eventMap.has(id)) {
+        eventMap.set(id, event)
+      }
+    }
+
+    // Filter for Kinker events (generous matching)
+    const kinkerEvents = Array.from(eventMap.values()).filter(isKinkerEvent)
+
+    // Sort by date
+    kinkerEvents.sort((a, b) => new Date(a.begin || 0).getTime() - new Date(b.begin || 0).getTime())
+
+    // Upsert all Kinker events
     let created = 0
     let updated = 0
+    let skipped = 0
     let failed = 0
     const failDetails: string[] = []
 
-    for (const event of transformedEvents) {
+    for (const event of kinkerEvents) {
       try {
-        const result = await upsertEvent(supabase, { ...event, id: event.id })
+        const result = await upsertEvent(supabase, event)
         if (result.error) {
           failed++
-          failDetails.push(`${result.action} ${event.id}: ${result.error.message}`)
+          failDetails.push(`${event.id}: ${result.error.message}`)
         } else if (result.action === 'created') {
           created++
-        } else {
+        } else if (result.action === 'updated') {
           updated++
+        } else {
+          skipped++
         }
       } catch (err: any) {
         failed++
-        failDetails.push(`Event ${event.id}: ${err.message}`)
+        failDetails.push(`${event.id}: ${err.message}`)
       }
     }
 
     return NextResponse.json({
       success: true,
       summary: {
-        totalFetched: uniqueEvents.length,
+        totalScanned: eventMap.size,
+        kinkerEventsFound: kinkerEvents.length,
         created,
         updated,
+        skipped,
         failed,
       },
+      attempts,
       errors: errors.length > 0 ? errors : undefined,
       failDetails: failDetails.length > 0 ? failDetails : undefined,
     })
