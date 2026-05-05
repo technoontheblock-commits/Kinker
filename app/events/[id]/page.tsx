@@ -26,6 +26,7 @@ interface InternalEvent {
   image: string
   price: string
   type: string
+  ticket_url?: string
   lineup?: string[]
   timetable?: Floor[]
 }
@@ -72,11 +73,40 @@ export default function EventDetailPage() {
       setLoading(true)
       setError('')
 
-      // 1. Try internal event first
+      // 1. Try Eventfrog first (for synced events with Eventfrog IDs)
+      // Numeric IDs like 7456707453478002840 are Eventfrog events
+      if (params.id && /^\d+$/.test(params.id as string)) {
+        const eventfrogRes = await fetch(`/api/eventfrog/event/${params.id}`)
+        if (eventfrogRes.ok) {
+          const eventfrogData = await eventfrogRes.json()
+          if (eventfrogData.event) {
+            setEvent({ source: 'eventfrog', data: eventfrogData.event })
+            setLoading(false)
+            return
+          }
+        }
+      }
+
+      // 2. Try internal event (UUID format = local DB events)
       const internalRes = await fetch(`/api/events/${params.id}`)
       if (internalRes.ok) {
         const internalData = await internalRes.json()
         if (internalData && internalData.id) {
+          // If name is missing/empty, try to fetch from Eventfrog as fallback
+          if (!internalData.name || internalData.name === 'Unnamed Event') {
+            try {
+              const frogRes = await fetch(`/api/eventfrog/event/${internalData.id}`)
+              if (frogRes.ok) {
+                const frogData = await frogRes.json()
+                if (frogData.event?.title) {
+                  internalData.name = frogData.event.title
+                  internalData.ticket_url = frogData.event.url || internalData.ticket_url
+                }
+              }
+            } catch {
+              // Ignore fallback error
+            }
+          }
           setEvent({ source: 'internal', data: internalData })
 
           // Load ticket types
@@ -88,17 +118,6 @@ export default function EventDetailPage() {
               setSelectedTicket(ticketsData[0])
             }
           }
-          setLoading(false)
-          return
-        }
-      }
-
-      // 2. Fallback to Eventfrog
-      const eventfrogRes = await fetch(`/api/eventfrog/event/${params.id}`)
-      if (eventfrogRes.ok) {
-        const eventfrogData = await eventfrogRes.json()
-        if (eventfrogData.event) {
-          setEvent({ source: 'eventfrog', data: eventfrogData.event })
           setLoading(false)
           return
         }
@@ -416,7 +435,23 @@ export default function EventDetailPage() {
             <div className="bg-neutral-900 rounded-lg p-6 border border-white/10">
               <h3 className="text-xl font-bold text-white mb-4 font-display">Tickets</h3>
 
-              {ticketTypes.length > 0 ? (
+              {e.ticket_url ? (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-white/60">Entry</span>
+                    <span className="text-2xl font-bold text-white">{e.price}</span>
+                  </div>
+                  <a
+                    href={e.ticket_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    Tickets on Eventfrog
+                  </a>
+                </>
+              ) : ticketTypes.length > 0 ? (
                 <>
                   <div className="space-y-2 mb-4">
                     {ticketTypes.map((ticket) => (

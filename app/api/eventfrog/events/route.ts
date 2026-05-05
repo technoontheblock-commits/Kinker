@@ -55,11 +55,21 @@ function getValidDate(begin: string | undefined): { date: string; time: string }
   return { date: now.toISOString().split('T')[0], time: '22:00' }
 }
 
+function getEventTitle(event: any): string {
+  if (typeof event.title === 'string') return event.title
+  if (event.title && typeof event.title === 'object') {
+    return event.title.de || event.title.en || ''
+  }
+  if (typeof event.name === 'string') return event.name
+  if (typeof event.label === 'string') return event.label
+  return ''
+}
+
 function transformEvent(event: any) {
   const { date, time } = getValidDate(event.begin)
   return {
     id: event.id?.toString(),
-    title: event.title?.de || event.title?.en || 'Unnamed Event',
+    title: getEventTitle(event) || 'Unnamed Event',
     description: event.descriptionAsHTML?.de || event.descriptionAsHTML?.en || event.shortDescription?.de || event.shortDescription?.en || '',
     date,
     time,

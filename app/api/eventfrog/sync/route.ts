@@ -60,7 +60,24 @@ function transformEvent(event: any) {
   const { date: dateStr, time: timeStr } = getValidDate(event.begin)
   const endTimeStr = event.end?.split('T')[1]?.slice(0, 5) || null
   const price = event.lowestTicketPrice || 0
-  const name = event.title?.de || event.title?.en || event.title || ''
+  
+  // Eventfrog returns title in different formats depending on the endpoint
+  // It can be: string, { de: string, en: string }, or missing
+  let name = ''
+  if (typeof event.title === 'string') {
+    name = event.title
+  } else if (event.title && typeof event.title === 'object') {
+    name = event.title.de || event.title.en || ''
+  }
+  if (!name && typeof event.name === 'string') {
+    name = event.name
+  }
+  if (!name && typeof event.label === 'string') {
+    name = event.label
+  }
+  if (!name && typeof event.text === 'string') {
+    name = event.text
+  }
 
   return {
     id: event.id?.toString(),

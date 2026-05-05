@@ -62,10 +62,18 @@ export async function GET(
     const timeStr = beginDate ? (beginDate.split('T')[1]?.slice(0, 5) || '22:00') : '22:00'
     const validDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr : new Date().toISOString().split('T')[0]
 
+    // Extract title (Eventfrog returns it as string or object)
+    let title = ''
+    if (typeof event.title === 'string') {
+      title = event.title
+    } else if (event.title && typeof event.title === 'object') {
+      title = event.title.de || event.title.en || ''
+    }
+
     // Transform to consistent format
     const transformed = {
       id: event.id?.toString(),
-      title: event.title?.de || event.title?.en || 'Unnamed Event',
+      title: title || 'Unnamed Event',
       description: event.descriptionAsHTML?.de || event.descriptionAsHTML?.en || event.shortDescription?.de || event.shortDescription?.en || '',
       date: validDate,
       time: timeStr,
