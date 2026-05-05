@@ -41,13 +41,28 @@ function extractImageUrl(event: any): string | undefined {
   return undefined
 }
 
+function getValidDate(begin: string | undefined): { date: string; time: string } {
+  if (!begin) {
+    const now = new Date()
+    return { date: now.toISOString().split('T')[0], time: '22:00' }
+  }
+  const dateStr = begin.split('T')[0]
+  const timeStr = begin.split('T')[1]?.slice(0, 5) || '22:00'
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return { date: dateStr, time: timeStr }
+  }
+  const now = new Date()
+  return { date: now.toISOString().split('T')[0], time: '22:00' }
+}
+
 function transformEvent(event: any) {
+  const { date, time } = getValidDate(event.begin)
   return {
     id: event.id?.toString(),
     title: event.title?.de || event.title?.en || 'Unnamed Event',
     description: event.descriptionAsHTML?.de || event.descriptionAsHTML?.en || event.shortDescription?.de || event.shortDescription?.en || '',
-    date: event.begin?.split('T')[0],
-    time: event.begin?.split('T')[1]?.slice(0, 5),
+    date,
+    time,
     location: event.locationText || event.location?.name || 'KINKER, Münchenstein',
     price: event.lowestTicketPrice || 0,
     currency: event.currency || 'CHF',

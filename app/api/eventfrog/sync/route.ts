@@ -44,9 +44,29 @@ function extractImageUrl(event: any): string {
   return ''
 }
 
+function getValidDate(begin: string | undefined): { date: string; time: string } {
+  if (!begin) {
+    const now = new Date()
+    return {
+      date: now.toISOString().split('T')[0],
+      time: '22:00',
+    }
+  }
+  const dateStr = begin.split('T')[0]
+  const timeStr = begin.split('T')[1]?.slice(0, 5) || '22:00'
+  // Validate date format YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return { date: dateStr, time: timeStr }
+  }
+  const now = new Date()
+  return {
+    date: now.toISOString().split('T')[0],
+    time: '22:00',
+  }
+}
+
 function transformEvent(event: any) {
-  const dateStr = event.begin?.split('T')[0] || ''
-  const timeStr = event.begin?.split('T')[1]?.slice(0, 5) || ''
+  const { date: dateStr, time: timeStr } = getValidDate(event.begin)
   const endTimeStr = event.end?.split('T')[1]?.slice(0, 5) || null
   const price = event.lowestTicketPrice || 0
 

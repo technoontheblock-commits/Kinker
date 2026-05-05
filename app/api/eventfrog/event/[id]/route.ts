@@ -56,13 +56,19 @@ export async function GET(
     const img = event.image || event.emblemToShow || event.imageToShow
     const imageUrl = typeof img === 'string' ? img : img?.url
 
+    // Validate date
+    const beginDate = event.begin || ''
+    const dateStr = beginDate ? beginDate.split('T')[0] : new Date().toISOString().split('T')[0]
+    const timeStr = beginDate ? (beginDate.split('T')[1]?.slice(0, 5) || '22:00') : '22:00'
+    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr : new Date().toISOString().split('T')[0]
+
     // Transform to consistent format
     const transformed = {
       id: event.id?.toString(),
       title: event.title?.de || event.title?.en || 'Unnamed Event',
       description: event.descriptionAsHTML?.de || event.descriptionAsHTML?.en || event.shortDescription?.de || event.shortDescription?.en || '',
-      date: event.begin?.split('T')[0],
-      time: event.begin?.split('T')[1]?.slice(0, 5),
+      date: validDate,
+      time: timeStr,
       endDate: event.end?.split('T')[0],
       endTime: event.end?.split('T')[1]?.slice(0, 5),
       location: event.locationText || event.location?.name || 'KINKER, Münchenstein',
