@@ -118,6 +118,28 @@ export async function DELETE(
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
     
+    // Delete related tickets first (to avoid FK constraint violation)
+    const { error: ticketsError } = await supabase
+      .from('tickets')
+      .delete()
+      .eq('event_id', params.id)
+    
+    if (ticketsError) {
+      console.error('DELETE tickets error:', ticketsError)
+      return NextResponse.json({ error: `Failed to delete related tickets: ${ticketsError.message}` }, { status: 500 })
+    }
+    
+    // Delete related cart items referencing this event
+    const { error: cartError } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('event_id', params.id)
+    
+    if (cartError) {
+      console.error('DELETE cart items error:', cartError)
+      // Non-fatal: cart_items may not have FK constraint
+    }
+    
     const { error } = await supabase
       .from('events')
       .delete()
