@@ -756,9 +756,13 @@ export default function AdminDashboard() {
         const response = await fetch(`/api/events/${id}`, { method: 'DELETE' })
         if (response.ok) {
           setEvents(events.filter(e => e.id !== id))
+        } else {
+          const data = await response.json().catch(() => ({}))
+          alert('Error deleting event: ' + (data.error || `HTTP ${response.status}`))
         }
       } catch (error) {
         console.error('Error deleting event:', error)
+        alert('Network error deleting event')
       }
     }
   }

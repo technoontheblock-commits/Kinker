@@ -102,17 +102,35 @@ export async function DELETE(
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
+    // First check if event exists
+    const { data: existingEvent, error: fetchError } = await supabase
+      .from('events')
+      .select('id')
+      .eq('id', params.id)
+      .single()
+    
+    if (fetchError) {
+      console.error('DELETE event fetch error:', fetchError)
+      return NextResponse.json({ error: `Fetch error: ${fetchError.message}`, code: fetchError.code }, { status: 500 })
+    }
+    
+    if (!existingEvent) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+    }
+    
     const { error } = await supabase
       .from('events')
       .delete()
       .eq('id', params.id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('DELETE event error:', error)
+      return NextResponse.json({ error: error.message, code: error.code, hint: error.hint }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
+    console.error('DELETE event exception:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
