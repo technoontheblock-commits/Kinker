@@ -107,9 +107,9 @@ export async function POST(request: NextRequest) {
     let allEvents: any[] = []
     if (organizerFilteredEvents.length === 0) {
       try {
-        const pagesToLoad = 5
+        const pagesToLoad = 20
         for (let page = 1; page <= pagesToLoad; page++) {
-          const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&page=${page}&from=2020-01-01`
+          const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&page=${page}`
           const events = await fetchEvents(url)
           allEvents.push(...events)
           if (events.length < 100) break

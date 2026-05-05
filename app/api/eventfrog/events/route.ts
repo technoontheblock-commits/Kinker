@@ -109,9 +109,9 @@ export async function GET(request: NextRequest) {
     if (organizerFilteredEvents.length === 0) {
       try {
         // Load multiple pages to get as many events as possible
-        const pagesToLoad = 5
+        const pagesToLoad = 20
         for (let page = 1; page <= pagesToLoad; page++) {
-          const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&page=${page}&from=2020-01-01`
+          const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&perPage=100&page=${page}`
           const events = await fetchEvents(url)
           attempts.push({ strategy: 'all-events', page, count: events.length })
           allEvents.push(...events)
