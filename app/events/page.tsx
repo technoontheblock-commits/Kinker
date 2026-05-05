@@ -77,10 +77,13 @@ export default function EventsPage() {
         }
       }
       
-      // Sort by date
-      allEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      // Filter out unnamed/empty events
+      const validEvents = allEvents.filter(e => e.title && e.title.trim() !== '' && e.title !== 'Unnamed Event')
       
-      setEvents(allEvents)
+      // Sort by date
+      validEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      
+      setEvents(validEvents)
     } catch (err: any) {
       setError(err.message)
     } finally {

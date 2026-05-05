@@ -161,7 +161,9 @@ export async function GET(request: NextRequest) {
       )
       .sort((a, b) => new Date(a.begin).getTime() - new Date(b.begin).getTime())
 
-    const events = uniqueEvents.map(transformEvent)
+    const events = uniqueEvents.map(transformEvent).filter((e: any) => 
+      e.title && e.title.trim() !== '' && e.title !== 'Unnamed Event'
+    )
 
     // For debug: collect all organizers seen
     const allOrganizers = new Map()

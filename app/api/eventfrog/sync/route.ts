@@ -69,15 +69,16 @@ function transformEvent(event: any) {
   const { date: dateStr, time: timeStr } = getValidDate(event.begin)
   const endTimeStr = event.end?.split('T')[1]?.slice(0, 5) || null
   const price = event.lowestTicketPrice || 0
+  const name = event.title?.de || event.title?.en || event.title || ''
 
   return {
     id: event.id?.toString(),
-    name: event.title?.de || event.title?.en || 'Unnamed Event',
+    name: name || 'Unnamed Event',
     date: dateStr,
     time: timeStr,
     end_time: endTimeStr,
-    description: event.shortDescription?.de || event.shortDescription?.en || '',
-    full_description: event.descriptionAsHTML?.de || event.descriptionAsHTML?.en || event.shortDescription?.de || event.shortDescription?.en || '',
+    description: event.shortDescription?.de || event.shortDescription?.en || event.shortDescription || event.description || '',
+    full_description: event.descriptionAsHTML?.de || event.descriptionAsHTML?.en || event.shortDescription?.de || event.shortDescription?.en || event.description || '',
     lineup: [],
     image: extractImageUrl(event),
     ticket_url: event.presaleLink || event.url || '',
