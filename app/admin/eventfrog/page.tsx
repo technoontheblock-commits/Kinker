@@ -13,7 +13,8 @@ import {
   ExternalLink,
   AlertCircle,
   RefreshCw,
-  Settings
+  Settings,
+  Download
 } from 'lucide-react'
 
 interface EventfrogEvent {
@@ -40,6 +41,8 @@ export default function AdminEventfrogPage() {
   const [salesLoading, setSalesLoading] = useState(false)
   const [error, setError] = useState('')
   const [salesError, setSalesError] = useState('')
+  const [syncLoading, setSyncLoading] = useState(false)
+  const [syncResult, setSyncResult] = useState<any>(null)
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
@@ -99,6 +102,29 @@ export default function AdminEventfrogPage() {
     }
   }
 
+  const syncEvents = async () => {
+    try {
+      setSyncLoading(true)
+      setSyncResult(null)
+      const res = await fetch('/api/eventfrog/sync', {
+        method: 'POST',
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Sync failed')
+      }
+
+      setSyncResult(data)
+      // Reload events list after sync
+      await loadEvents()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSyncLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
@@ -121,17 +147,45 @@ export default function AdminEventfrogPage() {
             </Link>
             <div>
               <h1 className="text-3xl font-bold text-white">Eventfrog Integration</h1>
-              <p className="text-white/50">Events und Verkaufsdaten</p>
+              <p className="text-white/50">Events and sales data</p>
             </div>
           </div>
-          <button
-            onClick={loadEvents}
-            className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Aktualisieren
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={syncEvents}
+              disabled={syncLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white rounded-lg transition-colors"
+            >
+              {syncLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Sync Events
+            </button>
+            <button
+              onClick={loadEvents}
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </button>
+          </div>
         </div>
+
+        {/* Sync Result */}
+        {syncResult && (
+          <div className={`mb-6 p-4 rounded-lg flex items-start gap-3 ${syncResult.summary?.failed > 0 ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-green-500/10 border border-green-500/30'}`}>
+            <div className="flex-1">
+              <p className={`font-medium ${syncResult.summary?.failed > 0 ? 'text-yellow-400' : 'text-green-400'}`}>
+                Sync complete: {syncResult.summary?.created} created, {syncResult.summary?.updated} updated, {syncResult.summary?.failed} failed
+              </p>
+              {syncResult.summary?.failed > 0 && syncResult.failDetails && (
+                <div className="mt-2 text-sm text-yellow-400/70 max-h-32 overflow-y-auto">
+                  {syncResult.failDetails.map((detail: string, i: number) => (
+                    <div key={i}>{detail}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -164,7 +218,7 @@ export default function AdminEventfrogPage() {
               <Calendar className="w-8 h-8 text-red-500" />
               <span className="text-3xl font-bold text-white">{events.length}</span>
             </div>
-            <p className="text-white/60">Events auf Eventfrog</p>
+            <p className="text-white/60">Events on Eventfrog</p>
           </motion.div>
 
           <motion.div
@@ -179,7 +233,7 @@ export default function AdminEventfrogPage() {
                 {events.filter(e => e.soldOut).length}
               </span>
             </div>
-            <p className="text-white/60">Ausverkaufte Events</p>
+            <p className="text-white/60">Sold out events</p>
           </motion.div>
 
           <motion.div
@@ -198,7 +252,7 @@ export default function AdminEventfrogPage() {
                 {salesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Laden'}
               </button>
             </div>
-            <p className="text-white/60">Verkaufsdaten (Organizer API)</p>
+            <p className="text-white/60">Sales data (Organizer API)</p>
           </motion.div>
         </div>
 
@@ -209,25 +263,25 @@ export default function AdminEventfrogPage() {
             animate={{ opacity: 1, height: 'auto' }}
             className="mb-8 bg-zinc-900 rounded-xl p-6 border border-white/10"
           >
-            <h2 className="text-xl font-bold text-white mb-4">Verkaufsübersicht</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Sales overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 bg-zinc-800/50 rounded-lg">
                 <div className="text-2xl font-bold text-white mb-1">
                   CHF {salesData.totalRevenue?.toLocaleString() || 0}
                 </div>
-                <div className="text-sm text-white/50">Gesamtumsatz</div>
+                <div className="text-sm text-white/50">Total revenue</div>
               </div>
               <div className="p-4 bg-zinc-800/50 rounded-lg">
                 <div className="text-2xl font-bold text-white mb-1">
                   {salesData.totalTickets?.toLocaleString() || 0}
                 </div>
-                <div className="text-sm text-white/50">Verkaufte Tickets</div>
+                <div className="text-sm text-white/50">Tickets sold</div>
               </div>
               <div className="p-4 bg-zinc-800/50 rounded-lg">
                 <div className="text-2xl font-bold text-white mb-1">
                   {salesData.totalOrders?.toLocaleString() || 0}
                 </div>
-                <div className="text-sm text-white/50">Bestellungen</div>
+                <div className="text-sm text-white/50">Orders</div>
               </div>
             </div>
           </motion.div>
@@ -236,10 +290,10 @@ export default function AdminEventfrogPage() {
         {salesError && (
           <div className="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <p className="text-yellow-400">
-              Organizer API nicht verfügbar: {salesError}
+              Organizer API not available: {salesError}
             </p>
             <p className="text-yellow-400/70 text-sm mt-1">
-              Für Verkaufsdaten benötigst du die Organizer API Berechtigung.
+              You need Organizer API permission for sales data.
             </p>
           </div>
         )}
@@ -254,7 +308,7 @@ export default function AdminEventfrogPage() {
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
             >
-              Eventfrog öffnen
+              Open Eventfrog
               <ExternalLink className="w-4 h-4" />
             </a>
           </div>
@@ -262,7 +316,7 @@ export default function AdminEventfrogPage() {
           <div className="divide-y divide-white/10">
             {events.length === 0 ? (
               <div className="p-8 text-center text-white/60">
-                Keine Events gefunden
+                No events found
               </div>
             ) : (
               events.map((event) => (
@@ -280,7 +334,7 @@ export default function AdminEventfrogPage() {
                   <div className="flex items-center gap-3">
                     {event.soldOut && (
                       <span className="px-2 py-1 bg-red-500/20 text-red-500 text-xs rounded">
-                        Ausverkauft
+                        Sold out
                       </span>
                     )}
                     <a
