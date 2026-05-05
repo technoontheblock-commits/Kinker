@@ -118,7 +118,65 @@ export async function DELETE(
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
     
-    // Delete related tickets first (to avoid FK constraint violation)
+    // Find event_tickets for this event
+    const { data: eventTickets, error: etFetchError } = await (supabase as any)
+      .from('event_tickets')
+      .select('id')
+      .eq('event_id', params.id)
+    
+    if (etFetchError) {
+      console.error('FETCH event_tickets error:', etFetchError)
+      // Continue anyway — table might not exist
+    }
+    
+    const eventTicketIds = eventTickets?.map((t: any) => t.id) || []
+    
+    // Delete order_items referencing these event_tickets
+    if (eventTicketIds.length > 0) {
+      const { error: oiError } = await supabase
+        .from('order_items')
+        .delete()
+        .in('event_ticket_id', eventTicketIds)
+      
+      if (oiError) {
+        console.error('DELETE order_items error:', oiError)
+        return NextResponse.json({ error: `Failed to delete related order items: ${oiError.message}` }, { status: 500 })
+      }
+      
+      // Delete cart_items referencing these event_tickets
+      const { error: ciError } = await supabase
+        .from('cart_items')
+        .delete()
+        .in('event_ticket_id', eventTicketIds)
+      
+      if (ciError) {
+        console.error('DELETE cart_items error:', ciError)
+        // Non-fatal
+      }
+    }
+    
+    // Delete order_items directly referencing this event
+    const { error: oiDirectError } = await supabase
+      .from('order_items')
+      .delete()
+      .eq('event_id', params.id)
+    
+    if (oiDirectError) {
+      console.error('DELETE order_items direct error:', oiDirectError)
+    }
+    
+    // Delete related event_tickets
+    const { error: etError } = await (supabase as any)
+      .from('event_tickets')
+      .delete()
+      .eq('event_id', params.id)
+    
+    if (etError) {
+      console.error('DELETE event_tickets error:', etError)
+      // Continue anyway
+    }
+    
+    // Delete related tickets
     const { error: ticketsError } = await supabase
       .from('tickets')
       .delete()
@@ -137,7 +195,7 @@ export async function DELETE(
     
     if (cartError) {
       console.error('DELETE cart items error:', cartError)
-      // Non-fatal: cart_items may not have FK constraint
+      // Non-fatal
     }
     
     const { error } = await supabase
