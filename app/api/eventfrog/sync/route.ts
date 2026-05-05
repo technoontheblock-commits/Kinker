@@ -12,6 +12,15 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 export const dynamic = 'force-dynamic'
 
+function parseSafeJson(text: string): any {
+  // Eventfrog returns very large IDs (e.g. 7456707453478002840) which exceed
+  // JavaScript's Number.MAX_SAFE_INTEGER. We convert them to strings.
+  const safeText = text
+    .replace(/"id"\s*:\s*(\d{16,})/g, '"id":"$1"')
+    .replace(/"organizerId"\s*:\s*(\d{16,})/g, '"organizerId":"$1"')
+  return JSON.parse(safeText)
+}
+
 async function fetchEvents(url: string): Promise<any[]> {
   const response = await fetch(url, {
     method: 'GET',
@@ -23,7 +32,8 @@ async function fetchEvents(url: string): Promise<any[]> {
     throw new Error(`${response.status}: ${text.substring(0, 300)}`)
   }
 
-  const data = await response.json()
+  const text = await response.text()
+  const data = parseSafeJson(text)
   return data.events || []
 }
 

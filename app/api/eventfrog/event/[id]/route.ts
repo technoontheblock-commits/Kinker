@@ -35,7 +35,12 @@ export async function GET(
       )
     }
 
-    const data = await response.json()
+    const text = await response.text()
+    // Eventfrog returns very large IDs that exceed Number.MAX_SAFE_INTEGER
+    const safeText = text
+      .replace(/"id"\s*:\s*(\d{16,})/g, '"id":"$1"')
+      .replace(/"organizerId"\s*:\s*(\d{16,})/g, '"organizerId":"$1"')
+    const data = JSON.parse(safeText)
     const events = data.events || []
 
     if (events.length === 0) {
