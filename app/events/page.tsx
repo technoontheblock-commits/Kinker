@@ -31,14 +31,56 @@ export default function EventsPage() {
   const loadEvents = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/eventfrog/events')
-      const data = await res.json()
       
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to load events')
+      // Load from both Eventfrog API and local DB
+      const [frogRes, dbRes] = await Promise.allSettled([
+        fetch('/api/eventfrog/events'),
+        fetch('/api/events')
+      ])
+      
+      let allEvents: EventfrogEvent[] = []
+      
+      // Eventfrog events (primary source)
+      if (frogRes.status === 'fulfilled') {
+        const data = await frogRes.value.json()
+        if (frogRes.value.ok && data.events) {
+          allEvents = data.events
+        }
       }
       
-      setEvents(data.events || [])
+      // Local DB events (fallback / supplement)
+      if (dbRes.status === 'fulfilled') {
+        const dbData = await dbRes.value.json()
+        if (dbRes.value.ok && Array.isArray(dbData)) {
+          const dbEvents: EventfrogEvent[] = dbData.map((e: any) => ({
+            id: e.id,
+            title: e.name,
+            description: e.description || e.full_description || '',
+            date: e.date,
+            time: e.time,
+            location: 'KINKER, Münchenstein',
+            price: parseFloat(e.price?.replace(/[^0-9.]/g, '')) || 0,
+            currency: 'CHF',
+            image: e.image || '',
+            url: e.ticket_url || '',
+            soldOut: false,
+          }))
+          
+          // Merge: Eventfrog has priority, DB fills gaps
+          const existingIds = new Set(allEvents.map(ev => ev.id))
+          for (const dbEvent of dbEvents) {
+            if (!existingIds.has(dbEvent.id)) {
+              allEvents.push(dbEvent)
+              existingIds.add(dbEvent.id)
+            }
+          }
+        }
+      }
+      
+      // Sort by date
+      allEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      
+      setEvents(allEvents)
     } catch (err: any) {
       setError(err.message)
     } finally {
