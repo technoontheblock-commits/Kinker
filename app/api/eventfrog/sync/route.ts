@@ -100,7 +100,15 @@ function isKinkerEvent(event: any): boolean {
   const eventOrgId = event.organizerId?.toString() || ''
   const eventOrgName = (event.organizerName || '').toLowerCase()
   const eventLocation = (event.locationText || event.location?.name || '').toLowerCase()
-  const title = (event.title?.de || event.title?.en || event.title || '').toLowerCase()
+  
+  // Title can be string or object { de, en }
+  let title = ''
+  if (typeof event.title === 'string') {
+    title = event.title
+  } else if (event.title && typeof event.title === 'object') {
+    title = event.title.de || event.title.en || ''
+  }
+  title = title.toLowerCase()
 
   const idMatch = ORGANIZER_IDS.includes(eventOrgId)
   const nameMatch = eventOrgName.includes(ORGANIZER_NAME_FILTER)
