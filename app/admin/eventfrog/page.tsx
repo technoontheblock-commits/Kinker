@@ -43,6 +43,9 @@ export default function AdminEventfrogPage() {
   const [salesError, setSalesError] = useState('')
   const [syncLoading, setSyncLoading] = useState(false)
   const [syncResult, setSyncResult] = useState<any>(null)
+  const [syncByIdLoading, setSyncByIdLoading] = useState(false)
+  const [syncByIdResult, setSyncByIdResult] = useState<any>(null)
+  const [eventIdInput, setEventIdInput] = useState('')
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
@@ -116,12 +119,37 @@ export default function AdminEventfrogPage() {
       }
 
       setSyncResult(data)
-      // Reload events list after sync
       await loadEvents()
     } catch (err: any) {
       setError(err.message)
     } finally {
       setSyncLoading(false)
+    }
+  }
+
+  const syncEventById = async () => {
+    if (!eventIdInput.trim()) return
+    try {
+      setSyncByIdLoading(true)
+      setSyncByIdResult(null)
+      const res = await fetch('/api/eventfrog/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: eventIdInput.trim() }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Sync by ID failed')
+      }
+
+      setSyncByIdResult(data)
+      setEventIdInput('')
+      await loadEvents()
+    } catch (err: any) {
+      setSyncByIdResult({ error: err.message })
+    } finally {
+      setSyncByIdLoading(false)
     }
   }
 
@@ -167,6 +195,34 @@ export default function AdminEventfrogPage() {
               Refresh
             </button>
           </div>
+        </div>
+
+        {/* Sync by ID */}
+        <div className="mb-6 bg-zinc-900 rounded-xl p-6 border border-white/10">
+          <h3 className="text-lg font-bold text-white mb-3">Sync single event by ID</h3>
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={eventIdInput}
+              onChange={(e) => setEventIdInput(e.target.value)}
+              placeholder="Eventfrog Event ID (e.g. 7456707453478002840)"
+              className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-red-500/50"
+              onKeyDown={(e) => e.key === 'Enter' && syncEventById()}
+            />
+            <button
+              onClick={syncEventById}
+              disabled={syncByIdLoading || !eventIdInput.trim()}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white rounded-lg transition-colors"
+            >
+              {syncByIdLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Sync
+            </button>
+          </div>
+          {syncByIdResult && (
+            <div className={`mt-3 p-3 rounded-lg text-sm ${syncByIdResult.error ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-green-500/10 border border-green-500/30 text-green-400'}`}>
+              {syncByIdResult.error ? syncByIdResult.error : `Synced: ${syncByIdResult.event?.name || 'Event'}`}
+            </div>
+          )}
         </div>
 
         {/* Sync Result */}

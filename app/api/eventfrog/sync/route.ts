@@ -67,6 +67,43 @@ function transformEvent(event: any) {
   }
 }
 
+async function upsertEvent(supabase: any, event: any) {
+  const transformed = transformEvent(event)
+  const { data: existing } = await supabase
+    .from('events')
+    .select('id')
+    .eq('id', transformed.id)
+    .single()
+
+  if (existing) {
+    const { error } = await supabase
+      .from('events')
+      .update({
+        name: transformed.name,
+        date: transformed.date,
+        time: transformed.time,
+        end_time: transformed.end_time,
+        description: transformed.description,
+        full_description: transformed.full_description,
+        image: transformed.image,
+        ticket_url: transformed.ticket_url,
+        price: transformed.price,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', transformed.id)
+    return { action: 'updated', error }
+  } else {
+    const { error } = await supabase
+      .from('events')
+      .insert([{
+        ...transformed,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }])
+    return { action: 'created', error }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireAdmin()
@@ -84,8 +121,45 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const body = await request.json().catch(() => ({}))
 
-    // Fetch events from Eventfrog (same logic as /api/eventfrog/events)
+    // --- SINGLE EVENT SYNC by ID ---
+    if (body.eventId) {
+      const url = `${EVENTFROG_API_URL}/events.json?apiKey=${encodeURIComponent(API_KEY)}&id=${encodeURIComponent(body.eventId)}`
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        return NextResponse.json(
+          { error: `Eventfrog API error: ${response.status}`, details: text.substring(0, 500) },
+          { status: response.status }
+        )
+      }
+
+      const text = await response.text()
+      const data = parseSafeJson(text)
+      const events = data.events || []
+
+      if (events.length === 0) {
+        return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+      }
+
+      const result = await upsertEvent(supabase, events[0])
+      if (result.error) {
+        return NextResponse.json({ error: result.error.message }, { status: 500 })
+      }
+
+      return NextResponse.json({
+        success: true,
+        summary: { totalFetched: 1, created: result.action === 'created' ? 1 : 0, updated: result.action === 'updated' ? 1 : 0, failed: 0 },
+        event: transformEvent(events[0]),
+      })
+    }
+
+    // --- FULL SYNC (all events) ---
     let organizerFilteredEvents: any[] = []
     const errors: string[] = []
 
@@ -132,14 +206,12 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Remove duplicates
     const uniqueEvents = matchedEvents
       .filter((event, index, self) =>
         index === self.findIndex((e) => e.id === event.id)
       )
       .sort((a, b) => new Date(a.begin).getTime() - new Date(b.begin).getTime())
 
-    // Upsert into database
     const transformedEvents = uniqueEvents.map(transformEvent)
     let created = 0
     let updated = 0
@@ -148,53 +220,14 @@ export async function POST(request: NextRequest) {
 
     for (const event of transformedEvents) {
       try {
-        // Check if event already exists
-        const { data: existing } = await supabase
-          .from('events')
-          .select('id')
-          .eq('id', event.id)
-          .single()
-
-        if (existing) {
-          // Update
-          const { error } = await supabase
-            .from('events')
-            .update({
-              name: event.name,
-              date: event.date,
-              time: event.time,
-              end_time: event.end_time,
-              description: event.description,
-              full_description: event.full_description,
-              image: event.image,
-              ticket_url: event.ticket_url,
-              price: event.price,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', event.id)
-
-          if (error) {
-            failed++
-            failDetails.push(`Update ${event.id}: ${error.message}`)
-          } else {
-            updated++
-          }
+        const result = await upsertEvent(supabase, { ...event, id: event.id })
+        if (result.error) {
+          failed++
+          failDetails.push(`${result.action} ${event.id}: ${result.error.message}`)
+        } else if (result.action === 'created') {
+          created++
         } else {
-          // Insert
-          const { error } = await supabase
-            .from('events')
-            .insert([{
-              ...event,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }])
-
-          if (error) {
-            failed++
-            failDetails.push(`Insert ${event.id}: ${error.message}`)
-          } else {
-            created++
-          }
+          updated++
         }
       } catch (err: any) {
         failed++
