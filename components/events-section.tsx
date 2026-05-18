@@ -87,9 +87,6 @@ export function EventsSection({ events }: { events: EventfrogEvent[] }) {
                       <Badge variant="red" className="uppercase tracking-wider">
                         Event
                       </Badge>
-                      <span className="text-white/80 font-semibold text-lg">
-                        {event.price > 0 ? `${event.price.toFixed(2)} ${event.currency}` : 'Gratis'}
-                      </span>
                     </div>
 
                     {/* Bottom */}

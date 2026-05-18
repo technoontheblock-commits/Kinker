@@ -53,15 +53,8 @@ export function EventsGrid({ events }: { events: EventfrogEvent[] }) {
 
             <div className="flex-grow" />
 
-            {/* Price & CTA */}
-            <div className="flex items-center justify-between gap-3 pt-4 border-t border-white/5">
-              <div className="text-white font-bold whitespace-nowrap">
-                {event.price > 0 ? (
-                  <span>{event.price.toFixed(2)} {event.currency}</span>
-                ) : (
-                  <span className="text-green-400">Gratis</span>
-                )}
-              </div>
+            {/* CTA */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
               <div className="flex items-center gap-2">
                 <Link
                   href={`/events/${event.id}`}
