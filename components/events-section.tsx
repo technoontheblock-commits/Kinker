@@ -5,44 +5,10 @@ import { Calendar, Clock, ArrowRight, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useLanguage } from './language-provider'
-import { useEffect, useState } from 'react'
+import type { EventfrogEvent } from '@/lib/eventfrog'
 
-interface EventfrogEvent {
-  id: string
-  title: string
-  description: string
-  date: string
-  time: string
-  location: string
-  price: number
-  currency: string
-  image: string
-  url: string
-  soldOut: boolean
-}
-
-export function EventsSection() {
+export function EventsSection({ events }: { events: EventfrogEvent[] }) {
   const { t } = useLanguage()
-  const [upcomingEvents, setUpcomingEvents] = useState<EventfrogEvent[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const res = await fetch('/api/eventfrog/events')
-        const data = await res.json()
-        if (data.events) {
-          // Take first 4 upcoming events
-          setUpcomingEvents(data.events.slice(0, 4))
-        }
-      } catch (err) {
-        console.error('Error loading Eventfrog events:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadEvents()
-  }, [])
 
   const formatEventDate = (dateStr: string) => {
     try {
@@ -56,26 +22,7 @@ export function EventsSection() {
     }
   }
 
-  if (loading) {
-    return (
-      <section id="events" className="py-24 lg:py-32 bg-black relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter font-display text-white">
-              UPCOMING<span className="text-red-500">.</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[16/10] bg-neutral-900 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  if (upcomingEvents.length === 0) {
+  if (events.length === 0) {
     return null
   }
 
@@ -110,7 +57,7 @@ export function EventsSection() {
 
         {/* Events Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-          {upcomingEvents.map((event) => (
+          {events.map((event) => (
             <div
               key={event.id}
               className="group relative"
