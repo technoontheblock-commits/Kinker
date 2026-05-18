@@ -10,7 +10,12 @@ export default async function EventsPage() {
     getEvents(),
   ])
 
-  const mergedEvents = mergeEvents(frogEvents, localEvents)
+  // Filter out past local events too
+  const now = new Date()
+  const todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+  const upcomingLocal = localEvents.filter(e => e.date >= todayStr)
+
+  const mergedEvents = mergeEvents(frogEvents, upcomingLocal)
 
   const validEvents = mergedEvents.filter(
     e => e.title && e.title.trim() !== '' && e.title !== 'Unnamed Event'
