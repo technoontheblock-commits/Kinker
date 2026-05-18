@@ -273,12 +273,6 @@ export default function EventDetailPage() {
               {/* Tickets */}
               <div className="bg-neutral-900 rounded-lg p-6 border border-white/10">
                 <h3 className="text-xl font-bold text-white mb-4 font-display">Tickets</h3>
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-white/60">Entry</span>
-                  <span className="text-2xl font-bold text-white">
-                    {e.price > 0 ? `${e.price.toFixed(2)} ${e.currency}` : 'Gratis'}
-                  </span>
-                </div>
                 {e.soldOut ? (
                   <Button variant="glitch" size="lg" className="w-full" disabled>
                     AUSVERKAUFT
@@ -437,10 +431,6 @@ export default function EventDetailPage() {
 
               {e.ticket_url ? (
                 <>
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-white/60">Entry</span>
-                    <span className="text-2xl font-bold text-white">{e.price}</span>
-                  </div>
                   <a
                     href={e.ticket_url}
                     target="_blank"
@@ -534,10 +524,6 @@ export default function EventDetailPage() {
                 </>
               ) : (
                 <>
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-white/60">Entry</span>
-                    <span className="text-2xl font-bold text-white">{e.price}</span>
-                  </div>
                   <Button variant="glitch" size="lg" className="w-full" disabled>
                     Tickets coming soon
                   </Button>
