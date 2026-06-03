@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - E-Mail-Bestätigung mit QR-Code und Zahlungsinformationen
   - Wallet-API-Routen vorbereitet (Apple Wallet + Google Wallet) – deaktiviert bis Accounts vorhanden
 - **DB Schema**: Neue Tabellen `bonus_cards` und `bonus_card_scans` mit Audit-Trail
+- **Bonuscard Navigation**: Links zur Bonuscard in Header, Dashboard-Sidebar und Admin-Panel hinzugefügt
+- **Bonuscard PDF**: E-Mail enthält jetzt PDF-Anhang mit Karte und QR-Code (statt Bild inline)
+- **Bonuscard Zahlungsreferenz**: Verwendungszweck bei allen Zahlungsmethoden ist jetzt die Kartennummer
+- **Bonuscard Banküberweisung**: IBAN, BIC und Kontoinhaber werden in E-Mail und PDF angezeigt
 - **Account deletion**: UI and hardened RLS policies for secure account deletion.
 - **Cookie consent banner**: Implemented cookie consent with overhauled privacy policy.
 - **Eventfrog sync**: Sync single Eventfrog events by ID with fallback DB loading.
@@ -33,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Event detail**: Removed price from event detail page.
 
 ### Fixed
+- **Bonuscard Status**: Karte ist erst `active` wenn Zahlung bestätigt wurde (vorher war sie sofort aktiv)
 - **Event title crash**: Fixed `toLowerCase` crash when `event.title` is an object instead of a string.
 - **Event title extraction**: Fixed event title extraction and Eventfrog ticket link for synced events.
 - **Empty events**: Filter out unnamed/empty events from display and sync.
