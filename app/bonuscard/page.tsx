@@ -133,7 +133,7 @@ export default function BonusCardPage() {
             transition={{ delay: 0.4 }}
             className="bg-neutral-900 rounded-2xl p-8 border border-white/10"
           >
-            <h2 className="text-2xl font-bold text-white mb-6">Jetzt kaufen</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Jetzt bestellen</h2>
             
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -207,7 +207,7 @@ export default function BonusCardPage() {
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
-                    Bonuscard für CHF 100 kaufen
+                    Bonuscard für CHF 100 bestellen
                   </>
                 )}
               </button>
