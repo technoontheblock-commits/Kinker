@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react'
 import { motion } from 'framer-motion'
-import { Check, Mail, ArrowRight } from 'lucide-react'
+import { Check, Mail, ArrowRight, Banknote } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -10,6 +10,7 @@ function SuccessContent() {
   const searchParams = useSearchParams()
   const cardNumber = searchParams.get('card')
   const viewUrl = searchParams.get('url')
+  const paymentMethod = searchParams.get('method')
 
   return (
     <div className="min-h-screen bg-black pt-20">
@@ -47,6 +48,27 @@ function SuccessContent() {
                 Wir haben dir eine E-Mail mit deiner digitalen Karte geschickt.
               </p>
             </div>
+
+            {paymentMethod === 'bank_transfer' && cardNumber && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-5 text-left">
+                <div className="flex items-center gap-2 mb-4">
+                  <Banknote className="w-5 h-5 text-yellow-400" />
+                  <h3 className="text-yellow-400 font-semibold text-sm">Banküberweisung</h3>
+                </div>
+                <p className="text-white/70 text-sm mb-3">
+                  Bitte überweise <strong className="text-white">CHF 100.00</strong> auf folgendes Konto:
+                </p>
+                <div className="space-y-1 text-sm font-mono text-white/90">
+                  <p>IBAN: CH93 0076 2011 6238 5295 7</p>
+                  <p>BIC: BKBKCH22</p>
+                  <p>Konto: KINKER GmbH</p>
+                </div>
+                <div className="mt-3 pt-3 border-t border-yellow-500/20">
+                  <p className="text-white/60 text-xs">Verwendungszweck:</p>
+                  <p className="text-yellow-400 font-mono text-sm font-semibold">{cardNumber}</p>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-3 bg-neutral-900/50 rounded-xl p-4 border border-white/5">
               <ArrowRight className="w-5 h-5 text-red-500 shrink-0" />

@@ -29,7 +29,7 @@ export default function BonusCardPage() {
       const data = await response.json()
 
       if (data.success) {
-        router.push(`/bonuscard/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}`)
+        router.push(`/bonuscard/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}`)
       } else {
         alert(data.error || 'Ein Fehler ist aufgetreten')
       }
