@@ -1,19 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, Check, Loader2, Smartphone, Banknote, ArrowRight } from 'lucide-react'
+import { CreditCard, Check, Loader2, Smartphone, Banknote, ArrowRight, LogIn } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function BonusCardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [formData, setFormData] = useState({
     holder_name: '',
     holder_email: '',
     holder_phone: '',
     payment_method: 'twint'
   })
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/session')
+        const data = await res.json()
+        setIsLoggedIn(!!data.user)
+      } catch {
+        setIsLoggedIn(false)
+      } finally {
+        setIsCheckingAuth(false)
+      }
+    }
+    checkAuth()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,92 +144,114 @@ export default function BonusCardPage() {
             ))}
           </motion.div>
 
-          {/* Purchase Form */}
+          {/* Purchase Form or Login CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="bg-neutral-900 rounded-2xl p-8 border border-white/10"
           >
-            <h2 className="text-2xl font-bold text-white mb-6">Jetzt bestellen</h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-white/60 text-sm mb-2">Vollständiger Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.holder_name}
-                  onChange={(e) => setFormData({ ...formData, holder_name: e.target.value })}
-                  className="w-full px-4 py-3 bg-black rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors"
-                  placeholder="Max Mustermann"
-                />
+            {isCheckingAuth ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
               </div>
+            ) : isLoggedIn ? (
+              <>
+                <h2 className="text-2xl font-bold text-white mb-6">Jetzt bestellen</h2>
+                
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">Vollständiger Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.holder_name}
+                      onChange={(e) => setFormData({ ...formData, holder_name: e.target.value })}
+                      className="w-full px-4 py-3 bg-black rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors"
+                      placeholder="Max Mustermann"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-white/60 text-sm mb-2">E-Mail *</label>
-                <input
-                  type="email"
-                  required
-                  value={formData.holder_email}
-                  onChange={(e) => setFormData({ ...formData, holder_email: e.target.value })}
-                  className="w-full px-4 py-3 bg-black rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors"
-                  placeholder="max@beispiel.ch"
-                />
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">E-Mail *</label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.holder_email}
+                      onChange={(e) => setFormData({ ...formData, holder_email: e.target.value })}
+                      className="w-full px-4 py-3 bg-black rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors"
+                      placeholder="max@beispiel.ch"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white/60 text-sm mb-2">Telefon (optional)</label>
+                    <input
+                      type="tel"
+                      value={formData.holder_phone}
+                      onChange={(e) => setFormData({ ...formData, holder_phone: e.target.value })}
+                      className="w-full px-4 py-3 bg-black rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors"
+                      placeholder="+41 79 123 45 67"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white/60 text-sm mb-3">Zahlungsmethode *</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { value: 'twint', label: 'TWINT', icon: Smartphone },
+                        { value: 'bank_transfer', label: 'Banküberweisung', icon: Banknote },
+                        { value: 'sepa', label: 'SEPA', icon: ArrowRight },
+                        { value: 'cash', label: 'Bar', icon: CreditCard }
+                      ].map((method) => (
+                        <button
+                          key={method.value}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, payment_method: method.value })}
+                          className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all ${
+                            formData.payment_method === method.value
+                              ? 'border-red-500 bg-red-500/10 text-white'
+                              : 'border-white/10 text-white/60 hover:border-white/20'
+                          }`}
+                        >
+                          <method.icon className="w-4 h-4 shrink-0" />
+                          <span className="text-sm">{method.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5" />
+                        Bonuscard für CHF 100 bestellen
+                      </>
+                    )}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <h2 className="text-2xl font-bold text-white mb-4">Jetzt bestellen</h2>
+                <p className="text-white/60 mb-8">
+                  Melde dich an, um deine persönliche Bonuscard zu bestellen.
+                </p>
+                <Link
+                  href="/login?redirect=/bonuscard"
+                  className="inline-flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold rounded-xl transition-all"
+                >
+                  <LogIn className="w-5 h-5" />
+                  Einloggen um Bonuscard zu bestellen
+                </Link>
               </div>
-
-              <div>
-                <label className="block text-white/60 text-sm mb-2">Telefon (optional)</label>
-                <input
-                  type="tel"
-                  value={formData.holder_phone}
-                  onChange={(e) => setFormData({ ...formData, holder_phone: e.target.value })}
-                  className="w-full px-4 py-3 bg-black rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors"
-                  placeholder="+41 79 123 45 67"
-                />
-              </div>
-
-              <div>
-                <label className="block text-white/60 text-sm mb-3">Zahlungsmethode *</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: 'twint', label: 'TWINT', icon: Smartphone },
-                    { value: 'bank_transfer', label: 'Banküberweisung', icon: Banknote },
-                    { value: 'sepa', label: 'SEPA', icon: ArrowRight },
-                    { value: 'cash', label: 'Bar', icon: CreditCard }
-                  ].map((method) => (
-                    <button
-                      key={method.value}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, payment_method: method.value })}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-                        formData.payment_method === method.value
-                          ? 'border-red-500 bg-red-500/10 text-white'
-                          : 'border-white/10 text-white/60 hover:border-white/20'
-                      }`}
-                    >
-                      <method.icon className="w-4 h-4 shrink-0" />
-                      <span className="text-sm">{method.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <CreditCard className="w-5 h-5" />
-                    Bonuscard für CHF 100 bestellen
-                  </>
-                )}
-              </button>
-            </form>
+            )}
           </motion.div>
         </motion.div>
       </div>
