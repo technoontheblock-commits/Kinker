@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         purchase_price: 10000,
         payment_method,
         payment_status: 'pending',
-        status: 'active'
+        status: 'suspended'
       }])
       .select()
       .single()

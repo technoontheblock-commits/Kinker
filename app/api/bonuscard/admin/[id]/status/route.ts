@@ -39,6 +39,10 @@ export async function PATCH(
       updateData.payment_status = payment_status
       if (payment_status === 'paid') {
         updateData.paid_at = new Date().toISOString()
+        updateData.status = 'active'
+      }
+      if (payment_status === 'cancelled' || payment_status === 'refunded') {
+        updateData.status = 'suspended'
       }
     }
 
