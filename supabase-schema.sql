@@ -162,12 +162,10 @@ ALTER TABLE newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 -- Create policies for public read access
 CREATE POLICY "Allow public read access" ON events FOR SELECT USING (true);
 
--- Users policies (admin only - for now allow all for development)
-CREATE POLICY "Allow public read users" ON users FOR SELECT USING (true);
-CREATE POLICY "Allow public insert users" ON users FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update users" ON users FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete users" ON users FOR DELETE USING (true);
+-- Users policies: NO public access. All access goes through API routes with service role key.
+-- RLS remains enabled to block any direct anon key access to user data.
+-- If direct Supabase client access is needed in future, replace with authenticated policies.
 
--- Newsletter policies
-CREATE POLICY "Allow public insert" ON newsletter_subscribers FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public read own subscription" ON newsletter_subscribers FOR SELECT USING (true);
+-- Newsletter policies: Public insert allowed for newsletter signup via frontend
+CREATE POLICY "Allow public insert newsletter" ON newsletter_subscribers FOR INSERT WITH CHECK (true);
+-- No SELECT policy: subscriptions are not publicly readable

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, Mail, Phone, Lock, Shield, Camera, Loader2, Check, Monitor, Smartphone, LogOut, QrCode, Copy, Eye, EyeOff, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { User, Mail, Phone, Lock, Shield, Camera, Loader2, Check, Monitor, Smartphone, LogOut, QrCode, Copy, Eye, EyeOff, X, Trash2, AlertTriangle } from 'lucide-react'
 
 interface Session {
   id: string
@@ -12,9 +13,13 @@ interface Session {
 }
 
 export default function AccountPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -683,6 +688,87 @@ export default function AccountPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Delete Account Section */}
+      <div className="bg-neutral-900 rounded-xl p-4 md:p-6 border border-red-500/20">
+        <h2 className="text-lg md:text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <Trash2 className="w-5 h-5 text-red-500" />
+          Delete Account
+        </h2>
+        <p className="text-white/60 text-sm mb-4">
+          Permanently delete your account and all associated personal data. 
+          This action cannot be undone. Your order history will be anonymized 
+          for legal record-keeping purposes.
+        </p>
+        
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 rounded-lg transition-colors text-sm font-medium"
+          >
+            Delete My Account
+          </button>
+        ) : (
+          <div className="space-y-4 p-4 bg-red-500/5 border border-red-500/20 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-white font-medium text-sm">Are you absolutely sure?</p>
+                <p className="text-white/60 text-sm mt-1">
+                  This will permanently delete your profile, rewards points, wallet, 
+                  and session data. Type <strong className="text-white">DELETE</strong> to confirm.
+                </p>
+              </div>
+            </div>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Type DELETE to confirm"
+              className="w-full px-4 py-3 bg-black/50 border border-red-500/30 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-red-500"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setDeleteConfirmText('')
+                }}
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white/80 rounded-lg transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (deleteConfirmText !== 'DELETE') {
+                    setMessage({ type: 'error', text: 'Please type DELETE to confirm' })
+                    return
+                  }
+                  setDeleting(true)
+                  try {
+                    const res = await fetch('/api/user/profile', { method: 'DELETE' })
+                    if (res.ok) {
+                      router.push('/')
+                      window.location.reload()
+                    } else {
+                      const data = await res.json()
+                      setMessage({ type: 'error', text: data.error || 'Failed to delete account' })
+                      setDeleting(false)
+                    }
+                  } catch {
+                    setMessage({ type: 'error', text: 'An error occurred while deleting your account' })
+                    setDeleting(false)
+                  }
+                }}
+                disabled={deleting || deleteConfirmText !== 'DELETE'}
+                className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Permanently Delete Account
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Save Button */}

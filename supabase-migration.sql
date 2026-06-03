@@ -135,13 +135,16 @@ CREATE POLICY "Allow public read access" ON events FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Allow public insert" ON newsletter_subscribers;
 CREATE POLICY "Allow public insert" ON newsletter_subscribers FOR INSERT WITH CHECK (true);
 
--- Users: Admin only (for now - use service role key)
+-- Users: NO public policies. All access through API routes with service role key.
+-- RLS blocks any direct anon key access.
 DROP POLICY IF EXISTS "Allow admin full access" ON users;
-CREATE POLICY "Allow admin full access" ON users FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow public read users" ON users;
+DROP POLICY IF EXISTS "Allow public insert users" ON users;
+DROP POLICY IF EXISTS "Allow public update users" ON users;
+DROP POLICY IF EXISTS "Allow public delete users" ON users;
 
--- Notifications: Admin only
+-- Notifications: NO public policies. All access through API routes with service role key.
 DROP POLICY IF EXISTS "Allow admin full access" ON notifications;
-CREATE POLICY "Allow admin full access" ON notifications FOR ALL USING (true);
 
 -- Jobs: Public read, Admin write
 DROP POLICY IF EXISTS "Allow public read jobs" ON jobs;

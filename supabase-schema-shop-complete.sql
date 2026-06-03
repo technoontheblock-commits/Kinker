@@ -191,19 +191,18 @@ CREATE POLICY "orders_all" ON orders FOR ALL USING (true);
 DROP POLICY IF EXISTS "order_items_all" ON order_items;
 CREATE POLICY "order_items_all" ON order_items FOR ALL USING (true);
 
--- Policies for Tickets
+-- Policies for Tickets: NO public access. API routes only.
 DROP POLICY IF EXISTS "tickets_read" ON tickets;
 DROP POLICY IF EXISTS "tickets_write" ON tickets;
-CREATE POLICY "tickets_read" ON tickets FOR SELECT USING (true);
-CREATE POLICY "tickets_write" ON tickets FOR ALL USING (true);
+-- No policies: access only via service role key (API routes)
 
--- Policies for Scanner Users
+-- Policies for Scanner Users: NO public access. API routes only.
 DROP POLICY IF EXISTS "scanner_users_all" ON scanner_users;
-CREATE POLICY "scanner_users_all" ON scanner_users FOR ALL USING (true);
+-- No policies: access only via service role key (API routes)
 
--- Policies for Ticket Scans
+-- Policies for Ticket Scans: NO public access. API routes only.
 DROP POLICY IF EXISTS "ticket_scans_all" ON ticket_scans;
-CREATE POLICY "ticket_scans_all" ON ticket_scans FOR ALL USING (true);
+-- No policies: access only via service role key (API routes)
 
 -- ============================================
 -- SAMPLE DATA
