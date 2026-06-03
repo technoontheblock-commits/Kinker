@@ -11,7 +11,7 @@ interface BonusCardEmailData {
   qrCodeDataUrl?: string
 }
 
-function getPaymentInstructions(method: string): string {
+function getPaymentInstructions(method: string, cardNumber: string): string {
   switch (method) {
     case 'twint':
       return `
@@ -20,7 +20,7 @@ function getPaymentInstructions(method: string): string {
           <span style="color: #dc2626; font-weight: 600;">+41 79 123 45 67</span>
         </p>
         <p style="margin: 0; font-size: 13px; color: #888888;">
-          Verwendungszweck: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">Bonuscard</code>
+          Verwendungszweck: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">${cardNumber}</code>
         </p>
       `
     case 'bank_transfer':
@@ -34,7 +34,7 @@ function getPaymentInstructions(method: string): string {
           Konto: KINKER GmbH
         </p>
         <p style="margin: 0; font-size: 13px; color: #888888;">
-          Verwendungszweck: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">Bonuscard ${method}</code>
+          Verwendungszweck: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${cardNumber}</code>
         </p>
       `
     case 'sepa':
@@ -43,7 +43,7 @@ function getPaymentInstructions(method: string): string {
           Wir ziehen den Betrag von <strong>CHF 100.00</strong> per SEPA-Lastschrift von deinem Konto ein.
         </p>
         <p style="margin: 0; font-size: 13px; color: #888888;">
-          Die Karte wird nach Zahlungseingang aktiviert.
+          Verwendungszweck: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">${cardNumber}</code>
         </p>
       `
     case 'cash':
@@ -52,7 +52,7 @@ function getPaymentInstructions(method: string): string {
           Bitte bezahle <strong>CHF 100.00</strong> bar an der Abendkasse.
         </p>
         <p style="margin: 0; font-size: 13px; color: #888888;">
-          Die Karte wird nach Zahlungseingang aktiviert.
+          Verwendungszweck: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">${cardNumber}</code>
         </p>
       `
     default:
@@ -61,7 +61,7 @@ function getPaymentInstructions(method: string): string {
 }
 
 export function generateBonusCardEmail(data: BonusCardEmailData): string {
-  const paymentInstructions = getPaymentInstructions(data.paymentMethod)
+  const paymentInstructions = getPaymentInstructions(data.paymentMethod, data.cardNumber)
   const isPaid = data.paymentStatus === 'paid'
 
   const contentHtml = `
@@ -82,24 +82,14 @@ export function generateBonusCardEmail(data: BonusCardEmailData): string {
       </td>
     </tr>
     
-    ${data.qrCodeDataUrl ? `
     <tr>
       <td style="padding: 0 32px 32px; text-align: center;">
-        <div style="background: #f5f5f5; border-radius: 16px; padding: 24px; display: inline-block;">
-          <img src="${data.qrCodeDataUrl}" alt="QR Code" width="200" height="200" style="display: block; margin: 0 auto;">
-          <p style="margin: 12px 0 0; font-size: 12px; color: #888888;">
-            Zeige diesen QR-Code an der Abendkasse vor
-          </p>
-        </div>
-      </td>
-    </tr>
-    ` : ''}
-    
-    <tr>
-      <td style="padding: 0 32px 32px; text-align: center;">
+        <p style="margin: 0 0 16px; font-size: 14px; color: #666666;">
+          Deine digitale Karte findest du im Anhang als PDF.
+        </p>
         <a href="${data.cardViewUrl}" 
            style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #dc2626, #ef4444); color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 600; font-family: sans-serif;">
-          Karte anzeigen
+          Karte online anzeigen
         </a>
       </td>
     </tr>

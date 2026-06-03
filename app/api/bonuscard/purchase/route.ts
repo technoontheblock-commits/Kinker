@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { Resend } from 'resend'
+import { renderToBuffer } from '@react-pdf/renderer'
 import { 
   generateBonusCardToken, 
   generateCardNumber, 
@@ -9,6 +10,7 @@ import {
   generateCardViewUrl 
 } from '@/lib/bonuscard'
 import { generateBonusCardEmail } from '@/lib/email-bonuscard'
+import { BonusCardPDF } from '@/lib/bonuscard-pdf'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -82,7 +84,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate QR code for email
+    // Generate QR code for PDF
     let qrCodeDataUrl: string | undefined
     try {
       qrCodeDataUrl = await generateQRCodeDataUrl(qrToken)
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
       console.error('QR generation error:', err)
     }
 
-    // Send confirmation email
+    // Send confirmation email with PDF attachment
     if (resend) {
       try {
         const emailHtml = generateBonusCardEmail({
@@ -102,11 +104,30 @@ export async function POST(request: NextRequest) {
           qrCodeDataUrl
         })
 
+        // Generate PDF
+        let pdfBuffer: Buffer | undefined
+        if (qrCodeDataUrl) {
+          const pdfElement = BonusCardPDF({
+            holderName: holder_name.trim(),
+            cardNumber,
+            purchaseDate: new Date().toLocaleDateString('de-CH'),
+            qrCodeDataUrl,
+            paymentMethod: payment_method,
+            isPaid: false,
+          })
+          pdfBuffer = await renderToBuffer(pdfElement)
+        }
+
+        const attachments = pdfBuffer
+          ? [{ filename: `KINKER-Bonuscard-${cardNumber}.pdf`, content: pdfBuffer }]
+          : undefined
+
         await resend.emails.send({
           from: `${process.env.RESEND_FROM_NAME || 'KINKER Basel'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
           to: holder_email.trim().toLowerCase(),
           subject: 'Deine KINKER Bonuscard',
-          html: emailHtml
+          html: emailHtml,
+          attachments
         })
       } catch (emailErr) {
         console.error('Bonus card email error:', emailErr)
