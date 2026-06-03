@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, QrCode, AlertTriangle, Check } from 'lucide-react'
-import { createClient } from '@supabase/supabase-js'
 import { generateQRCodeDataUrl } from '@/lib/bonuscard'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 interface BonusCardData {
   id: string
@@ -31,23 +27,19 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
   useEffect(() => {
     async function loadCard() {
       try {
-        const supabase = createClient(supabaseUrl, supabaseAnonKey)
-        const { data, error } = await supabase
-          .from('bonus_cards')
-          .select('*')
-          .eq('qr_token', params.token)
-          .single()
+        const response = await fetch(`/api/bonuscard/view/${params.token}`)
+        const data = await response.json()
 
-        if (error || !data) {
-          setError('Karte nicht gefunden')
+        if (!response.ok || !data.card) {
+          setError(data.error || 'Karte nicht gefunden')
           setLoading(false)
           return
         }
 
-        setCard(data)
+        setCard(data.card)
 
         // Generate QR code
-        const qrDataUrl = await generateQRCodeDataUrl(data.qr_token)
+        const qrDataUrl = await generateQRCodeDataUrl(data.card.qr_token)
         setQrCode(qrDataUrl)
       } catch (err) {
         setError('Ein Fehler ist aufgetreten')
