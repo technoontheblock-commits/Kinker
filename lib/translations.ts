@@ -46,6 +46,7 @@ export const translations = {
       imprint: 'Imprint',
       privacy: 'Privacy Policy',
       contact: 'Contact',
+      cookies: 'Cookie Settings',
     },
     // Common
     common: {
@@ -301,6 +302,7 @@ export const translations = {
       imprint: 'Impressum',
       privacy: 'Datenschutz',
       contact: 'Kontakt',
+      cookies: 'Cookie-Einstellungen',
     },
     // Common
     common: {

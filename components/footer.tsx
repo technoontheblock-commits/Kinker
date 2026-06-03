@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Instagram, Facebook, Mail, MapPin } from 'lucide-react'
+import { CookieSettingsButton } from './cookie-settings'
 import { clubInfo } from '@/lib/data'
 import { useLanguage } from './language-provider'
 
@@ -118,13 +119,14 @@ export function Footer() {
           <p className="text-white/40 text-sm">
             © {new Date().getFullYear()} KINKER. {t.footer.rights}
           </p>
-          <div className="flex space-x-6 text-sm">
+          <div className="flex space-x-6 text-sm items-center">
             <Link href="/impressum" className="text-white/40 hover:text-white transition-colors">
               {t.footer.imprint}
             </Link>
             <Link href="/privacy" className="text-white/40 hover:text-white transition-colors">
               {t.footer.privacy}
             </Link>
+            <CookieSettingsButton />
           </div>
         </div>
       </div>

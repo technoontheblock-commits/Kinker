@@ -4,7 +4,8 @@ import './globals.css'
 import { Navigation } from '@/components/navigation'
 import { FooterWrapper } from '@/components/footer-wrapper'
 import { LanguageProvider } from '@/components/language-provider'
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { AnalyticsWrapper } from '@/components/analytics-wrapper'
+import { CookieConsentBanner } from '@/components/cookie-consent'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -40,7 +41,8 @@ export default function RootLayout({
           <Navigation />
           <main>{children}</main>
           <FooterWrapper />
-          <SpeedInsights />
+          <AnalyticsWrapper />
+          <CookieConsentBanner />
         </LanguageProvider>
       </body>
     </html>

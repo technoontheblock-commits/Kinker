@@ -2,210 +2,451 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | KINKER',
-  description: 'Datenschutzerklärung der KNKR GmbH',
+  description: 'Datenschutzerklärung / Privacy Policy of KNKR GmbH',
 }
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-black pt-32 pb-20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-12">PRIVACY POLICY</h1>
-        
-        <div className="space-y-10 text-white/80">
-          
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">PRIVACY POLICY</h1>
+        <p className="text-white/40 mb-12 text-sm">Last updated: 3 June 2026</p>
+
+        <div className="space-y-12 text-white/80">
+
+          {/* 1. Overview */}
           <section>
-            <p className="text-white/60 mb-4">Last updated: March 29, 2026</p>
+            <h2 className="text-xl font-semibold text-white mb-4">1. Overview</h2>
+            <p className="leading-relaxed mb-4">
+              KNKR GmbH («KINKER», «we», «us», or «our») operates the website{' '}
+              <a href="https://knkr.ch" className="text-red-500 hover:text-red-400">knkr.ch</a>. 
+              We take the protection of your personal data very seriously. This Privacy Policy 
+              informs you in accordance with the EU General Data Protection Regulation (GDPR) 
+              and the Swiss Federal Act on Data Protection (nFADP) about the processing of your 
+              personal data when you use our services.
+            </p>
             <p className="leading-relaxed">
-              KNKR GmbH («KINKER», «we», «us», or «our») operates the website knkr.ch. 
-              This page informs you of our policies regarding the collection, use, and disclosure 
-              of personal data when you use our Service and the choices you have associated with that data.
+              This policy applies to all processing of personal data in connection with our website, 
+              ticket shop, merchandise store, user accounts, newsletter, and VIP bookings.
             </p>
           </section>
 
-          {/* Data Controller */}
+          {/* 2. Data Controller */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Data Controller</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">2. Data Controller</h2>
             <div className="space-y-2">
               <p><strong>KNKR GmbH</strong></p>
               <p>Barcelona-Strasse 4</p>
               <p>4142 Münchenstein</p>
               <p>Switzerland</p>
               <p className="pt-2">Email: <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a></p>
+              <p>Commercial Register: CHE-491.863.600</p>
+            </div>
+            <p className="leading-relaxed mt-4">
+              <strong>Data Protection Officer (DPO):</strong> We are not legally required to appoint 
+              a DPO under Art. 37 GDPR. For data protection inquiries, please contact us at{' '}
+              <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a>.
+            </p>
+          </section>
+
+          {/* 3. What Data We Collect and Why */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-4">3. What Data We Collect and Why</h2>
+            <p className="leading-relaxed mb-4">
+              We process personal data only for specific, explicit, and legitimate purposes. 
+              The following table provides an overview of the data we collect, the purposes, 
+              and the legal bases under Art. 6 GDPR:
+            </p>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border border-white/10 rounded-lg overflow-hidden">
+                <thead className="bg-white/5">
+                  <tr>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Purpose</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Data Categories</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Legal Basis</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  <tr>
+                    <td className="p-3 align-top">Website operation & security</td>
+                    <td className="p-3 align-top">IP address, browser type, device info, session cookies</td>
+                    <td className="p-3 align-top">Art. 6(1)(f) GDPR (legitimate interest: fraud prevention, security)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">User account creation & login</td>
+                    <td className="p-3 align-top">Name, email, password (hashed), phone (optional), avatar (optional)</td>
+                    <td className="p-3 align-top">Art. 6(1)(b) GDPR (contract)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">Ticket & merchandise purchases</td>
+                    <td className="p-3 align-top">Name, email, phone, billing/shipping address, payment reference, order history</td>
+                    <td className="p-3 align-top">Art. 6(1)(b) GDPR (contract)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">Payment processing</td>
+                    <td className="p-3 align-top">Payment data is processed directly by Stripe; we only receive payment status & reference</td>
+                    <td className="p-3 align-top">Art. 6(1)(b) GDPR (contract)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">Merchandise fulfillment (Printful)</td>
+                    <td className="p-3 align-top">Name, shipping address, email, phone, order items</td>
+                    <td className="p-3 align-top">Art. 6(1)(b) GDPR (contract)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">Newsletter</td>
+                    <td className="p-3 align-top">Email address, subscription timestamp, consent record</td>
+                    <td className="p-3 align-top">Art. 6(1)(a) GDPR (consent)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">VIP room booking</td>
+                    <td className="p-3 align-top">User ID, selected event, package, special requests</td>
+                    <td className="p-3 align-top">Art. 6(1)(b) GDPR (contract)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">Loyalty program (rewards)</td>
+                    <td className="p-3 align-top">Points balance, tier level, purchase history references</td>
+                    <td className="p-3 align-top">Art. 6(1)(b) GDPR (contract) / Art. 6(1)(a) (consent, if profiling)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">Customer support</td>
+                    <td className="p-3 align-top">Name, email, order details, correspondence</td>
+                    <td className="p-3 align-top">Art. 6(1)(b) GDPR (contract) / Art. 6(1)(f) (legitimate interest)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 align-top">Website analytics</td>
+                    <td className="p-3 align-top">Anonymized performance metrics (only with your consent)</td>
+                    <td className="p-3 align-top">Art. 6(1)(a) GDPR (consent)</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </section>
 
-          {/* Information We Collect */}
+          {/* 4. Cookies & Tracking */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Information We Collect</h2>
-            <p className="mb-4">We collect several different types of information for various purposes to provide and improve our Service to you:</p>
-            
-            <h3 className="text-lg font-medium text-white mb-2">Personal Data</h3>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Email address</li>
-              <li>First name and last name</li>
-              <li>Phone number</li>
-              <li>Address, State, Province, ZIP/Postal code, City</li>
-              <li>Cookies and Usage Data</li>
+            <h2 className="text-xl font-semibold text-white mb-4">4. Cookies and Similar Technologies</h2>
+            <p className="leading-relaxed mb-4">
+              We use cookies and similar technologies. Cookies are small text files stored on your device. 
+              You can manage your preferences via the cookie banner or the &quot;Cookie Settings&quot; link in the footer.
+            </p>
+
+            <h3 className="text-lg font-medium text-white mb-2">4.1 Necessary Cookies</h3>
+            <p className="leading-relaxed mb-4">
+              These cookies are essential for the website to function and cannot be disabled. 
+              They are set based on Art. 6(1)(b) GDPR (contract performance) or Art. 6(1)(f) GDPR 
+              (legitimate interest in secure operation).
+            </p>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full text-sm border border-white/10 rounded-lg overflow-hidden">
+                <thead className="bg-white/5">
+                  <tr>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Name</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Purpose</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Duration</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  <tr>
+                    <td className="p-3 font-mono text-xs">user_session</td>
+                    <td className="p-3">Authentication and user session management</td>
+                    <td className="p-3">7 days</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">session_id</td>
+                    <td className="p-3">Shopping cart functionality for non-logged-in users</td>
+                    <td className="p-3">30 days</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-lg font-medium text-white mb-2">4.2 Analytics Cookies (Consent Required)</h3>
+            <p className="leading-relaxed mb-4">
+              These cookies are only set with your explicit consent (Art. 6(1)(a) GDPR). 
+              You can revoke your consent at any time via the Cookie Settings.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border border-white/10 rounded-lg overflow-hidden">
+                <thead className="bg-white/5">
+                  <tr>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Provider</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Purpose</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Data</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  <tr>
+                    <td className="p-3">Vercel Speed Insights</td>
+                    <td className="p-3">Page performance measurement and Core Web Vitals tracking</td>
+                    <td className="p-3">Anonymized performance metrics (no personal data)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* 5. Data Recipients & Third Parties */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-4">5. Data Recipients and Third-Party Processors</h2>
+            <p className="leading-relaxed mb-4">
+              We only share your data with third parties when necessary for the purposes stated above 
+              or when legally required. All processors are contractually bound by Data Processing Agreements 
+              (Art. 28 GDPR).
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border border-white/10 rounded-lg overflow-hidden">
+                <thead className="bg-white/5">
+                  <tr>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Processor</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Location</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Purpose</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Legal Basis for Transfer</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  <tr>
+                    <td className="p-3">Supabase Inc.</td>
+                    <td className="p-3">USA</td>
+                    <td className="p-3">Database hosting, user authentication, data storage</td>
+                    <td className="p-3">Standard Contractual Clauses (SCC) Art. 46(2)(c) GDPR</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Stripe Inc.</td>
+                    <td className="p-3">USA</td>
+                    <td className="p-3">Payment processing</td>
+                    <td className="p-3">EU-U.S. Data Privacy Framework (DPF) certified + SCC</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Resend Inc.</td>
+                    <td className="p-3">USA</td>
+                    <td className="p-3">Transactional emails (order confirmations, verification)</td>
+                    <td className="p-3">Standard Contractual Clauses (SCC) Art. 46(2)(c) GDPR</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Vercel Inc.</td>
+                    <td className="p-3">USA</td>
+                    <td className="p-3">Website hosting, Edge network delivery</td>
+                    <td className="p-3">EU-U.S. Data Privacy Framework (DPF) certified + SCC</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Printful LLC</td>
+                    <td className="p-3">Latvia (EU) / USA</td>
+                    <td className="p-3">Merchandise printing, packaging, and shipping</td>
+                    <td className="p-3">Adequacy decision (Latvia, EU); SCC for USA transfers</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Eventfrog AG</td>
+                    <td className="p-3">Switzerland</td>
+                    <td className="p-3">Event data synchronization (public event information only)</td>
+                    <td className="p-3">Adequacy decision (Switzerland)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* 6. International Transfers */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-4">6. International Data Transfers</h2>
+            <p className="leading-relaxed mb-4">
+              Some of our processors are located outside the European Economic Area (EEA), particularly 
+              in the USA. In such cases, we ensure an adequate level of data protection through:
+            </p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li>
+                <strong>EU-U.S. Data Privacy Framework (DPF):</strong> For providers certified under 
+                the DPF (e.g., Stripe, Vercel), data transfers are based on the European Commission&apos;s 
+                adequacy decision of 10 July 2023.
+              </li>
+              <li>
+                <strong>Standard Contractual Clauses (SCC):</strong> For providers without DPF certification 
+                (e.g., Resend, Supabase), we have concluded EU Commission Standard Contractual Clauses 
+                pursuant to Art. 46(2)(c) GDPR. Additional technical safeguards (TLS encryption, 
+                access restrictions) are implemented.
+              </li>
+              <li>
+                <strong>Switzerland:</strong> Switzerland has been recognized by the EU Commission as 
+                providing an adequate level of data protection (Adequacy Decision 2000/518/EC).
+              </li>
             </ul>
-
-            <h3 className="text-lg font-medium text-white mb-2 mt-4">Usage Data</h3>
-            <p className="leading-relaxed">
-              We may also collect information on how the Service is accessed and used (&quot;Usage Data&quot;). 
-              This Usage Data may include information such as your computer&apos;s Internet Protocol address (e.g. IP address), 
-              browser type, browser version, the pages of our Service that you visit, the time and date of your visit, 
-              the time spent on those pages, unique device identifiers and other diagnostic data.
-            </p>
-
-            <h3 className="text-lg font-medium text-white mb-2 mt-4">Tracking & Cookies Data</h3>
-            <p className="leading-relaxed">
-              We use cookies and similar tracking technologies to track the activity on our Service and 
-              hold certain information. Cookies are files with small amount of data which may include an 
-              anonymous unique identifier.
-            </p>
           </section>
 
-          {/* How We Use Your Information */}
+          {/* 7. Retention Periods */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">How We Use Your Information</h2>
-            <p className="mb-4">KNKR GmbH uses the collected data for various purposes:</p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>To provide and maintain our Service</li>
-              <li>To notify you about changes to our Service</li>
-              <li>To allow you to participate in interactive features of our Service when you choose to do so</li>
-              <li>To provide customer support</li>
-              <li>To gather analysis or valuable information so that we can improve our Service</li>
-              <li>To monitor the usage of our Service</li>
-              <li>To detect, prevent and address technical issues</li>
-              <li>To provide you with news, special offers and general information about other goods, 
-                  services and events which we offer that are similar to those that you have already 
-                  purchased or enquired about unless you have opted not to receive such information</li>
-            </ul>
-          </section>
-
-          {/* Legal Basis */}
-          <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Legal Basis for Processing</h2>
-            <p className="leading-relaxed">
-              Under the Swiss Federal Act on Data Protection (FADP) and the EU General Data Protection 
-              Regulation (GDPR), we process your personal data based on the following legal grounds:
+            <h2 className="text-xl font-semibold text-white mb-4">7. Data Retention Periods</h2>
+            <p className="leading-relaxed mb-4">
+              We retain your personal data only for as long as necessary to fulfill the purposes 
+              for which it was collected or to comply with legal obligations:
             </p>
-            <ul className="list-disc list-inside space-y-1 ml-4 mt-4">
-              <li><strong>Performance of a contract:</strong> Processing is necessary for the performance 
-                  of a contract to which you are a party (e.g., ticket purchases)</li>
-              <li><strong>Legitimate interests:</strong> Processing is necessary for our legitimate interests, 
-                  such as improving our services and security</li>
-              <li><strong>Consent:</strong> You have given consent to the processing of your personal data 
-                  for one or more specific purposes (e.g., newsletter subscription)</li>
-              <li><strong>Legal obligation:</strong> Processing is necessary for compliance with a legal 
-                  obligation to which we are subject</li>
-            </ul>
-          </section>
-
-          {/* Data Retention */}
-          <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Data Retention</h2>
-            <p className="leading-relaxed">
-              KNKR GmbH will retain your Personal Data only for as long as is necessary for the purposes 
-              set out in this Privacy Policy. We will retain and use your Personal Data to the extent 
-              necessary to comply with our legal obligations (for example, if we are required to retain 
-              your data to comply with applicable laws), resolve disputes, and enforce our legal agreements 
-              and policies.
-            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border border-white/10 rounded-lg overflow-hidden">
+                <thead className="bg-white/5">
+                  <tr>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Data Category</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Retention Period</th>
+                    <th className="text-left p-3 text-white font-medium border-b border-white/10">Reason</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  <tr>
+                    <td className="p-3">Account data (active users)</td>
+                    <td className="p-3">Until account deletion</td>
+                    <td className="p-3">Contract performance</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Unverified accounts</td>
+                    <td className="p-3">30 days after registration</td>
+                    <td className="p-3">Data minimization</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Order & payment data</td>
+                    <td className="p-3">10 years</td>
+                    <td className="p-3">Swiss commercial law (OR 958f), tax obligations</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Ticket data</td>
+                    <td className="p-3">10 years</td>
+                    <td className="p-3">Proof of purchase, tax obligations</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Newsletter subscriptions</td>
+                    <td className="p-3">Until unsubscribe + 3 years</td>
+                    <td className="p-3">Proof of consent</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Shopping cart sessions</td>
+                    <td className="p-3">30 days</td>
+                    <td className="p-3">Technical necessity</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Server logs</td>
+                    <td className="p-3">30 days</td>
+                    <td className="p-3">Security, troubleshooting</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3">Email correspondence</td>
+                    <td className="p-3">2 years after last contact</td>
+                    <td className="p-3">Legitimate interest (documentation)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <p className="leading-relaxed mt-4">
-              Usage Data is generally retained for a shorter period of time, except when this data is used 
-              to strengthen the security or to improve the functionality of our Service, or we are legally 
-              obligated to retain this data for longer time periods.
+              After the retention period expires, data is either deleted or anonymized (e.g., 
+              replacement of names with &quot;Deleted User&quot; and removal of contact details), unless 
+              longer retention is required by law.
             </p>
           </section>
 
-          {/* Your Data Protection Rights */}
+          {/* 8. Your Rights */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Your Data Protection Rights</h2>
-            <p className="mb-4">Under applicable data protection laws, you have the following rights:</p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li><strong>Right to access:</strong> You have the right to request copies of your personal data.</li>
-              <li><strong>Right to rectification:</strong> You have the right to request that we correct 
-                  any information you believe is inaccurate or complete information you believe is incomplete.</li>
-              <li><strong>Right to erasure:</strong> You have the right to request that we erase your 
-                  personal data, under certain conditions.</li>
-              <li><strong>Right to restrict processing:</strong> You have the right to request that we 
-                  restrict the processing of your personal data, under certain conditions.</li>
-              <li><strong>Right to object to processing:</strong> You have the right to object to our 
-                  processing of your personal data, under certain conditions.</li>
-              <li><strong>Right to data portability:</strong> You have the right to request that we transfer 
-                  the data that we have collected to another organization, or directly to you, under certain conditions.</li>
+            <h2 className="text-xl font-semibold text-white mb-4">8. Your Data Protection Rights</h2>
+            <p className="leading-relaxed mb-4">
+              Under the GDPR and the Swiss nFADP, you have the following rights regarding your personal data:
+            </p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li><strong>Right of access (Art. 15 GDPR):</strong> Request a copy of the personal data we hold about you.</li>
+              <li><strong>Right to rectification (Art. 16 GDPR):</strong> Request correction of inaccurate or incomplete data.</li>
+              <li><strong>Right to erasure (Art. 17 GDPR):</strong> Request deletion of your data, subject to legal retention obligations.</li>
+              <li><strong>Right to restriction of processing (Art. 18 GDPR):</strong> Request limitation on how we use your data.</li>
+              <li><strong>Right to data portability (Art. 20 GDPR):</strong> Receive your data in a structured, commonly used format.</li>
+              <li><strong>Right to object (Art. 21 GDPR):</strong> Object to processing based on legitimate interests or direct marketing.</li>
+              <li><strong>Right to withdraw consent (Art. 7(3) GDPR):</strong> Withdraw consent at any time without affecting the lawfulness of prior processing.</li>
             </ul>
             <p className="leading-relaxed mt-4">
-              If you make a request, we have one month to respond to you. If you would like to exercise 
-              any of these rights, please contact us at <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a>.
-            </p>
-          </section>
-
-          {/* Security */}
-          <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Security of Data</h2>
-            <p className="leading-relaxed">
-              The security of your data is important to us, but remember that no method of transmission 
-              over the Internet, or method of electronic storage is 100% secure. While we strive to use 
-              commercially acceptable means to protect your Personal Data, we cannot guarantee its absolute security.
-            </p>
-          </section>
-
-          {/* Service Providers */}
-          <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Service Providers</h2>
-            <p className="leading-relaxed">
-              We may employ third party companies and individuals to facilitate our Service («Service Providers»), 
-              to provide the Service on our behalf, to perform Service-related services or to assist us in 
-              analyzing how our Service is used.
+              <strong>Exercising your rights:</strong> To exercise any of these rights, please contact us at{' '}
+              <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a>. 
+              We will respond within <strong>one month</strong> (extendable by two months for complex requests). 
+              Requests are generally free of charge.
             </p>
             <p className="leading-relaxed mt-4">
-              These third parties have access to your Personal Data only to perform these tasks on our behalf 
-              and are obligated not to disclose or use it for any other purpose.
+              <strong>Right to lodge a complaint:</strong> You have the right to lodge a complaint with a 
+              supervisory authority, in particular in the EU member state of your habitual residence, 
+              place of work, or place of the alleged infringement (Art. 77 GDPR).
             </p>
           </section>
 
-          {/* Links to Other Sites */}
+          {/* 9. Security */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Links to Other Sites</h2>
-            <p className="leading-relaxed">
-              Our Service may contain links to other sites that are not operated by us. If you click on 
-              a third party link, you will be directed to that third party&apos;s site. We strongly advise you 
-              to review the Privacy Policy of every site you visit.
+            <h2 className="text-xl font-semibold text-white mb-4">9. Data Security</h2>
+            <p className="leading-relaxed mb-4">
+              We implement appropriate technical and organizational measures (TOMs) to protect your data:
             </p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li><strong>Encryption:</strong> All data transmission uses TLS 1.2+ encryption (HTTPS).</li>
+              <li><strong>Password security:</strong> Passwords are hashed using bcrypt with a cost factor of 12.</li>
+              <li><strong>Two-factor authentication (2FA):</strong> Available for user accounts via TOTP.</li>
+              <li><strong>Signed sessions:</strong> User sessions are cryptographically signed with HMAC-SHA256.</li>
+              <li><strong>HttpOnly cookies:</strong> Session cookies are not accessible via JavaScript.</li>
+              <li><strong>Row Level Security (RLS):</strong> Database access is restricted per user.</li>
+              <li><strong>Access controls:</strong> Role-based access for administrative functions.</li>
+            </ul>
             <p className="leading-relaxed mt-4">
-              We have no control over and assume no responsibility for the content, privacy policies or 
-              practices of any third party sites or services.
+              Despite these measures, no electronic transmission or storage method is 100% secure. 
+              We continuously review and improve our security practices.
             </p>
           </section>
 
-          {/* Children's Privacy */}
+          {/* 10. Newsletter */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Children&apos;s Privacy</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">10. Newsletter</h2>
+            <p className="leading-relaxed mb-4">
+              Our newsletter is sent only with your explicit consent (Art. 6(1)(a) GDPR). 
+              When you subscribe, we use a <strong>double opt-in</strong> process: After entering 
+              your email address, you will receive a confirmation email with a verification link. 
+              Only after clicking this link will your subscription be activated.
+            </p>
+            <p className="leading-relaxed mb-4">
+              We store your consent record (timestamp, IP address hashed, confirmation email content) 
+              to demonstrate compliance. You can unsubscribe at any time by clicking the unsubscribe 
+              link in every newsletter email or by contacting us at{' '}
+              <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a>.
+            </p>
+          </section>
+
+          {/* 11. Children's Privacy */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-4">11. Children&apos;s Privacy</h2>
             <p className="leading-relaxed">
-              Our Service is intended for users who are at least 18 years old. We do not knowingly collect 
-              personally identifiable information from anyone under the age of 18. If you are a parent or 
-              guardian and you are aware that your child has provided us with Personal Data, please contact us.
+              Our services are intended for users who are at least <strong>18 years old</strong>. 
+              We do not knowingly collect personal data from anyone under 18. If you are a parent 
+              or guardian and believe your child has provided us with personal data, please contact 
+              us immediately at{' '}
+              <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a>. 
+              We will delete such data promptly.
             </p>
           </section>
 
-          {/* Changes to This Policy */}
+          {/* 12. Automated Decision-Making */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Changes to This Privacy Policy</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">12. Automated Decision-Making and Profiling</h2>
             <p className="leading-relaxed">
-              We may update our Privacy Policy from time to time. We will notify you of any changes by 
-              posting the new Privacy Policy on this page.
-            </p>
-            <p className="leading-relaxed mt-4">
-              You are advised to review this Privacy Policy periodically for any changes. Changes to this 
-              Privacy Policy are effective when they are posted on this page.
+              Our loyalty program calculates points and tiers based on your purchase history. 
+              This constitutes automated decision-making under Art. 22 GDPR. However, it does not 
+              produce legal effects or similarly significantly affect you. The tier calculation 
+              is based on objective criteria (points total). You have the right to object to such 
+              processing (Art. 21 GDPR) and can contact us to discuss your tier status.
             </p>
           </section>
 
-          {/* Contact Us */}
+          {/* 13. Changes */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">Contact Us</h2>
-            <p className="mb-4">If you have any questions about this Privacy Policy, please contact us:</p>
+            <h2 className="text-xl font-semibold text-white mb-4">13. Changes to This Privacy Policy</h2>
+            <p className="leading-relaxed">
+              We may update this Privacy Policy from time to time to reflect changes in our practices 
+              or legal requirements. We will notify you of significant changes by posting the new 
+              Privacy Policy on this page and updating the &quot;Last updated&quot; date. For material changes, 
+              we may also send you an email notification.
+            </p>
+          </section>
+
+          {/* 14. Contact */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-4">14. Contact Us</h2>
+            <p className="leading-relaxed mb-4">
+              If you have any questions about this Privacy Policy or our data practices, please contact us:
+            </p>
             <div className="space-y-2">
               <p><strong>By email:</strong> <a href="mailto:info@knkr.ch" className="text-red-500 hover:text-red-400">info@knkr.ch</a></p>
               <p><strong>By mail:</strong></p>
