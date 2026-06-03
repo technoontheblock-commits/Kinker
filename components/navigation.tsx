@@ -45,7 +45,7 @@ export function Navigation() {
     { name: t.nav.events, href: '/events' },
     { name: t.nav.club, href: '/club' },
     { name: t.nav.location, href: '/location' },
-
+    { name: 'Bonuscard', href: '/bonuscard' },
     { name: t.nav.career, href: '/career' },
     { name: t.nav.forum || 'Forum', href: '/forum' },
   ]

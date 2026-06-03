@@ -15,12 +15,14 @@ import {
   LogOut,
   Loader2,
   Menu,
-  X
+  X,
+  CreditCard
 } from 'lucide-react'
 
 const menuItems = [
   { id: 'homepage', label: 'Homepage', icon: Home, href: '/' },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+  { id: 'bonuscard', label: 'Bonuscard', icon: CreditCard, href: '/dashboard/bonuscard' },
   { id: 'rewards', label: 'Rewards', icon: Gift, href: '/dashboard/rewards' },
   { id: 'careers', label: 'Careers', icon: Briefcase, href: '/dashboard/careers' },
   { id: 'orders', label: 'Orders', icon: Package, href: '/dashboard/orders' },
