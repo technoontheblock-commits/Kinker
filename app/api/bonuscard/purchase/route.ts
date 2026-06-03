@@ -104,35 +104,47 @@ export async function POST(request: NextRequest) {
           qrCodeDataUrl
         })
 
-        // Generate PDF
+        // Generate PDF (separate try-catch so email still sends if PDF fails)
         let pdfBuffer: Buffer | undefined
-        if (qrCodeDataUrl) {
-          const pdfElement = BonusCardPDF({
-            holderName: holder_name.trim(),
-            cardNumber,
-            purchaseDate: new Date().toLocaleDateString('de-CH'),
-            qrCodeDataUrl,
-            paymentMethod: payment_method,
-            isPaid: false,
-          })
-          pdfBuffer = await renderToBuffer(pdfElement)
+        try {
+          if (qrCodeDataUrl) {
+            const pdfElement = BonusCardPDF({
+              holderName: holder_name.trim(),
+              cardNumber,
+              purchaseDate: new Date().toLocaleDateString('de-CH'),
+              qrCodeDataUrl,
+              paymentMethod: payment_method,
+              isPaid: false,
+            })
+            pdfBuffer = await renderToBuffer(pdfElement)
+          }
+        } catch (pdfErr) {
+          console.error('PDF generation error:', pdfErr)
         }
 
         const attachments = pdfBuffer
           ? [{ filename: `KINKER-Bonuscard-${cardNumber}.pdf`, content: pdfBuffer }]
           : undefined
 
-        await resend.emails.send({
+        const { data: emailData, error: emailError } = await resend.emails.send({
           from: `${process.env.RESEND_FROM_NAME || 'KINKER Basel'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
           to: holder_email.trim().toLowerCase(),
           subject: 'Deine KINKER Bonuscard',
           html: emailHtml,
           attachments
         })
+
+        if (emailError) {
+          console.error('Resend email error:', emailError)
+        } else {
+          console.log('Email sent successfully:', emailData)
+        }
       } catch (emailErr) {
         console.error('Bonus card email error:', emailErr)
         // Don't fail the purchase if email fails
       }
+    } else {
+      console.warn('Resend not configured, skipping email')
     }
 
     return NextResponse.json({
