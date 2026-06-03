@@ -337,6 +337,94 @@ export interface Database {
           created_at?: string
         }
       }
+      bonus_cards: {
+        Row: {
+          id: string
+          user_id: string | null
+          card_number: string
+          qr_token: string
+          holder_name: string
+          holder_email: string
+          purchase_price: number
+          payment_method: 'twint' | 'bank_transfer' | 'sepa' | 'cash'
+          payment_status: 'pending' | 'paid' | 'cancelled' | 'refunded'
+          status: 'active' | 'suspended' | 'expired'
+          purchased_at: string
+          paid_at: string | null
+          expires_at: string | null
+          scan_count: number
+          last_scanned_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          card_number: string
+          qr_token: string
+          holder_name: string
+          holder_email: string
+          purchase_price?: number
+          payment_method: 'twint' | 'bank_transfer' | 'sepa' | 'cash'
+          payment_status?: 'pending' | 'paid' | 'cancelled' | 'refunded'
+          status?: 'active' | 'suspended' | 'expired'
+          purchased_at?: string
+          paid_at?: string | null
+          expires_at?: string | null
+          scan_count?: number
+          last_scanned_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          card_number?: string
+          qr_token?: string
+          holder_name?: string
+          holder_email?: string
+          purchase_price?: number
+          payment_method?: 'twint' | 'bank_transfer' | 'sepa' | 'cash'
+          payment_status?: 'pending' | 'paid' | 'cancelled' | 'refunded'
+          status?: 'active' | 'suspended' | 'expired'
+          purchased_at?: string
+          paid_at?: string | null
+          expires_at?: string | null
+          scan_count?: number
+          last_scanned_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      bonus_card_scans: {
+        Row: {
+          id: string
+          bonus_card_id: string
+          scanned_by: string | null
+          scanner_name: string | null
+          scan_result: 'valid' | 'already_used' | 'invalid' | 'cancelled' | 'payment_pending' | 'suspended'
+          device_info: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          bonus_card_id: string
+          scanned_by?: string | null
+          scanner_name?: string | null
+          scan_result: 'valid' | 'already_used' | 'invalid' | 'cancelled' | 'payment_pending' | 'suspended'
+          device_info?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          bonus_card_id?: string
+          scanned_by?: string | null
+          scanner_name?: string | null
+          scan_result?: 'valid' | 'already_used' | 'invalid' | 'cancelled' | 'payment_pending' | 'suspended'
+          device_info?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -357,3 +445,5 @@ export type Notification = Database['public']['Tables']['notifications']['Row']
 export type Job = Database['public']['Tables']['jobs']['Row']
 export type JobApplication = Database['public']['Tables']['job_applications']['Row']
 export type RentalInquiry = Database['public']['Tables']['rental_inquiries']['Row']
+export type BonusCard = Database['public']['Tables']['bonus_cards']['Row']
+export type BonusCardScan = Database['public']['Tables']['bonus_card_scans']['Row']

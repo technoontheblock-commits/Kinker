@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Camera, Check, X, Ticket } from 'lucide-react'
+import { Camera, Check, X, Ticket, CreditCard } from 'lucide-react'
 
 export default function ScannerPage() {
   const [scanning, setScanning] = useState(false)
@@ -60,16 +60,20 @@ export default function ScannerPage() {
     requestAnimationFrame(scanLoop)
   }
 
-  const validateTicket = async (qrCode: string) => {
+  const validateCode = async (qrCode: string) => {
     try {
-      const response = await fetch('/api/tickets/validate', {
+      // Determine if it's a bonus card or ticket
+      const isBonusCard = qrCode.startsWith('KINKER-BC-')
+      const endpoint = isBonusCard ? '/api/bonuscard/validate' : '/api/tickets/validate'
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ qr_code: qrCode })
       })
       
       const data = await response.json()
-      setResult(data)
+      setResult({ ...data, type: isBonusCard ? 'bonuscard' : 'ticket' })
       
       if (data.valid) {
         setScanning(false)
@@ -88,7 +92,7 @@ export default function ScannerPage() {
           className="max-w-md mx-auto"
         >
           <h1 className="text-3xl font-bold text-white text-center mb-8">
-            Ticket Scanner
+            Scanner
           </h1>
 
           {!scanning && !result && (
@@ -131,7 +135,7 @@ export default function ScannerPage() {
                   className="w-full px-4 py-3 bg-black/80 text-white rounded-lg"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      validateTicket(e.currentTarget.value)
+                      validateCode(e.currentTarget.value)
                     }
                   }}
                 />
@@ -149,26 +153,68 @@ export default function ScannerPage() {
             >
               {result.valid ? (
                 <>
-                  <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h2 className="text-2xl font-bold text-white mb-2">
-                    {result.message}
-                  </h2>
-                  <div className="text-white/70 mt-4">
-                    <p className="font-semibold">{result.ticket?.event}</p>
-                    <p>{result.ticket?.holder}</p>
-                    <p className="text-sm mt-2">{result.ticket?.number}</p>
-                  </div>
+                  {result.type === 'bonuscard' ? (
+                    <>
+                      <CreditCard className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                      <h2 className="text-2xl font-bold text-white mb-2">
+                        {result.message}
+                      </h2>
+                      <div className="text-white/70 mt-4">
+                        <p className="font-semibold text-lg">{result.card?.holder_name}</p>
+                        <p className="text-sm">{result.card?.card_number}</p>
+                        <p className="text-sm mt-2 text-green-400">
+                          Scan #{result.card?.scan_count}
+                        </p>
+                        <p className="text-xs mt-4 text-white/50">
+                          Preisermässigung gewähren
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                      <h2 className="text-2xl font-bold text-white mb-2">
+                        {result.message}
+                      </h2>
+                      <div className="text-white/70 mt-4">
+                        <p className="font-semibold">{result.ticket?.event}</p>
+                        <p>{result.ticket?.holder}</p>
+                        <p className="text-sm mt-2">{result.ticket?.number}</p>
+                      </div>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
-                  <X className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                  <h2 className="text-2xl font-bold text-white">
-                    {result.message}
-                  </h2>
-                  {result.used_at && (
-                    <p className="text-white/60 mt-2">
-                      Bereits verwendet am: {new Date(result.used_at).toLocaleString('de-CH')}
-                    </p>
+                  {result.type === 'bonuscard' ? (
+                    <>
+                      <CreditCard className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                      <h2 className="text-2xl font-bold text-white">
+                        {result.message}
+                      </h2>
+                      {result.payment_status === 'pending' && (
+                        <p className="text-yellow-400 mt-2 text-sm">
+                          Zahlung noch nicht eingegangen
+                        </p>
+                      )}
+                      {result.status === 'suspended' && (
+                        <p className="text-red-400 mt-2 text-sm">
+                          Karte ist gesperrt
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <X className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                      <h2 className="text-2xl font-bold text-white">
+                        {result.message}
+                      </h2>
+                      {result.used_at && (
+                        <p className="text-white/60 mt-2">
+                          Bereits verwendet am: {new Date(result.used_at).toLocaleString('de-CH')}
+                        </p>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -180,7 +226,7 @@ export default function ScannerPage() {
                 }}
                 className="mt-6 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg"
               >
-                Nächstes Ticket
+                Nächster Scan
               </button>
             </motion.div>
           )}
