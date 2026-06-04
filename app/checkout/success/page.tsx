@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-import { CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import { CheckCircle, AlertCircle, ArrowLeft, FileText } from 'lucide-react'
 import { getSumUp } from '@/lib/sumup'
 import { createClient } from '@supabase/supabase-js'
 
@@ -207,13 +207,22 @@ export default async function CheckoutSuccessPage() {
               </div>
             )}
           </div>
-          <Link
-            href="/merch"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Weiter einkaufen
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/merch"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Weiter einkaufen
+            </Link>
+            <Link
+              href="/dashboard/orders"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Order Übersicht
+            </Link>
+          </div>
         </div>
       </div>
     )
