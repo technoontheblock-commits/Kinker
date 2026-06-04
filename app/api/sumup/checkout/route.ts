@@ -36,15 +36,11 @@ export async function POST(request: NextRequest) {
       merchant_code: merchantCode,
       description: body.description || 'KINKER Order',
       redirect_url: `${appUrl}/checkout/success`,
-      hosted_checkout: {
-        enabled: true,
-      },
     })
 
     return NextResponse.json({
       id: checkout.id,
       status: checkout.status,
-      hosted_checkout_url: checkout.hosted_checkout_url,
       checkout_reference: checkout.checkout_reference,
       amount: checkout.amount,
       currency: checkout.currency,

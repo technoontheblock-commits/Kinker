@@ -208,10 +208,10 @@ export default function MerchPage() {
         return
       }
 
-      if (data.hosted_checkout_url) {
-        window.location.href = data.hosted_checkout_url
+      if (data.id) {
+        window.location.href = '/checkout?id=' + data.id
       } else {
-        alert('Keine Checkout-URL erhalten')
+        alert('Keine Checkout-ID erhalten')
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Unbekannter Fehler'
