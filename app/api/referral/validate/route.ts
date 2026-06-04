@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { getCurrentUser } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -32,20 +32,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check for self-referral
-    const cookieStore = cookies()
-    const userSession = cookieStore.get('user_session')?.value
-    let currentUserId: string | null = null
-
-    if (userSession) {
-      try {
-        const user = JSON.parse(userSession)
-        currentUserId = user.id || null
-      } catch {
-        // ignore
-      }
-    }
-
-    if (currentUserId && referralCode.user_id === currentUserId) {
+    const currentUser = getCurrentUser()
+    if (currentUser && referralCode.user_id === currentUser.id) {
       return NextResponse.json({ valid: false, error: 'Eigener Code kann nicht verwendet werden' }, { status: 200 })
     }
 

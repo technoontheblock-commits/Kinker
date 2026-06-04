@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { getCurrentUser } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -11,24 +11,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
     }
 
-    const cookieStore = cookies()
-    const userSession = cookieStore.get('user_session')?.value
-
-    if (!userSession) {
+    const user = getCurrentUser()
+    if (!user) {
       return NextResponse.json(
         { error: 'Nicht eingeloggt' },
-        { status: 401 }
-      )
-    }
-
-    let userId: string
-    try {
-      const user = JSON.parse(userSession)
-      userId = user.id
-      if (!userId) throw new Error('No user id')
-    } catch {
-      return NextResponse.json(
-        { error: 'Ungültige Session' },
         { status: 401 }
       )
     }
@@ -38,7 +24,7 @@ export async function GET(request: NextRequest) {
     const { data: cards, error } = await supabase
       .from('bonus_cards')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
