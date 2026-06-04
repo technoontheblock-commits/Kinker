@@ -471,7 +471,7 @@ export default function AdminDashboard() {
       if (response.ok) {
         const data = await response.json()
         console.log('Orders loaded:', data)
-        setOrders(data || [])
+        setOrders(data.orders || [])
       } else {
         const error = await response.json()
         console.error('Error loading orders:', error)
