@@ -103,6 +103,7 @@ export default async function CheckoutSuccessPage() {
                 .from('orders')
                 .insert([{
                   order_number: orderNumber,
+                  customer_email: 'guest@kinker.ch',
                   payment_method: 'sumup',
                   payment_status: 'paid',
                   payment_reference: checkoutId,
@@ -138,6 +139,7 @@ export default async function CheckoutSuccessPage() {
               .from('orders')
               .insert([{
                 order_number: orderNumber,
+                customer_email: 'guest@kinker.ch',
                 payment_method: 'sumup',
                 payment_status: 'paid',
                 payment_reference: checkoutId,
