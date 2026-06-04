@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       id: checkout.id,
       status: checkout.status,
       hosted_checkout_url: checkout.hosted_checkout_url,
@@ -49,6 +49,16 @@ export async function POST(request: NextRequest) {
       amount: checkout.amount,
       currency: checkout.currency,
     })
+
+    response.cookies.set('sumup_checkout_id', checkout.id ?? '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 30, // 30 minutes
+      path: '/',
+    })
+
+    return response
   } catch (err) {
     return handleSumUpError(err)
   }
