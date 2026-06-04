@@ -85,7 +85,7 @@ export default function PrivacyPage() {
                   </tr>
                   <tr>
                     <td className="p-3 align-top">Payment processing</td>
-                    <td className="p-3 align-top">Payment data is processed directly by Stripe; we only receive payment status & reference</td>
+                    <td className="p-3 align-top">Payment data is processed directly by our payment providers; we only receive payment status & reference</td>
                     <td className="p-3 align-top">Art. 6(1)(b) GDPR (contract)</td>
                   </tr>
                   <tr>
@@ -212,12 +212,6 @@ export default function PrivacyPage() {
                     <td className="p-3">Standard Contractual Clauses (SCC) Art. 46(2)(c) GDPR</td>
                   </tr>
                   <tr>
-                    <td className="p-3">Stripe Inc.</td>
-                    <td className="p-3">USA</td>
-                    <td className="p-3">Payment processing</td>
-                    <td className="p-3">EU-U.S. Data Privacy Framework (DPF) certified + SCC</td>
-                  </tr>
-                  <tr>
                     <td className="p-3">Resend Inc.</td>
                     <td className="p-3">USA</td>
                     <td className="p-3">Transactional emails (order confirmations, verification)</td>
@@ -256,7 +250,7 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>
                 <strong>EU-U.S. Data Privacy Framework (DPF):</strong> For providers certified under 
-                the DPF (e.g., Stripe, Vercel), data transfers are based on the European Commission&apos;s 
+                the DPF (e.g., Vercel), data transfers are based on the European Commission&apos;s 
                 adequacy decision of 10 July 2023.
               </li>
               <li>

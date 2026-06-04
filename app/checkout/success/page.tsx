@@ -1,93 +1,131 @@
-'use client'
-
-import { Suspense } from 'react'
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { CheckCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import { getSumUp } from '@/lib/sumup'
 
-function CheckoutSuccessContent() {
-  const searchParams = useSearchParams()
-  const orderNumber = searchParams.get('order')
-  const [status, setStatus] = useState<'loading' | 'success'>('loading')
+interface CheckoutSuccessPageProps {
+  searchParams: Promise<{ id?: string }>
+}
 
-  useEffect(() => {
-    // Simulate loading for now
-    const timer = setTimeout(() => {
-      setStatus('success')
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [])
+export default async function CheckoutSuccessPage({
+  searchParams,
+}: CheckoutSuccessPageProps) {
+  const params = await searchParams
+  const checkoutId = params.id
 
-  if (status === 'loading') {
+  if (!checkoutId) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />
-          <p className="text-white/60">Bestellung wird verarbeitet...</p>
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Ungültige Anfrage
+          </h1>
+          <p className="text-white/60 mb-6">
+            Keine Checkout-ID gefunden.
+          </p>
+          <Link
+            href="/merch"
+            className="inline-flex items-center gap-2 text-red-500 hover:text-red-400"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Zurück zum Shop
+          </Link>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-black pt-24">
-      <div className="container mx-auto px-4 max-w-2xl text-center">
-        <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-12 h-12 text-green-500" />
-        </div>
-        
-        <h1 className="text-4xl font-bold text-white mb-4">Vielen Dank für deine Bestellung!</h1>
-        
-        <p className="text-white/60 text-lg mb-2">
-          Wir schätzen dein Geschäft! Bei Fragen schreibe uns an{' '}
-          <a href="mailto:support@knkr.ch" className="text-red-500 hover:text-red-400">
-            support@knkr.ch
-          </a>
-        </p>
-        
-        {orderNumber && (
-          <p className="text-white/40 mb-8">
-            Bestellnummer: <span className="text-white font-mono">{orderNumber}</span>
-          </p>
-        )}
+  try {
+    const sumup = getSumUp()
+    const checkout = await sumup.checkouts.get(checkoutId)
 
-        <div className="space-y-4">
-          <p className="text-white/60">
-            Du erhältst eine Bestätigungs-E-Mail mit deinen Bestell Details.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+    if (checkout.status === 'PAID') {
+      return (
+        <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-4">
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Zahlung erfolgreich!
+            </h1>
+            <p className="text-white/60 mb-2">
+              Vielen Dank für deine Bestellung bei KINKER.
+            </p>
+            <div className="bg-white/5 rounded-lg p-4 mb-6 text-left">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-white/60">Referenz:</span>
+                <span className="text-white font-mono">
+                  {checkout.checkout_reference}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-white/60">Betrag:</span>
+                <span className="text-white">
+                  {checkout.amount?.toFixed(2)} {checkout.currency}
+                </span>
+              </div>
+              {checkout.transactions?.[0]?.transaction_code && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/60">Transaktion:</span>
+                  <span className="text-white font-mono">
+                    {checkout.transactions[0].transaction_code}
+                  </span>
+                </div>
+              )}
+            </div>
             <Link
-              href="/dashboard/orders"
-              className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+              href="/merch"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
             >
-              Meine Bestellungen
-            </Link>
-            <Link
-              href="/events"
-              className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors"
-            >
-              Weitere Events
+              <ArrowLeft className="w-4 h-4" />
+              Weiter einkaufen
             </Link>
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
+      )
+    }
 
-export default function CheckoutSuccessPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />
-          <p className="text-white/60">Laden...</p>
+    return (
+      <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Zahlungsstatus unklar
+          </h1>
+          <p className="text-white/60 mb-6">
+            Status: {checkout.status}. Bitte kontaktiere uns, falls du
+            Hilfe benötigst.
+          </p>
+          <Link
+            href="/merch"
+            className="inline-flex items-center gap-2 text-red-500 hover:text-red-400"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Zurück zum Shop
+          </Link>
         </div>
       </div>
-    }>
-      <CheckoutSuccessContent />
-    </Suspense>
-  )
+    )
+  } catch {
+    return (
+      <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Verifizierung fehlgeschlagen
+          </h1>
+          <p className="text-white/60 mb-6">
+            Die Zahlung konnte nicht verifiziert werden. Falls du eine
+            Bestätigungsmail erhalten hast, ist alles in Ordnung.
+          </p>
+          <Link
+            href="/merch"
+            className="inline-flex items-center gap-2 text-red-500 hover:text-red-400"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Zurück zum Shop
+          </Link>
+        </div>
+      </div>
+    )
+  }
 }

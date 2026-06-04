@@ -310,13 +310,6 @@ export function EventsClient({ events }: EventsClientProps) {
                         <span className="text-2xl font-bold text-white">CHF {cartTotal.toFixed(2)}</span>
                       </div>
                     </div>
-                    <Link
-                      href="/checkout"
-                      onClick={() => setCartOpen(false)}
-                      className="block w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors text-center"
-                    >
-                      Proceed to Checkout
-                    </Link>
                   </div>
                 </>
               )}

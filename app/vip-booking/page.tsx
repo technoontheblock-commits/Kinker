@@ -277,8 +277,8 @@ export default function VIPBookingPage() {
       // Trigger cart update event
       window.dispatchEvent(new Event('cartUpdated'))
 
-      // Redirect to standard checkout
-      router.push('/checkout')
+      setMessage({ type: 'success', text: 'VIP booking request submitted!' })
+      setSubmitting(false)
     } catch (error) {
       console.error('Checkout error:', error)
       setMessage({ type: 'error', text: 'An error occurred during checkout' })

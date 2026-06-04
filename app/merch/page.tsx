@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ShoppingBag, Plus, Minus, X, ShoppingCart, Trash2, Ticket, Tag, Loader2 } from 'lucide-react'
-import Link from 'next/link'
 
 interface Product {
   id: string
@@ -177,6 +176,48 @@ export default function MerchPage() {
       await loadCart()
     } catch (error) {
       console.error('Error removing item:', error)
+    }
+  }
+
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+
+  const handleCheckout = async () => {
+    if (cart.length === 0 || !cartData) {
+      alert('Warenkorb ist leer')
+      return
+    }
+
+    setCheckoutLoading(true)
+
+    try {
+      const ref = 'KINKER-' + Date.now()
+      const res = await fetch('/api/sumup/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: cartData.total,
+          description: `KINKER Order (${cart.reduce((s, i) => s + i.quantity, 0)} items)`,
+          checkout_reference: ref,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        alert('Checkout-Fehler: ' + (data.error || 'Unbekannter Fehler'))
+        return
+      }
+
+      if (data.hosted_checkout_url) {
+        window.location.href = data.hosted_checkout_url
+      } else {
+        alert('Keine Checkout-URL erhalten')
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unbekannter Fehler'
+      alert('Checkout-Fehler: ' + msg)
+    } finally {
+      setCheckoutLoading(false)
     }
   }
 
@@ -531,13 +572,21 @@ export default function MerchPage() {
                       <span>CHF {total.toFixed(2)}</span>
                     </div>
                   </div>
-                  
-                  <Link
-                    href="/checkout"
-                    className="block w-full py-4 bg-red-500 hover:bg-red-600 text-white text-center font-semibold rounded-lg"
+
+                  <button
+                    onClick={handleCheckout}
+                    disabled={checkoutLoading}
+                    className="w-full py-3.5 bg-red-500 hover:bg-red-600 disabled:bg-white/10 disabled:text-white/30 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                   >
-                    Zur Kasse
-                  </Link>
+                    {checkoutLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Wird geladen...
+                      </>
+                    ) : (
+                      'Zur Kasse'
+                    )}
+                  </button>
                 </div>
               </>
             )}

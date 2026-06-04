@@ -155,7 +155,8 @@ export default function EventDetailPage() {
         quantity: quantity
       })
     })
-    window.location.href = '/checkout'
+    setAddedToCart(true)
+    setTimeout(() => setAddedToCart(false), 2000)
   }
 
   if (loading) {
