@@ -61,6 +61,40 @@ export async function PATCH(
       )
     }
 
+    // Award referral points when payment is confirmed
+    if (payment_status === 'paid' && card.referral_code_used) {
+      try {
+        // Check if points were already awarded for this card
+        const { data: existingPoints } = await supabase
+          .from('referral_points')
+          .select('id')
+          .eq('source_bonus_card_id', card.id)
+          .single()
+
+        if (!existingPoints) {
+          // Get the referrer user_id from the referral code
+          const { data: refCode } = await supabase
+            .from('referral_codes')
+            .select('user_id')
+            .eq('id', card.referral_code_used)
+            .single()
+
+          if (refCode) {
+            await supabase
+              .from('referral_points')
+              .insert([{
+                user_id: refCode.user_id,
+                points: 200,
+                source_bonus_card_id: card.id
+              }])
+          }
+        }
+      } catch (pointsError) {
+        console.error('Referral points award error:', pointsError)
+        // Don't fail the status update if points award fails
+      }
+    }
+
     return NextResponse.json({ success: true, card })
   } catch (error) {
     console.error('Update bonus card status error:', error)

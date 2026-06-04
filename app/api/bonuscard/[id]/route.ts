@@ -22,7 +22,7 @@ export async function GET(
 
     const { data: card, error } = await supabase
       .from('bonus_cards')
-      .select('*')
+      .select('*, referral_code:referral_code_used(code, user_id)')
       .eq('id', id)
       .single()
 

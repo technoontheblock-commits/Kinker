@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { holder_name, holder_email, holder_phone, payment_method } = body
+    const { holder_name, holder_email, holder_phone, payment_method, referral_code } = body
 
     // Validation
     if (!holder_name || !holder_email || !payment_method) {
@@ -55,6 +55,26 @@ export async function POST(request: NextRequest) {
       // Ignore parse errors
     }
 
+    // Validate referral code if provided
+    let referralCodeId: string | null = null
+    let purchasePrice = 10000 // 100 CHF in Rappen
+
+    if (referral_code) {
+      const { data: refCode } = await supabase
+        .from('referral_codes')
+        .select('id, user_id')
+        .eq('code', referral_code.trim().toUpperCase())
+        .single()
+
+      if (refCode) {
+        // Prevent self-referral
+        if (refCode.user_id !== userId) {
+          referralCodeId = refCode.id
+          purchasePrice = 9000 // 90 CHF in Rappen (10% Rabatt)
+        }
+      }
+    }
+
     // Generate unique card number and token
     const cardNumber = await generateCardNumber(supabase)
     const qrToken = generateBonusCardToken()
@@ -68,10 +88,11 @@ export async function POST(request: NextRequest) {
         qr_token: qrToken,
         holder_name: holder_name.trim(),
         holder_email: holder_email.trim().toLowerCase(),
-        purchase_price: 10000,
+        purchase_price: purchasePrice,
         payment_method,
         payment_status: 'pending',
-        status: 'suspended'
+        status: 'suspended',
+        referral_code_used: referralCodeId
       }])
       .select()
       .single()

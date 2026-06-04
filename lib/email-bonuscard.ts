@@ -9,14 +9,16 @@ interface BonusCardEmailData {
   paymentMethod: string
   paymentStatus: string
   qrCodeDataUrl?: string
+  purchasePrice?: number
 }
 
-function getPaymentInstructions(method: string, cardNumber: string): string {
+function getPaymentInstructions(method: string, cardNumber: string, purchasePrice: number): string {
+  const priceChf = (purchasePrice / 100).toFixed(2)
   switch (method) {
     case 'twint':
       return `
         <p style="margin: 0 0 8px; font-size: 14px; color: #666666;">
-          Bitte überweise <strong>CHF 100.00</strong> via TWINT an:<br>
+          Bitte überweise <strong>CHF ${priceChf}</strong> via TWINT an:<br>
           <span style="color: #dc2626; font-weight: 600;">+41 79 123 45 67</span>
         </p>
         <p style="margin: 0; font-size: 13px; color: #888888;">
@@ -26,7 +28,7 @@ function getPaymentInstructions(method: string, cardNumber: string): string {
     case 'bank_transfer':
       return `
         <p style="margin: 0 0 8px; font-size: 14px; color: #666666;">
-          Bitte überweise <strong>CHF 100.00</strong> auf folgendes Konto:
+          Bitte überweise <strong>CHF ${priceChf}</strong> auf folgendes Konto:
         </p>
         <p style="margin: 0 0 8px; font-size: 14px; color: #111111; font-family: monospace;">
           IBAN: CH93 0076 2011 6238 5295 7<br>
@@ -40,7 +42,7 @@ function getPaymentInstructions(method: string, cardNumber: string): string {
     case 'sepa':
       return `
         <p style="margin: 0 0 8px; font-size: 14px; color: #666666;">
-          Wir ziehen den Betrag von <strong>CHF 100.00</strong> per SEPA-Lastschrift von deinem Konto ein.
+          Wir ziehen den Betrag von <strong>CHF ${priceChf}</strong> per SEPA-Lastschrift von deinem Konto ein.
         </p>
         <p style="margin: 0; font-size: 13px; color: #888888;">
           Verwendungszweck: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">${cardNumber}</code>
@@ -49,7 +51,7 @@ function getPaymentInstructions(method: string, cardNumber: string): string {
     case 'cash':
       return `
         <p style="margin: 0 0 8px; font-size: 14px; color: #666666;">
-          Bitte bezahle <strong>CHF 100.00</strong> bar an der Abendkasse.
+          Bitte bezahle <strong>CHF ${priceChf}</strong> bar an der Abendkasse.
         </p>
         <p style="margin: 0; font-size: 13px; color: #888888;">
           Verwendungszweck: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">${cardNumber}</code>
@@ -61,8 +63,11 @@ function getPaymentInstructions(method: string, cardNumber: string): string {
 }
 
 export function generateBonusCardEmail(data: BonusCardEmailData): string {
-  const paymentInstructions = getPaymentInstructions(data.paymentMethod, data.cardNumber)
+  const paymentInstructions = getPaymentInstructions(data.paymentMethod, data.cardNumber, data.purchasePrice || 10000)
   const isPaid = data.paymentStatus === 'paid'
+  const priceChf = ((data.purchasePrice || 10000) / 100).toFixed(2)
+  const originalPriceChf = '100.00'
+  const hasDiscount = (data.purchasePrice || 10000) < 10000
 
   const contentHtml = `
     <tr>
@@ -76,9 +81,18 @@ export function generateBonusCardEmail(data: BonusCardEmailData): string {
         <p style="margin: 0 0 8px; font-size: 15px; color: #666666; font-family: sans-serif;">
           Vielen Dank für deinen Kauf, ${data.holderName}!
         </p>
-        <p style="margin: 0; font-size: 14px; color: #888888; font-family: sans-serif;">
+        <p style="margin: 0 0 8px; font-size: 14px; color: #888888; font-family: sans-serif;">
           Kartennummer: <span style="color: #dc2626; font-family: monospace; font-weight: 600;">${data.cardNumber}</span>
         </p>
+        ${hasDiscount ? `
+        <p style="margin: 0; font-size: 14px; color: #16a34a; font-family: sans-serif;">
+          Preis: <span style="text-decoration: line-through; color: #888888;">CHF ${originalPriceChf}</span> <strong>CHF ${priceChf}</strong> (10% Rabatt mit Referral-Code)
+        </p>
+        ` : `
+        <p style="margin: 0; font-size: 14px; color: #888888; font-family: sans-serif;">
+          Preis: <strong>CHF ${priceChf}</strong>
+        </p>
+        `}
       </td>
     </tr>
     

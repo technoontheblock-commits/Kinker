@@ -15,8 +15,16 @@ export default function BonusCardPage() {
     holder_name: '',
     holder_email: '',
     holder_phone: '',
-    payment_method: 'twint'
+    payment_method: 'twint',
+    referral_code: ''
   })
+  const [referralValidation, setReferralValidation] = useState<{
+    valid: boolean
+    discount_percent?: number
+    final_price?: number
+    error?: string
+  } | null>(null)
+  const [validatingCode, setValidatingCode] = useState(false)
 
   useEffect(() => {
     async function checkAuth() {
@@ -47,7 +55,8 @@ export default function BonusCardPage() {
       const data = await response.json()
 
       if (data.success) {
-        router.push(`/bonuscard/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}`)
+        const price = referralValidation?.valid ? '90' : '100'
+        router.push(`/bonuscard/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}`)
       } else {
         alert(data.error || 'Ein Fehler ist aufgetreten')
       }
@@ -57,6 +66,33 @@ export default function BonusCardPage() {
       setLoading(false)
     }
   }
+
+  const validateReferralCode = async (code: string) => {
+    if (!code.trim()) {
+      setReferralValidation(null)
+      return
+    }
+    setValidatingCode(true)
+    try {
+      const response = await fetch(`/api/referral/validate?code=${encodeURIComponent(code.trim())}`)
+      const data = await response.json()
+      setReferralValidation(data)
+    } catch {
+      setReferralValidation({ valid: false, error: 'Validierung fehlgeschlagen' })
+    } finally {
+      setValidatingCode(false)
+    }
+  }
+
+  useEffect(() => {
+    const code = formData.referral_code
+    if (code.trim().length >= 3) {
+      const timeout = setTimeout(() => validateReferralCode(code), 500)
+      return () => clearTimeout(timeout)
+    } else {
+      setReferralValidation(null)
+    }
+  }, [formData.referral_code])
 
   return (
     <div className="min-h-screen bg-black pt-20">
@@ -117,7 +153,12 @@ export default function BonusCardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-white/30 text-xs mb-1">PREIS</p>
-                    <p className="text-red-500 font-bold text-2xl">CHF 100</p>
+                    <p className={`font-bold text-2xl ${referralValidation?.valid ? 'text-green-500' : 'text-red-500'}`}>
+                      CHF {referralValidation?.valid ? '90' : '100'}
+                    </p>
+                    {referralValidation?.valid && (
+                      <p className="text-green-400 text-xs">10% Rabatt</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -196,6 +237,26 @@ export default function BonusCardPage() {
                   </div>
 
                   <div>
+                    <label className="block text-white/60 text-sm mb-2">Referral-Code (optional)</label>
+                    <input
+                      type="text"
+                      value={formData.referral_code}
+                      onChange={(e) => setFormData({ ...formData, referral_code: e.target.value.toUpperCase() })}
+                      className="w-full px-4 py-3 bg-black rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors uppercase"
+                      placeholder="z.B. LUCA-2026-A7B2"
+                    />
+                    {validatingCode && (
+                      <p className="text-white/40 text-xs mt-1">Wird geprüft...</p>
+                    )}
+                    {referralValidation?.valid && (
+                      <p className="text-green-400 text-xs mt-1">✓ Code gültig – 10% Rabatt</p>
+                    )}
+                    {referralValidation?.error && (
+                      <p className="text-red-400 text-xs mt-1">✗ {referralValidation.error}</p>
+                    )}
+                  </div>
+
+                  <div>
                     <label className="block text-white/60 text-sm mb-3">Zahlungsmethode *</label>
                     <div className="grid grid-cols-2 gap-3">
                       {[
@@ -231,7 +292,7 @@ export default function BonusCardPage() {
                     ) : (
                       <>
                         <CreditCard className="w-5 h-5" />
-                        Bonuscard für CHF 100 bestellen
+                        Bonuscard für CHF {referralValidation?.valid ? '90' : '100'} bestellen
                       </>
                     )}
                   </button>

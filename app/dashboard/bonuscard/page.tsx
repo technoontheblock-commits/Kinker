@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, QrCode, ExternalLink, AlertTriangle, Check } from 'lucide-react'
+import { CreditCard, QrCode, ExternalLink, AlertTriangle, Check, Gift, Copy } from 'lucide-react'
 import Link from 'next/link'
 
 interface BonusCard {
@@ -17,17 +17,32 @@ interface BonusCard {
   scan_count: number
 }
 
+interface ReferralInfo {
+  code: string
+  total_points: number
+}
+
 export default function DashboardBonusCardPage() {
   const [cards, setCards] = useState<BonusCard[]>([])
+  const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    async function loadCards() {
+    async function loadData() {
       try {
-        const response = await fetch('/api/bonuscard/user')
-        const data = await response.json()
-        if (data.cards) {
-          setCards(data.cards)
+        const [cardsRes, referralRes] = await Promise.all([
+          fetch('/api/bonuscard/user'),
+          fetch('/api/referral/my-code')
+        ])
+        const cardsData = await cardsRes.json()
+        const referralData = await referralRes.json()
+
+        if (cardsData.cards) {
+          setCards(cardsData.cards)
+        }
+        if (referralData.code) {
+          setReferralInfo(referralData)
         }
       } catch (err) {
         console.error('Failed to load bonus cards:', err)
@@ -36,8 +51,16 @@ export default function DashboardBonusCardPage() {
       }
     }
 
-    loadCards()
+    loadData()
   }, [])
+
+  const copyCode = () => {
+    if (referralInfo?.code) {
+      navigator.clipboard.writeText(referralInfo.code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   if (loading) {
     return (
@@ -56,6 +79,36 @@ export default function DashboardBonusCardPage() {
           className="max-w-2xl mx-auto"
         >
           <h1 className="text-3xl font-bold text-white mb-8">Meine Bonuscards</h1>
+
+          {referralInfo && (
+            <div className="bg-gradient-to-br from-neutral-900 to-black rounded-2xl p-6 border border-white/10 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Gift className="w-5 h-5 text-red-500" />
+                <h2 className="text-lg font-semibold text-white">Dein Referral-Code</h2>
+              </div>
+              <div className="flex items-center gap-3 mb-3">
+                <code className="flex-1 bg-black rounded-xl px-4 py-3 text-white font-mono text-lg border border-white/10">
+                  {referralInfo.code}
+                </code>
+                <button
+                  onClick={copyCode}
+                  className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                  title="Code kopieren"
+                >
+                  {copied ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5 text-white/60" />}
+                </button>
+              </div>
+              <p className="text-white/60 text-sm">
+                Gib diesen Code an Freunde weiter. Sie erhalten 10% Rabatt auf ihre Bonuscard und du erhältst 200 Punkte pro erfolgreicher Bestellung.
+              </p>
+              {referralInfo.total_points > 0 && (
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <p className="text-white/40 text-sm">Gesammelte Punkte</p>
+                  <p className="text-2xl font-bold text-white">{referralInfo.total_points}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {cards.length === 0 ? (
             <div className="text-center py-16 bg-neutral-900 rounded-2xl border border-white/10">

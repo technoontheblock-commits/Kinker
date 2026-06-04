@@ -19,6 +19,11 @@ interface BonusCard {
   scan_count: number
   last_scanned_at: string | null
   payment_method: string
+  purchase_price: number
+  referral_code: {
+    code: string
+    user_id: string
+  } | null
 }
 
 interface ScanRecord {
@@ -148,6 +153,16 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
                 <p className="text-white/40 text-sm mb-1">Scans</p>
                 <p className="text-white">{card.scan_count} {card.last_scanned_at && `(zuletzt ${new Date(card.last_scanned_at).toLocaleDateString('de-CH')})`}</p>
               </div>
+              <div>
+                <p className="text-white/40 text-sm mb-1">Preis</p>
+                <p className="text-white">CHF {(card.purchase_price / 100).toFixed(2)}</p>
+              </div>
+              {card.referral_code && (
+                <div>
+                  <p className="text-white/40 text-sm mb-1">Referral-Code</p>
+                  <p className="text-white font-mono">{card.referral_code.code}</p>
+                </div>
+              )}
             </div>
 
             {/* Status */}

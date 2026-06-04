@@ -11,6 +11,7 @@ function SuccessContent() {
   const cardNumber = searchParams.get('card')
   const viewUrl = searchParams.get('url')
   const paymentMethod = searchParams.get('method')
+  const price = searchParams.get('price') || '100'
 
   return (
     <div className="min-h-screen bg-black pt-20">
@@ -56,7 +57,7 @@ function SuccessContent() {
                   <h3 className="text-yellow-400 font-semibold text-sm">Banküberweisung</h3>
                 </div>
                 <p className="text-white/70 text-sm mb-3">
-                  Bitte überweise <strong className="text-white">CHF 100.00</strong> auf folgendes Konto:
+                  Bitte überweise <strong className="text-white">CHF {parseFloat(price).toFixed(2)}</strong> auf folgendes Konto:
                 </p>
                 <div className="space-y-1 text-sm font-mono text-white/90">
                   <p>IBAN: CH93 0076 2011 6238 5295 7</p>

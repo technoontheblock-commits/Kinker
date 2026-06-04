@@ -70,18 +70,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
-  qrSection: {
-    marginTop: 40,
+  qrOnCard: {
     alignItems: 'center',
+    marginBottom: 30,
   },
-  qrLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
-    marginBottom: 16,
-  },
-  qrImage: {
-    width: 200,
-    height: 200,
+  qrOnCardImage: {
+    width: 160,
+    height: 160,
     backgroundColor: '#ffffff',
     padding: 8,
   },
@@ -131,6 +126,7 @@ interface BonusCardPDFProps {
   qrCodeDataUrl: string
   paymentMethod: string
   isPaid: boolean
+  purchasePrice?: number
 }
 
 export function BonusCardPDF({
@@ -140,8 +136,11 @@ export function BonusCardPDF({
   qrCodeDataUrl,
   paymentMethod,
   isPaid,
+  purchasePrice = 10000,
 }: BonusCardPDFProps) {
   const showPaymentInfo = paymentMethod === 'bank_transfer' && !isPaid
+  const priceChf = (purchasePrice / 100).toFixed(2)
+  const hasDiscount = purchasePrice < 10000
 
   return (
     <Document>
@@ -159,29 +158,27 @@ export function BonusCardPDF({
             <Text style={styles.value}>{holderName}</Text>
           </View>
 
+          <View style={styles.qrOnCard}>
+            <Image src={qrCodeDataUrl} style={styles.qrOnCardImage} />
+          </View>
+
           <View style={styles.bottomRow}>
             <View>
               <Text style={styles.label}>Kartennummer</Text>
               <Text style={styles.cardNumber}>{cardNumber}</Text>
             </View>
             <View>
-              <Text style={styles.price}>CHF 100</Text>
+              <Text style={styles.price}>CHF {priceChf}</Text>
+              {hasDiscount && <Text style={{ fontSize: 10, color: '#16a34a', marginTop: 4 }}>10% Rabatt</Text>}
             </View>
           </View>
-        </View>
-
-        <View style={styles.qrSection}>
-          <Text style={styles.qrLabel}>
-            Zeige diesen QR-Code an der Abendkasse vor
-          </Text>
-          <Image src={qrCodeDataUrl} style={styles.qrImage} />
         </View>
 
         {showPaymentInfo && (
           <View style={styles.paymentSection}>
             <Text style={styles.paymentTitle}>Zahlungsinformationen</Text>
             <Text style={styles.paymentText}>
-              Bitte überweise <Text style={styles.paymentBold}>CHF 100.00</Text> auf folgendes Konto:
+              Bitte überweise <Text style={styles.paymentBold}>CHF {priceChf}</Text> auf folgendes Konto:
             </Text>
             <Text style={styles.paymentMono}>IBAN: CH93 0076 2011 6238 5295 7</Text>
             <Text style={styles.paymentMono}>BIC: BKBKCH22</Text>

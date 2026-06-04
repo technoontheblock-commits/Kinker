@@ -354,6 +354,7 @@ export interface Database {
           expires_at: string | null
           scan_count: number
           last_scanned_at: string | null
+          referral_code_used: string | null
           created_at: string
           updated_at: string
         }
@@ -373,6 +374,7 @@ export interface Database {
           expires_at?: string | null
           scan_count?: number
           last_scanned_at?: string | null
+          referral_code_used?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -392,6 +394,7 @@ export interface Database {
           expires_at?: string | null
           scan_count?: number
           last_scanned_at?: string | null
+          referral_code_used?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -425,6 +428,49 @@ export interface Database {
           created_at?: string
         }
       }
+      referral_codes: {
+        Row: {
+          id: string
+          user_id: string
+          code: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          code: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          code?: string
+          created_at?: string
+        }
+      }
+      referral_points: {
+        Row: {
+          id: string
+          user_id: string
+          points: number
+          source_bonus_card_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          points?: number
+          source_bonus_card_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          points?: number
+          source_bonus_card_id?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -447,3 +493,5 @@ export type JobApplication = Database['public']['Tables']['job_applications']['R
 export type RentalInquiry = Database['public']['Tables']['rental_inquiries']['Row']
 export type BonusCard = Database['public']['Tables']['bonus_cards']['Row']
 export type BonusCardScan = Database['public']['Tables']['bonus_card_scans']['Row']
+export type ReferralCode = Database['public']['Tables']['referral_codes']['Row']
+export type ReferralPoint = Database['public']['Tables']['referral_points']['Row']

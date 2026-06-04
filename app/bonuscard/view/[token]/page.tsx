@@ -102,7 +102,7 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
             </div>
 
             <div className="relative">
-              <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center justify-between mb-8">
                 <div>
                   <p className="text-red-500 font-bold text-sm tracking-wider">KINKER BASEL</p>
                   <p className="text-white/40 text-xs">STAMMGASTKARTE</p>
@@ -110,9 +110,20 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
                 <CreditCard className="w-10 h-10 text-red-500/30" />
               </div>
 
-              <div className="mb-10">
+              <div className="mb-6">
                 <p className="text-white/30 text-xs mb-1">KARTENINHABER</p>
                 <p className="text-white text-2xl font-medium">{card.holder_name}</p>
+              </div>
+
+              {/* QR Code */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-white rounded-xl p-3 inline-block">
+                  {qrCode ? (
+                    <img src={qrCode} alt="QR Code" width="180" height="180" className="block" />
+                  ) : (
+                    <QrCode className="w-44 h-44 text-neutral-300" />
+                  )}
+                </div>
               </div>
 
               <div className="flex items-end justify-between">
@@ -128,19 +139,9 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
             </div>
           </div>
 
-          {/* QR Code */}
-          <div className="bg-neutral-900 rounded-2xl p-6 border border-white/10 text-center mb-6">
-            <div className="bg-white rounded-xl p-4 inline-block mb-4">
-              {qrCode ? (
-                <img src={qrCode} alt="QR Code" width="200" height="200" className="block" />
-              ) : (
-                <QrCode className="w-32 h-32 text-neutral-300" />
-              )}
-            </div>
-            <p className="text-white/60 text-sm">
-              Zeige diesen QR-Code an der Abendkasse vor
-            </p>
-          </div>
+          <p className="text-white/60 text-sm text-center mb-6">
+            Zeige diesen QR-Code an der Abendkasse vor
+          </p>
 
           {/* Wallet Buttons (prepared for Phase 2) */}
           <div className="space-y-3 mb-6">
