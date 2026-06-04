@@ -38,11 +38,12 @@ export function getMerchantCode(): string {
 export function getAppUrl(): string {
   const url = process.env.NEXT_PUBLIC_APP_URL
 
-  if (!url) {
-    throw new Error('NEXT_PUBLIC_APP_URL not configured')
+  if (url) {
+    return url.replace(/\/$/, '')
   }
 
-  return url.replace(/\/$/, '')
+  // Fallback for production — ensure SumUp always redirects to the correct domain
+  return 'https://www.kinker.ch'
 }
 
 // Lazy-initialized singleton for server-side reuse.
