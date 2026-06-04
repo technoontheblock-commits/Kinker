@@ -76,64 +76,65 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
 
   return (
     <div className="min-h-screen bg-black pt-8 pb-8">
-      <div className="container mx-auto px-4 max-w-md">
+      <div className="container mx-auto px-4 max-w-2xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {/* Card */}
-          <div className="relative bg-gradient-to-br from-neutral-900 to-black rounded-3xl p-8 border border-white/10 overflow-hidden mb-6">
+          {/* Card - Landscape */}
+          <div className="relative bg-gradient-to-br from-neutral-900 to-black rounded-3xl p-6 border border-white/10 overflow-hidden mb-6 aspect-[1.586/1] max-w-2xl mx-auto">
             {/* Decorative */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/10 rounded-full blur-3xl" />
             
-            {/* Status Badge */}
-            <div className="flex justify-end mb-6">
-              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                isValid 
-                  ? 'bg-green-500/20 text-green-400' 
-                  : 'bg-yellow-500/20 text-yellow-400'
-              }`}>
-                {isValid ? (
-                  <><Check className="w-3 h-3" /> Aktiv</>
-                ) : (
-                  <><AlertTriangle className="w-3 h-3" /> {isPaid ? 'Gesperrt' : 'Zahlung ausstehend'}</>
-                )}
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="flex items-center justify-between mb-8">
+            <div className="relative h-full flex flex-col justify-between">
+              {/* Top row */}
+              <div className="flex items-start justify-between">
                 <div>
                   <p className="text-red-500 font-bold text-sm tracking-wider">KINKER BASEL</p>
                   <p className="text-white/40 text-xs">STAMMGASTKARTE</p>
                 </div>
-                <CreditCard className="w-10 h-10 text-red-500/30" />
+                <div className="flex items-center gap-3">
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                    isValid 
+                      ? 'bg-green-500/20 text-green-400' 
+                      : 'bg-yellow-500/20 text-yellow-400'
+                  }`}>
+                    {isValid ? (
+                      <><Check className="w-3 h-3" /> Aktiv</>
+                    ) : (
+                      <><AlertTriangle className="w-3 h-3" /> {isPaid ? 'Gesperrt' : 'Zahlung ausstehend'}</>
+                    )}
+                  </div>
+                  <CreditCard className="w-8 h-8 text-red-500/30" />
+                </div>
               </div>
 
-              <div className="mb-6">
-                <p className="text-white/30 text-xs mb-1">KARTENINHABER</p>
-                <p className="text-white text-2xl font-medium">{card.holder_name}</p>
-              </div>
-
-              {/* QR Code */}
-              <div className="flex justify-center mb-6">
-                <div className="bg-white rounded-xl p-3 inline-block">
+              {/* Bottom row */}
+              <div className="flex items-end justify-between gap-4">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-white/30 text-xs mb-1">KARTENINHABER</p>
+                    <p className="text-white text-xl font-medium">{card.holder_name}</p>
+                  </div>
+                  <div className="flex items-end gap-6 md:gap-8">
+                    <div>
+                      <p className="text-white/30 text-xs mb-1">KARTENNUMMER</p>
+                      <p className="text-white font-mono text-sm">{card.card_number}</p>
+                    </div>
+                    <div>
+                      <p className="text-white/30 text-xs mb-1">SCANS</p>
+                      <p className="text-white font-mono text-sm">{card.scan_count}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* QR Code */}
+                <div className="bg-white rounded-xl p-2 inline-block shrink-0">
                   {qrCode ? (
-                    <img src={qrCode} alt="QR Code" width="180" height="180" className="block" />
+                    <img src={qrCode} alt="QR Code" width="100" height="100" className="block" />
                   ) : (
-                    <QrCode className="w-44 h-44 text-neutral-300" />
+                    <QrCode className="w-24 h-24 text-neutral-300" />
                   )}
-                </div>
-              </div>
-
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-white/30 text-xs mb-1">KARTENNUMMER</p>
-                  <p className="text-white font-mono text-sm">{card.card_number}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white/30 text-xs mb-1">SCANS</p>
-                  <p className="text-white font-mono text-sm">{card.scan_count}</p>
                 </div>
               </div>
             </div>
