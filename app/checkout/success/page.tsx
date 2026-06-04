@@ -3,14 +3,14 @@ import { CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
 import { getSumUp } from '@/lib/sumup'
 
 interface CheckoutSuccessPageProps {
-  searchParams: Promise<{ id?: string }>
+  searchParams: Promise<{ id?: string; checkout_id?: string }>
 }
 
 export default async function CheckoutSuccessPage({
   searchParams,
 }: CheckoutSuccessPageProps) {
   const params = await searchParams
-  const checkoutId = params.id
+  const checkoutId = params.id || params.checkout_id
 
   if (!checkoutId) {
     return (
