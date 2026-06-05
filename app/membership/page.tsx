@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, Check, Loader2, Smartphone, Banknote, ArrowRight, LogIn } from 'lucide-react'
+import { CreditCard, Check, Loader2, Smartphone, Banknote, Calendar, LogIn, ShoppingCart, Download, ScanLine } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -150,6 +150,8 @@ export default function BonusCardPage() {
                   <div>
                     <p className="text-white/30 text-xs mb-1">KARTENNUMMER</p>
                     <p className="text-white font-mono text-sm">KINKER-BC-2026-000001</p>
+                    <p className="text-white/30 text-xs mt-3 mb-1">GÜLTIGKEIT</p>
+                    <p className="text-white text-sm">1 Jahr</p>
                   </div>
                   <div className="text-right">
                     <p className="text-white/30 text-xs mb-1">PREIS</p>
@@ -173,16 +175,44 @@ export default function BonusCardPage() {
             className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12"
           >
             {[
-              { icon: Check, text: 'Preisermässigung an der Abendkasse' },
+              { icon: Check, text: '5 CHF Rabatt an der Abendkasse' },
               { icon: CreditCard, text: 'Digitale Karte mit QR-Code' },
               { icon: Smartphone, text: 'Immer auf dem Handy dabei' },
-              { icon: ArrowRight, text: 'Schneller Einlass' }
+              { icon: Calendar, text: '1 Jahr gültig' }
             ].map((benefit, i) => (
               <div key={i} className="flex items-center gap-3 bg-neutral-900/50 rounded-xl p-4 border border-white/5">
                 <benefit.icon className="w-5 h-5 text-red-500 shrink-0" />
                 <span className="text-white/80 text-sm">{benefit.text}</span>
               </div>
             ))}
+          </motion.div>
+
+          {/* How it works */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="mb-12"
+          >
+            <h2 className="text-xl font-bold text-white mb-6 text-center">So funktioniert's</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { icon: ShoppingCart, step: '1', title: 'Membership kaufen', desc: 'Fülle das Formular aus und bestelle deine persönliche Karte.' },
+                { icon: Download, step: '2', title: 'PDF speichern / Screenshot', desc: 'Speichere deine digitale Karte als PDF oder mache einen Screenshot.' },
+                { icon: ScanLine, step: '3', title: 'QR-Code scannen lassen', desc: 'Zeige deinen QR-Code an der Abendkasse vor und profitiere von der Ermässigung.' }
+              ].map((item, i) => (
+                <div key={i} className="relative bg-neutral-900/50 rounded-xl p-6 border border-white/5 text-center">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-red-600 to-red-500 rounded-full mb-4">
+                    <item.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="absolute top-4 right-4 w-6 h-6 bg-white/10 rounded-full flex items-center justify-center">
+                    <span className="text-white/60 text-xs font-bold">{item.step}</span>
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">{item.title}</h3>
+                  <p className="text-white/50 text-sm">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </motion.div>
 
           {/* Purchase Form or Login CTA */}
