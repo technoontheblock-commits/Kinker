@@ -59,3 +59,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Event deletion**: Cascade delete `event_tickets`, `order_items`, `cart_items` before deleting event.
 - **Event delete error**: Better error logging for event delete + client error display.
 - **Eventfrog large IDs**: Handle Eventfrog large IDs exceeding JS `Number.MAX_SAFE_INTEGER`.
+- **Bonuscard View Padding**: Top padding auf `/bonuscard/view/[token]` von `pt-8` auf `pt-24` erhöht, damit die Karte nicht mehr in die fixe Navigation reinragt.
