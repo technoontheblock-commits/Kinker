@@ -107,6 +107,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Create admin notification for new membership purchase
+    try {
+      await supabase.from('notifications').insert([{
+        type: 'membership',
+        title: 'Neue Membership-Bestellung',
+        message: `${holder_name.trim()} hat eine Membership (${cardNumber}) per ${payment_method.toUpperCase()} bestellt.`,
+        read: false
+      }])
+    } catch (notifErr) {
+      console.error('Notification creation error:', notifErr)
+    }
+
     // Generate QR code for PDF
     let qrCodeDataUrl: string | undefined
     try {
