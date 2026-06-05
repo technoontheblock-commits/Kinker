@@ -221,7 +221,7 @@ export default function BonusCardPage() {
             transition={{ delay: 0.35 }}
             className="mb-12"
           >
-            <h2 className="text-xl font-bold text-white mb-6 text-center">So funktioniert's</h2>
+            <h2 className="text-xl font-bold text-white mb-6 text-center">So funktioniert&apos;s</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
                 { icon: ShoppingCart, step: '1', title: 'Membership kaufen', desc: 'Fülle das Formular aus und bestelle deine persönliche Karte.' },
