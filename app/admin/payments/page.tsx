@@ -128,7 +128,7 @@ export default function PaymentsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white">Payment Verification</h1>
-            <p className="text-white/60 mt-1">Verify TWINT and other pending payments</p>
+            <p className="text-white/60 mt-1">Verify pending payments</p>
           </div>
           <button
             onClick={loadOrders}

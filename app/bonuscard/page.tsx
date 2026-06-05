@@ -15,7 +15,7 @@ export default function BonusCardPage() {
     holder_name: '',
     holder_email: '',
     holder_phone: '',
-    payment_method: 'twint',
+    payment_method: 'bank_transfer',
     referral_code: ''
   })
   const [referralValidation, setReferralValidation] = useState<{
@@ -260,9 +260,7 @@ export default function BonusCardPage() {
                     <label className="block text-white/60 text-sm mb-3">Zahlungsmethode *</label>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { value: 'twint', label: 'TWINT', icon: Smartphone },
                         { value: 'bank_transfer', label: 'Banküberweisung', icon: Banknote },
-                        { value: 'sepa', label: 'SEPA', icon: ArrowRight },
                         { value: 'cash', label: 'Bar', icon: CreditCard }
                       ].map((method) => (
                         <button

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!['twint', 'bank_transfer', 'sepa', 'cash'].includes(payment_method)) {
+    if (!['bank_transfer', 'cash'].includes(payment_method)) {
       return NextResponse.json(
         { error: 'Ungültige Zahlungsmethode' },
         { status: 400 }
