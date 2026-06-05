@@ -56,6 +56,10 @@ export default function BonusCardPage() {
 
       if (data.success) {
         const price = referralValidation?.valid ? '90' : '100'
+        if (formData.payment_method === 'twint') {
+          const twintUrl = `https://go.twint.ch/1/e/tw?tw=acq.1QpEtdXaTp67RTtZAon-LmYwb6Dc4bSzry9O70XYAuuhdI6rCR5vezGx9qyHMQfc&amount=${price}.00&trxInfo=Kinker+Membership`
+          window.open(twintUrl, '_blank')
+        }
         router.push(`/membership/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}`)
       } else {
         alert(data.error || 'Ein Fehler ist aufgetreten')
@@ -291,6 +295,7 @@ export default function BonusCardPage() {
                     <div className="grid grid-cols-2 gap-3">
                       {[
                         { value: 'bank_transfer', label: 'Banküberweisung', icon: Banknote },
+                        { value: 'twint', label: 'TWINT', icon: Smartphone },
                         { value: 'cash', label: 'Bar', icon: CreditCard }
                       ].map((method) => (
                         <button
