@@ -187,6 +187,19 @@ export default function MerchPage() {
       return
     }
 
+    // Check authentication before checkout
+    try {
+      const authRes = await fetch('/api/auth/session')
+      const authData = await authRes.json()
+      if (!authData.user) {
+        window.location.href = '/login?redirect=/merch'
+        return
+      }
+    } catch {
+      window.location.href = '/login?redirect=/merch'
+      return
+    }
+
     setCheckoutLoading(true)
 
     try {
