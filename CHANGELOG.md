@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Membership PDF**: E-Mail enthält jetzt PDF-Anhang mit Membership und QR-Code (statt Bild inline)
 - **Membership Zahlungsreferenz**: Verwendungszweck bei allen Zahlungsmethoden ist jetzt die Kartennummer
 - **Membership Banküberweisung**: IBAN, BIC und Kontoinhaber werden in E-Mail und PDF angezeigt
+- **Membership Seite**: Schritt-für-Schritt-Anleitung "So funktioniert's" hinzugefügt (kaufen → speichern → QR-Code scannen)
+- **Membership Karte**: 1-Jahr-Gültigkeit direkt auf der Karten-Vorschau angezeigt
+- **Membership Benefits**: Preisermässigung präzisiert auf "5 CHF Rabatt an der Abendkasse"
 - **Account deletion**: UI and hardened RLS policies for secure account deletion.
 - **Cookie consent banner**: Implemented cookie consent with overhauled privacy policy.
 - **Eventfrog sync**: Sync single Eventfrog events by ID with fallback DB loading.
