@@ -221,7 +221,7 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'users', label: 'User Management', icon: Users },
-    { id: 'bonuscards', label: 'Memberships', icon: CreditCard, href: '/admin/bonuscards' },
+    { id: 'bonuscards', label: 'Memberships', icon: CreditCard, href: '/admin/memberships' },
     { id: 'vip-bookings', label: 'VIP Bookings', icon: Crown, href: '/admin/vip-bookings' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
     { id: 'newsletter', label: 'Newsletter', icon: Mail, href: '/admin/newsletter' },

@@ -54,7 +54,7 @@ export async function generateQRCodeDataUrl(token: string): Promise<string> {
  * Generate a public view URL for the bonus card
  */
 export function generateCardViewUrl(token: string): string {
-  return `${siteUrl}/bonuscard/view/${token}`
+  return `${siteUrl}/membership/view/${token}`
 }
 
 /**

@@ -64,7 +64,7 @@ export default function ScannerPage() {
     try {
       // Determine if it's a bonus card or ticket
       const isBonusCard = qrCode.startsWith('KINKER-BC-')
-      const endpoint = isBonusCard ? '/api/bonuscard/validate' : '/api/tickets/validate'
+      const endpoint = isBonusCard ? '/api/membership/validate' : '/api/tickets/validate'
       
       const response = await fetch(endpoint, {
         method: 'POST',

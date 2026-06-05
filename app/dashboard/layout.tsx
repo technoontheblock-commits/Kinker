@@ -22,7 +22,7 @@ import {
 const menuItems = [
   { id: 'homepage', label: 'Homepage', icon: Home, href: '/' },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { id: 'bonuscard', label: 'Membership', icon: CreditCard, href: '/dashboard/bonuscard' },
+  { id: 'bonuscard', label: 'Membership', icon: CreditCard, href: '/dashboard/membership' },
   { id: 'rewards', label: 'Rewards', icon: Gift, href: '/dashboard/rewards' },
   { id: 'careers', label: 'Careers', icon: Briefcase, href: '/dashboard/careers' },
   { id: 'orders', label: 'Orders', icon: Package, href: '/dashboard/orders' },

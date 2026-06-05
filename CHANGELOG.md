@@ -21,11 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `SUMUP_API_KEY` und `SUMUP_MERCHANT_CODE` als neue Env-Variablen
 - **DB Schema**: Migration `20250604_add_sumup_payment_method.sql` erweitert `orders.payment_method` Check Constraint um `sumup`
 - **Kinker Membership**: Digitale Membership für 100 CHF mit QR-Code und 1 Jahr Gültigkeit
-  - Kauf-Seite (`/bonuscard`) mit Zahlungsauswahl (TWINT, Bank, SEPA, Bar)
-  - Öffentliche Kartenansicht (`/bonuscard/view/[token]`) im Kinker-Design
-  - Dashboard-Ansicht (`/dashboard/bonuscard`) für eingeloggte User
+  - Kauf-Seite (`/membership`) mit Zahlungsauswahl (TWINT, Bank, SEPA, Bar)
+  - Öffentliche Kartenansicht (`/membership/view/[token]`) im Kinker-Design
+  - Dashboard-Ansicht (`/dashboard/membership`) für eingeloggte User
   - Scanner-Integration: Memberships werden neben Tickets erkannt und validiert
-  - Admin-Panel (`/admin/bonuscards`) mit Liste, Details, Zahlungsbestätigung, Sperrung
+  - Admin-Panel (`/admin/memberships`) mit Liste, Details, Zahlungsbestätigung, Sperrung
   - E-Mail-Bestätigung mit QR-Code und Zahlungsinformationen
   - Wallet-API-Routen vorbereitet (Apple Wallet + Google Wallet) – deaktiviert bis Accounts vorhanden
 - **DB Schema**: Neue Tabellen `bonus_cards` und `bonus_card_scans` mit Audit-Trail; `expires_at` Spalte mit 1-Jahres-Gültigkeit und Trigger
@@ -59,4 +59,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Event deletion**: Cascade delete `event_tickets`, `order_items`, `cart_items` before deleting event.
 - **Event delete error**: Better error logging for event delete + client error display.
 - **Eventfrog large IDs**: Handle Eventfrog large IDs exceeding JS `Number.MAX_SAFE_INTEGER`.
-- **Membership View Padding**: Top padding auf `/bonuscard/view/[token]` von `pt-8` auf `pt-24` erhöht, damit die Karte nicht mehr in die fixe Navigation reinragt.
+- **Membership View Padding**: Top padding auf `/membership/view/[token]` von `pt-8` auf `pt-24` erhöht, damit die Karte nicht mehr in die fixe Navigation reinragt.
