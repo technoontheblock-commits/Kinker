@@ -74,10 +74,10 @@ export default function OrdersPage() {
 
   const getPaymentMethodLabel = (method: string) => {
     switch (method) {
-      case 'twint': return 'TWINT'
       case 'bank_transfer': return 'Bank Transfer'
       case 'cash': return 'Cash on Site'
-      case 'invoice': return 'Invoice'
+      case 'sumup': return 'SumUp'
+      case 'stripe': return 'Stripe'
       default: return method
     }
   }

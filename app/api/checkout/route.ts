@@ -421,31 +421,6 @@ export async function POST(request: NextRequest) {
 
 function getPaymentInstructions(method: string, orderNumber: string, iban?: string) {
   switch (method) {
-    case 'twint':
-      return {
-        method: 'twint',
-        title: 'Pay with TWINT',
-        description: 'Open your TWINT app and send the payment to:',
-        qrCode: true,
-        phone: '+41 79 123 45 67',
-        reference: orderNumber,
-        steps: [
-          'Open TWINT app',
-          'Tap "Send Money"',
-          `Enter phone: +41 79 123 45 67`,
-          `Add reference: ${orderNumber}`,
-          'Confirm payment'
-        ]
-      }
-    case 'sepa':
-      return {
-        method: 'sepa',
-        title: 'SEPA Direct Debit',
-        description: 'We will debit the amount from your account within 1-3 business days.',
-        iban: iban || 'Provided at checkout',
-        reference: orderNumber,
-        note: 'You will receive a confirmation email once the debit is processed.'
-      }
     case 'bank_transfer':
       return {
         method: 'bank_transfer',
@@ -456,6 +431,14 @@ function getPaymentInstructions(method: string, orderNumber: string, iban?: stri
         accountName: 'KINKER Basel GmbH',
         reference: orderNumber,
         note: 'Your order will be processed after payment is received.'
+      }
+    case 'cash':
+      return {
+        method: 'cash',
+        title: 'Cash on Site',
+        description: 'Pay with cash at the venue.',
+        reference: orderNumber,
+        note: 'Please bring exact change if possible.'
       }
     default:
       return null

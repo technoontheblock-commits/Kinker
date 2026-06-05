@@ -201,7 +201,12 @@ export default function PaymentsPage() {
                     <span className="text-white font-semibold">{formatPrice(order.total)}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-white/70 text-sm capitalize">{order.payment_method}</span>
+                    <span className="text-white/70 text-sm capitalize">
+                      {order.payment_method === 'bank_transfer' ? 'Bank Transfer' : 
+                       order.payment_method === 'sumup' ? 'SumUp' :
+                       order.payment_method === 'stripe' ? 'Stripe' :
+                       order.payment_method === 'cash' ? 'Cash' : order.payment_method}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
