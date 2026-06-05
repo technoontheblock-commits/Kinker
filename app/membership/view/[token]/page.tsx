@@ -15,7 +15,7 @@ interface BonusCardData {
   purchased_at: string
   paid_at: string | null
   qr_token: string
-  scan_count: number
+  expires_at: string
 }
 
 export default function BonusCardViewPage({ params }: { params: { token: string } }) {
@@ -122,8 +122,8 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
                       <p className="text-white font-mono text-sm">{card.card_number}</p>
                     </div>
                     <div>
-                      <p className="text-white/30 text-xs mb-1">SCANS</p>
-                      <p className="text-white font-mono text-sm">{card.scan_count}</p>
+                      <p className="text-white/30 text-xs mb-1">GÜLTIG BIS</p>
+                      <p className="text-white font-mono text-sm">{new Date(card.expires_at).toLocaleDateString('de-CH')}</p>
                     </div>
                   </div>
                 </div>
