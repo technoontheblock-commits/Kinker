@@ -59,8 +59,31 @@ export default function BonusCardPage() {
         if (formData.payment_method === 'twint') {
           const twintUrl = `https://go.twint.ch/1/e/tw?tw=acq.1QpEtdXaTp67RTtZAon-LmYwb6Dc4bSzry9O70XYAuuhdI6rCR5vezGx9qyHMQfc&amount=${price}.00&trxInfo=Kinker+Membership`
           window.open(twintUrl, '_blank')
+          router.push(`/membership/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}`)
+        } else if (formData.payment_method === 'card') {
+          // Create SumUp checkout for card payment
+          const sumupRes = await fetch('/api/sumup/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: parseFloat(price),
+              description: 'Kinker Membership',
+              checkout_reference: data.card.card_number,
+            }),
+          })
+          const sumupData = await sumupRes.json()
+          if (!sumupRes.ok) {
+            alert('SumUp Checkout-Fehler: ' + (sumupData.error || 'Unbekannter Fehler'))
+            return
+          }
+          if (sumupData.hosted_checkout_url) {
+            window.location.href = sumupData.hosted_checkout_url
+          } else {
+            alert('Keine Checkout-URL erhalten')
+          }
+        } else {
+          router.push(`/membership/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}`)
         }
-        router.push(`/membership/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}`)
       } else {
         alert(data.error || 'Ein Fehler ist aufgetreten')
       }
@@ -294,9 +317,9 @@ export default function BonusCardPage() {
                     <label className="block text-white/60 text-sm mb-3">Zahlungsmethode *</label>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { value: 'bank_transfer', label: 'Banküberweisung', icon: Banknote },
+                        { value: 'card', label: 'Karte', icon: CreditCard },
                         { value: 'twint', label: 'TWINT', icon: Smartphone },
-                        { value: 'cash', label: 'Bar', icon: CreditCard }
+                        { value: 'cash', label: 'Bar', icon: Banknote }
                       ].map((method) => (
                         <button
                           key={method.value}

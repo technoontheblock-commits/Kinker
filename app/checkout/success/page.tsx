@@ -60,6 +60,24 @@ export default async function CheckoutSuccessPage() {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
       try {
+        // Check if a membership needs to be marked as paid
+        const { data: existingMembership } = await supabase
+          .from('bonus_cards')
+          .select('id, card_number, payment_status')
+          .eq('card_number', checkout.checkout_reference)
+          .maybeSingle()
+
+        if (existingMembership && existingMembership.payment_status !== 'paid') {
+          await supabase
+            .from('bonus_cards')
+            .update({
+              payment_status: 'paid',
+              status: 'active',
+              paid_at: new Date().toISOString(),
+            })
+            .eq('id', existingMembership.id)
+        }
+
         // Check if order already exists for this checkout
         const { data: existingOrder } = await supabase
           .from('orders')
