@@ -75,7 +75,7 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
   const isValid = isPaid && isActive
 
   return (
-    <div className="min-h-screen bg-black pt-8 pb-8">
+    <div className="min-h-screen bg-black pt-24 pb-8">
       <div className="container mx-auto px-4 max-w-2xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
