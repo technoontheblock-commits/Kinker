@@ -76,7 +76,7 @@ export function generateBonusCardEmail(data: BonusCardEmailData): string {
           🎫
         </div>
         <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #111111; font-family: sans-serif;">
-          Deine KINKER Bonuscard
+          Deine Kinker Membership
         </h2>
         <p style="margin: 0 0 8px; font-size: 15px; color: #666666; font-family: sans-serif;">
           Vielen Dank für deinen Kauf, ${data.holderName}!
@@ -125,7 +125,7 @@ export function generateBonusCardEmail(data: BonusCardEmailData): string {
       <td style="padding: 0 32px 32px;">
         <div style="background: #fafafa; border-radius: 12px; padding: 20px;">
           <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #111111;">
-            Was bringt dir die Bonuscard?
+            Was bringt dir die Membership?
           </h3>
           <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #666666; line-height: 1.8;">
             <li>Preisermässigung an der Abendkasse</li>
@@ -147,5 +147,5 @@ export function generateBonusCardEmail(data: BonusCardEmailData): string {
     </tr>
   `
 
-  return wrapEmail(contentHtml, 'Deine KINKER Bonuscard')
+  return wrapEmail(contentHtml, 'Deine Kinker Membership')
 }

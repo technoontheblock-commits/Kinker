@@ -113,10 +113,10 @@ export default function BonusCardPage() {
               <CreditCard className="w-10 h-10 text-white" />
             </motion.div>
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              KINKER <span className="text-red-500">Bonuscard</span>
+              Kinker <span className="text-red-500">Membership</span>
             </h1>
             <p className="text-white/60 text-lg">
-              Deine Stammgastkarte für exklusive Preisermässigungen
+              Deine Membership für exklusive Preisermässigungen
             </p>
           </div>
 
@@ -136,7 +136,7 @@ export default function BonusCardPage() {
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <p className="text-red-500 font-bold text-sm tracking-wider">KINKER BASEL</p>
-                    <p className="text-white/40 text-xs">STAMMGASTKARTE</p>
+                    <p className="text-white/40 text-xs">MEMBERSHIP</p>
                   </div>
                   <CreditCard className="w-8 h-8 text-red-500/50" />
                 </div>
@@ -290,7 +290,7 @@ export default function BonusCardPage() {
                     ) : (
                       <>
                         <CreditCard className="w-5 h-5" />
-                        Bonuscard für CHF {referralValidation?.valid ? '90' : '100'} bestellen
+                        Membership für CHF {referralValidation?.valid ? '90' : '100'} bestellen
                       </>
                     )}
                   </button>
@@ -300,14 +300,14 @@ export default function BonusCardPage() {
               <div className="text-center py-8">
                 <h2 className="text-2xl font-bold text-white mb-4">Jetzt bestellen</h2>
                 <p className="text-white/60 mb-8">
-                  Melde dich an, um deine persönliche Bonuscard zu bestellen.
+                  Melde dich an, um deine persönliche Membership zu bestellen.
                 </p>
                 <Link
                   href="/login?redirect=/bonuscard"
                   className="inline-flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold rounded-xl transition-all"
                 >
                   <LogIn className="w-5 h-5" />
-                  Einloggen um Bonuscard zu bestellen
+                  Einloggen um Membership zu bestellen
                 </Link>
               </div>
             )}

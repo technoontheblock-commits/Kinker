@@ -78,7 +78,7 @@ export default function DashboardBonusCardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-2xl mx-auto"
         >
-          <h1 className="text-3xl font-bold text-white mb-8">Meine Bonuscards</h1>
+          <h1 className="text-3xl font-bold text-white mb-8">Meine Memberships</h1>
 
           {referralInfo && (
             <div className="bg-gradient-to-br from-neutral-900 to-black rounded-2xl p-6 border border-white/10 mb-6">
@@ -99,7 +99,7 @@ export default function DashboardBonusCardPage() {
                 </button>
               </div>
               <p className="text-white/60 text-sm">
-                Gib diesen Code an Freunde weiter. Sie erhalten 10% Rabatt auf ihre Bonuscard und du erhältst 200 Punkte pro erfolgreicher Bestellung.
+                Gib diesen Code an Freunde weiter. Sie erhalten 10% Rabatt auf ihre Membership und du erhältst 200 Punkte pro erfolgreicher Bestellung.
               </p>
               {referralInfo.total_points > 0 && (
                 <div className="mt-4 pt-4 border-t border-white/10">
@@ -113,12 +113,12 @@ export default function DashboardBonusCardPage() {
           {cards.length === 0 ? (
             <div className="text-center py-16 bg-neutral-900 rounded-2xl border border-white/10">
               <CreditCard className="w-12 h-12 text-white/20 mx-auto mb-4" />
-              <p className="text-white/60 mb-4">Du hast noch keine Bonuscard</p>
+              <p className="text-white/60 mb-4">Du hast noch keine Membership</p>
               <Link
                 href="/bonuscard"
                 className="inline-block px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-medium rounded-xl transition-colors"
               >
-                Bonuscard kaufen
+                Membership kaufen
               </Link>
             </div>
           ) : (

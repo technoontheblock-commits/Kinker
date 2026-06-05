@@ -123,7 +123,7 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
             Zurück zur Übersicht
           </Link>
 
-          <h1 className="text-3xl font-bold text-white mb-8">Kartendetails</h1>
+          <h1 className="text-3xl font-bold text-white mb-8">Membership-Details</h1>
 
           {/* Card Info */}
           <div className="bg-neutral-900 rounded-2xl p-8 border border-white/10 mb-6">

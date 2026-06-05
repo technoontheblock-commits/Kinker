@@ -149,7 +149,7 @@ export function BonusCardPDF({
           <View style={styles.header}>
             <View>
               <Text style={styles.brand}>KINKER BASEL</Text>
-              <Text style={styles.subtitle}>STAMMGASTKARTE</Text>
+              <Text style={styles.subtitle}>MEMBERSHIP</Text>
             </View>
           </View>
 

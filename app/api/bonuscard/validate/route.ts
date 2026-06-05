@@ -47,16 +47,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine scan result
-    let scanResult: 'valid' | 'already_used' | 'invalid' | 'cancelled' | 'payment_pending' | 'suspended' = 'valid'
-    let message = 'Bonuscard gültig'
+    let scanResult: 'valid' | 'already_used' | 'invalid' | 'cancelled' | 'payment_pending' | 'suspended' | 'expired' = 'valid'
+    let message = 'Membership gültig'
     let valid = false
 
-    if (card.status === 'suspended') {
+    if (card.expires_at && new Date(card.expires_at) < new Date()) {
+      scanResult = 'expired'
+      message = 'Membership abgelaufen'
+    } else if (card.status === 'suspended') {
       scanResult = 'suspended'
       message = 'Karte gesperrt'
     } else if (card.status === 'expired') {
-      scanResult = 'invalid'
-      message = 'Karte abgelaufen'
+      scanResult = 'expired'
+      message = 'Membership abgelaufen'
     } else if (card.payment_status === 'cancelled' || card.payment_status === 'refunded') {
       scanResult = 'cancelled'
       message = 'Karte storniert'
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
       // Card is valid
       valid = true
       scanResult = 'valid'
-      message = 'BONUSCARD GÜLTIG'
+      message = 'MEMBERSHIP GÜLTIG'
     }
 
     // Log scan

@@ -91,7 +91,7 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-red-500 font-bold text-sm tracking-wider">KINKER BASEL</p>
-                  <p className="text-white/40 text-xs">STAMMGASTKARTE</p>
+                  <p className="text-white/40 text-xs">MEMBERSHIP</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${

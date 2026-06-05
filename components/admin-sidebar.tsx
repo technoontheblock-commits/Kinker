@@ -23,7 +23,7 @@ import {
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/admin' },
   { id: 'users', label: 'User Management', icon: Users, href: '/admin' },
-  { id: 'bonuscards', label: 'Bonuscards', icon: CreditCard, href: '/admin/bonuscards' },
+  { id: 'bonuscards', label: 'Memberships', icon: CreditCard, href: '/admin/bonuscards' },
   { id: 'vip-bookings', label: 'VIP Bookings', icon: Crown, href: '/admin/vip-bookings' },
   { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, href: '/admin' },
   { id: 'newsletter', label: 'Newsletter', icon: Mail, href: '/admin/newsletter' },

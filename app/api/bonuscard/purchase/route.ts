@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
         payment_method,
         payment_status: 'pending',
         status: 'suspended',
+        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         referral_code_used: referralCodeId
       }])
       .select()
@@ -144,13 +145,13 @@ export async function POST(request: NextRequest) {
         }
 
         const attachments = pdfBuffer
-          ? [{ filename: `KINKER-Bonuscard-${cardNumber}.pdf`, content: pdfBuffer }]
+          ? [{ filename: `KINKER-Membership-${cardNumber}.pdf`, content: pdfBuffer }]
           : undefined
 
         const { data: emailData, error: emailError } = await resend.emails.send({
           from: `${process.env.RESEND_FROM_NAME || 'KINKER Basel'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
           to: holder_email.trim().toLowerCase(),
-          subject: 'Deine KINKER Bonuscard',
+          subject: 'Deine Kinker Membership',
           html: emailHtml,
           attachments
         })

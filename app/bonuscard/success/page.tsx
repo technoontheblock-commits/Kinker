@@ -34,7 +34,7 @@ function SuccessContent() {
             Vielen Dank!
           </h1>
           <p className="text-white/60 text-lg mb-8">
-            Deine Bonuscard wurde erfolgreich bestellt.
+            Deine Membership wurde erfolgreich bestellt.
           </p>
 
           <div className="bg-neutral-900 rounded-2xl p-6 border border-white/10 mb-8">

@@ -77,7 +77,7 @@ export default function AdminBonusCardsPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-white">Bonuscards</h1>
+            <h1 className="text-3xl font-bold text-white">Memberships</h1>
             <div className="flex items-center gap-2 text-white/60 text-sm">
               <CreditCard className="w-4 h-4" />
               {cards.length} Karten
