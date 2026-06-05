@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { CheckCircle, AlertCircle, ArrowLeft, FileText } from 'lucide-react'
 import { getSumUp } from '@/lib/sumup'
 import { createClient } from '@supabase/supabase-js'
+import { verifySignedSession } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -11,6 +12,11 @@ export default async function CheckoutSuccessPage() {
   const cookieStore = cookies()
   const checkoutId = cookieStore.get('sumup_checkout_id')?.value
   const sessionId = cookieStore.get('session_id')?.value
+
+  const userSession = cookieStore.get('user_session')?.value
+  const loggedInUser = userSession ? verifySignedSession(userSession) : null
+  const customerName = loggedInUser?.name || 'Guest'
+  const customerEmail = loggedInUser?.email || 'guest@kinker.ch'
 
   if (!checkoutId) {
     return (
@@ -103,8 +109,8 @@ export default async function CheckoutSuccessPage() {
                 .from('orders')
                 .insert([{
                   order_number: orderNumber,
-                  customer_email: 'guest@kinker.ch',
-                  customer_name: 'Guest',
+                  customer_email: customerEmail,
+                  customer_name: customerName,
                   payment_method: 'bank_transfer',
                   payment_status: 'paid',
                   payment_reference: checkoutId,
@@ -140,8 +146,8 @@ export default async function CheckoutSuccessPage() {
               .from('orders')
               .insert([{
                 order_number: orderNumber,
-                customer_email: 'guest@kinker.ch',
-                customer_name: 'Guest',
+                customer_email: customerEmail,
+                customer_name: customerName,
                 payment_method: 'bank_transfer',
                 payment_status: 'paid',
                 payment_reference: checkoutId,
