@@ -13,6 +13,7 @@ import {
 import { generateBonusCardEmail } from '@/lib/email-bonuscard'
 import { BonusCardPDF } from '@/lib/bonuscard-pdf'
 import { verifySignedSession } from '@/lib/auth'
+import { wrapEmail } from '@/lib/email-layout'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -118,6 +119,68 @@ export async function POST(request: NextRequest) {
       }])
     } catch (notifErr) {
       console.error('Notification creation error:', notifErr)
+    }
+
+    // Send email notification to all admins
+    if (resend) {
+      try {
+        const { data: admins, error: adminsError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('role', 'admin')
+
+        if (!adminsError && admins && admins.length > 0) {
+          const adminEmails = admins.map((a: any) => a.email).filter(Boolean)
+          if (adminEmails.length > 0) {
+            const priceChf = (purchasePrice / 100).toFixed(2)
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kinker.ch'
+            const emailHtml = wrapEmail(
+              `<tr>
+                <td style="padding: 40px 32px; text-align: left;">
+                  <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #111111; font-family: sans-serif;">
+                    Neue Membership-Bestellung
+                  </h2>
+                  <p style="margin: 0 0 24px; font-size: 15px; color: #666666; line-height: 1.5; font-family: sans-serif;">
+                    Es wurde eine neue Membership im KINKER Shop bestellt.
+                  </p>
+                  <div style="background-color: #fafafa; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
+                    <p style="margin: 0 0 8px; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>Name:</strong> ${holder_name.trim()}
+                    </p>
+                    <p style="margin: 0 0 8px; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>E-Mail:</strong> ${holder_email.trim().toLowerCase()}
+                    </p>
+                    <p style="margin: 0 0 8px; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>Kartennummer:</strong> ${cardNumber}
+                    </p>
+                    <p style="margin: 0 0 8px; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>Zahlungsmethode:</strong> ${payment_method.toUpperCase()}
+                    </p>
+                    <p style="margin: 0; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>Preis:</strong> ${priceChf} CHF
+                    </p>
+                  </div>
+                  <p style="margin: 24px 0 0; font-size: 14px; color: #666666; font-family: sans-serif;">
+                    <a href="${siteUrl}/admin/memberships" style="color: #dc2626; text-decoration: none; font-weight: 600;">
+                      Zur Membership-Verwaltung →
+                    </a>
+                  </p>
+                </td>
+              </tr>`,
+              'Neue Membership-Bestellung'
+            )
+
+            await resend.emails.send({
+              from: `${process.env.RESEND_FROM_NAME || 'KINKER Basel'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+              to: adminEmails,
+              subject: `Neue Membership-Bestellung von ${holder_name.trim()}`,
+              html: emailHtml
+            })
+          }
+        }
+      } catch (adminEmailErr) {
+        console.error('Admin email notification error:', adminEmailErr)
+      }
     }
 
     // Generate QR code for PDF and email

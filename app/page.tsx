@@ -3,6 +3,7 @@ import { EventsSection } from '@/components/events-section'
 import { AboutSection } from '@/components/about-section'
 import { LocationPreview } from '@/components/location-preview'
 import { NewsletterSection } from '@/components/newsletter-section'
+import { MembershipBanner } from '@/components/membership-banner'
 import { getEventfrogEvents, mergeEvents } from '@/lib/eventfrog'
 import { getUpcomingEvents } from '@/lib/events'
 
@@ -36,6 +37,7 @@ export default async function Home() {
       <AboutSection />
       <LocationPreview />
       <NewsletterSection />
+      <MembershipBanner />
     </>
   )
 }
