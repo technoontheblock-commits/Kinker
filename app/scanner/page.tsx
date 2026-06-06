@@ -32,6 +32,7 @@ export default function ScannerPage() {
   const lastScanTimeRef = useRef<number>(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const initStartedRef = useRef(false)
+  const sessionScansRef = useRef<Set<string>>(new Set())
 
   const playBeep = useCallback((type: 'success' | 'error') => {
     if (!soundEnabled) return
@@ -102,6 +103,19 @@ export default function ScannerPage() {
         return
       }
 
+      // Check if already scanned in this session
+      if (sessionScansRef.current.has(qrCode)) {
+        setResult({
+          valid: false,
+          message: 'Bereits in dieser Session gescannt',
+          card: undefined,
+          type: 'bonuscard'
+        })
+        playBeep('error')
+        timeoutRef.current = setTimeout(clearResult, 2000)
+        return
+      }
+
       const response = await fetch('/api/membership/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,6 +135,7 @@ export default function ScannerPage() {
       setResult(scanResult)
 
       if (scanResult.valid) {
+        sessionScansRef.current.add(qrCode)
         setScanCount(prev => prev + 1)
         playBeep('success')
       } else {
