@@ -19,6 +19,7 @@ import {
   Package,
   LogOut,
   ScanLine,
+  Printer,
 } from 'lucide-react'
 
 const tabs = [
@@ -34,6 +35,7 @@ const tabs = [
   { id: 'orders', label: 'Bestellungen', icon: Package, href: '/admin' },
   { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
   { id: 'board', label: 'Board', icon: Layout, href: '/admin/board' },
+  { id: 'advertising', label: 'Werbung', icon: Printer, href: '/admin/advertising' },
   { id: 'dj-roster', label: 'DJ Roster', icon: Disc, href: '/admin' },
   { id: 'developer', label: 'Developer', icon: Code, href: '/admin' },
 ]
