@@ -106,14 +106,21 @@ function Flyer({ size, scale }: { size: 'a4' | 'a3'; scale: number }) {
           </div>
         </div>
 
+        {/* URL - Big and visible */}
+        <div className={`w-full text-center ${isA4 ? 'mb-6' : 'mb-10'}`}>
+          <p className={`${isA4 ? 'text-4xl' : 'text-6xl'} font-bold text-white tracking-wide`}>
+            kinker.ch/membership
+          </p>
+        </div>
+
         {/* Footer / CTA */}
         <div className="mt-auto w-full">
           <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6" />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Crown className={`${isA4 ? 'w-6 h-6' : 'w-8 h-8'} text-red-500`} />
-              <span className={`${isA4 ? 'text-sm' : 'text-lg'} text-white/60`}>
-                kinker.ch/membership
+              <span className={`${isA4 ? 'text-base' : 'text-xl'} text-white/60 font-medium`}>
+                KINKER BASEL
               </span>
             </div>
             <div className="flex items-center gap-4">
