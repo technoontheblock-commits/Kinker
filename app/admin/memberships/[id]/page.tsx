@@ -39,6 +39,7 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
   const [card, setCard] = useState<BonusCard | null>(null)
   const [scans, setScans] = useState<ScanRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
     loadCard()
@@ -72,6 +73,7 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
   }
 
   async function updateStatus(updates: { status?: string; payment_status?: string }) {
+    setUpdating(true)
     try {
       const response = await fetch(`/api/membership/admin/${params.id}/status`, {
         method: 'PATCH',
@@ -79,11 +81,16 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
         body: JSON.stringify(updates)
       })
 
-      if (response.ok) {
-        loadCard()
+      const data = await response.json()
+      if (response.ok && data.card) {
+        setCard(data.card)
+      } else {
+        console.error('Failed to update status:', data.error)
       }
     } catch (err) {
       console.error('Failed to update status:', err)
+    } finally {
+      setUpdating(false)
     }
   }
 
@@ -193,7 +200,8 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
               {card.payment_status === 'pending' && (
                 <button
                   onClick={() => updateStatus({ payment_status: 'paid' })}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors"
+                  disabled={updating}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   <Check className="w-4 h-4 inline mr-1" />
                   Als bezahlt markieren
@@ -202,7 +210,8 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
               {card.status === 'active' ? (
                 <button
                   onClick={() => updateStatus({ status: 'suspended' })}
-                  className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                  disabled={updating}
+                  className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 disabled:opacity-50 disabled:cursor-not-allowed text-red-400 rounded-lg text-sm font-medium transition-colors"
                 >
                   <X className="w-4 h-4 inline mr-1" />
                   Sperren
@@ -210,7 +219,8 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
               ) : (
                 <button
                   onClick={() => updateStatus({ status: 'active' })}
-                  className="px-4 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-lg text-sm font-medium transition-colors"
+                  disabled={updating}
+                  className="px-4 py-2 bg-green-600/20 hover:bg-green-600/30 disabled:opacity-50 disabled:cursor-not-allowed text-green-400 rounded-lg text-sm font-medium transition-colors"
                 >
                   <Check className="w-4 h-4 inline mr-1" />
                   Aktivieren
