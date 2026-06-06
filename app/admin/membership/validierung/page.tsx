@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Printer, Plus, QrCode, Copy, CheckCircle, XCircle, Clock, Crown } from 'lucide-react'
+import { Printer, Plus, QrCode, Copy, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { AdminSidebar } from '@/components/admin-sidebar'
 import QRCode from 'qrcode'
 
@@ -78,37 +78,10 @@ export default function AdminMembershipValidationPage() {
   }
 
   const handlePrint = () => {
-    const style = document.createElement('style')
-    style.id = 'print-claim-style'
-    style.innerHTML = `
-      @media print {
-        @page { size: A4 portrait; margin: 0; }
-        body * { visibility: hidden !important; }
-        .claim-print-area { 
-          visibility: visible !important; 
-          position: fixed !important; 
-          top: 0 !important; 
-          left: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          background: white !important;
-        }
-        .claim-print-area * { visibility: visible !important; }
-      }
-    `
-    document.head.appendChild(style)
     window.print()
-    setTimeout(() => {
-      const el = document.getElementById('print-claim-style')
-      if (el) el.remove()
-    }, 1000)
   }
 
   const isExpired = (claim: Claim) => !claim.claimed_at && new Date(claim.expires_at) < new Date()
-  const isActive = (claim: Claim) => !claim.claimed_at && new Date(claim.expires_at) >= new Date()
 
   return (
     <div className="min-h-screen bg-black pt-20">
@@ -129,7 +102,7 @@ export default function AdminMembershipValidationPage() {
 
           {/* Active Claim Modal */}
           {activeClaim && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 print:hidden">
               <div className="bg-neutral-900 rounded-2xl border border-white/10 p-8 max-w-md w-full">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-white">Neuer Claim-QR</h2>
@@ -138,19 +111,19 @@ export default function AdminMembershipValidationPage() {
                   </button>
                 </div>
 
-                <div className="claim-print-area flex flex-col items-center gap-6">
+                <div className="flex flex-col items-center gap-6">
                   <img src="/images/logo.png" alt="KINKER" width={100} className="mb-2" />
-                  <h3 className="text-2xl font-bold text-black">KINKER <span className="text-red-600">MEMBERSHIP</span></h3>
-                  <p className="text-black/60 text-sm text-center">Scanne den QR-Code, um deine Membership zu beanspruchen.</p>
+                  <h3 className="text-2xl font-bold text-white">KINKER <span className="text-red-500">MEMBERSHIP</span></h3>
+                  <p className="text-white/60 text-sm text-center">Scanne den QR-Code, um deine Membership zu beanspruchen.</p>
                   
                   {qrDataUrl && (
-                    <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 rounded-xl border-4 border-black/10" />
+                    <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 rounded-xl border-4 border-white/10" />
                   )}
                   
-                  <p className="text-black/40 text-xs text-center break-all px-4">
-                    {window.location.origin}/membership/claim?token={activeClaim.token}
+                  <p className="text-white/40 text-xs text-center break-all px-4">
+                    {typeof window !== 'undefined' && window.location.origin}/membership/claim?token={activeClaim.token}
                   </p>
-                  <p className="text-black/40 text-xs">Gültig bis: {new Date(activeClaim.expires_at).toLocaleString('de-CH')}</p>
+                  <p className="text-white/40 text-xs">Gültig bis: {new Date(activeClaim.expires_at).toLocaleString('de-CH')}</p>
                 </div>
 
                 <div className="flex gap-3 mt-6">
@@ -169,6 +142,22 @@ export default function AdminMembershipValidationPage() {
                     PDF / Drucken
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Print-only area */}
+          {activeClaim && qrDataUrl && (
+            <div className="print-only hidden">
+              <div className="flex flex-col items-center justify-center gap-8 py-16">
+                <img src="/images/logo.png" alt="KINKER" width={140} />
+                <h1 className="text-4xl font-bold text-black">KINKER <span className="text-red-600">MEMBERSHIP</span></h1>
+                <p className="text-black/60 text-base text-center">Scanne den QR-Code, um deine Membership zu beanspruchen.</p>
+                <img src={qrDataUrl} alt="QR Code" className="w-72 h-72" />
+                <p className="text-black/40 text-sm text-center break-all px-8">
+                  {typeof window !== 'undefined' && window.location.origin}/membership/claim?token={activeClaim.token}
+                </p>
+                <p className="text-black/40 text-sm">Gültig bis: {new Date(activeClaim.expires_at).toLocaleString('de-CH')}</p>
               </div>
             </div>
           )}
@@ -228,6 +217,16 @@ export default function AdminMembershipValidationPage() {
           </div>
         </motion.div>
       </div>
+
+      <style>{`
+        @media print {
+          @page { size: A4 portrait; margin: 0; }
+          body { background: white !important; }
+          body > div { display: none !important; }
+          .print-only { display: block !important; }
+          .print-only * { visibility: visible !important; }
+        }
+      `}</style>
     </div>
   )
 }
