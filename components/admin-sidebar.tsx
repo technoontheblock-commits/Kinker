@@ -18,12 +18,14 @@ import {
   ShoppingBag,
   Package,
   LogOut,
+  ScanLine,
 } from 'lucide-react'
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/admin' },
   { id: 'users', label: 'User Management', icon: Users, href: '/admin' },
   { id: 'bonuscards', label: 'Memberships', icon: CreditCard, href: '/admin/memberships' },
+  { id: 'scanner', label: 'Scanner', icon: ScanLine, href: '/scanner' },
   { id: 'vip-bookings', label: 'VIP Bookings', icon: Crown, href: '/admin/vip-bookings' },
   { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, href: '/admin' },
   { id: 'newsletter', label: 'Newsletter', icon: Mail, href: '/admin/newsletter' },
