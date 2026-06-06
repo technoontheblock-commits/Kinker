@@ -16,6 +16,7 @@ interface BonusCard {
   status: string
   purchased_at: string
   paid_at: string | null
+  expires_at: string | null
   scan_count: number
   last_scanned_at: string | null
   payment_method: string
@@ -163,6 +164,17 @@ export default function AdminBonusCardDetailPage({ params }: { params: { id: str
               <div>
                 <p className="text-white/40 text-sm mb-1">Preis</p>
                 <p className="text-white">CHF {(card.purchase_price / 100).toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-white/40 text-sm mb-1">Gültig bis</p>
+                <p className="text-white">
+                  {card.expires_at
+                    ? new Date(card.expires_at).toLocaleDateString('de-CH')
+                    : '—'}
+                </p>
+                {card.expires_at && new Date(card.expires_at) < new Date() && (
+                  <p className="text-red-400 text-xs">Abgelaufen</p>
+                )}
               </div>
               {card.referral_code && (
                 <div>
