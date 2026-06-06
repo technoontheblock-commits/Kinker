@@ -44,46 +44,7 @@ export async function POST(request: NextRequest) {
 
     let userId: string | null = null
 
-    // Check if already logged in
-    const currentUser = getCurrentUser()
-    if (currentUser) {
-      userId = currentUser.id
-    } else if (auth_mode === 'existing') {
-      if (!email || !password) {
-        return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
-      }
-
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id, email, password_hash, status, email_verified')
-        .eq('email', email.trim().toLowerCase())
-        .single()
-
-      if (userError || !user) {
-        return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
-      }
-
-      if (user.status !== 'active') {
-        return NextResponse.json({ error: 'Account inactive' }, { status: 403 })
-      }
-
-      const validPassword = await bcrypt.compare(password, user.password_hash)
-      if (!validPassword) {
-        return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
-      }
-
-      userId = user.id
-
-      // Create session
-      const sessionUser = {
-        id: user.id,
-        email: user.email,
-        name: '', // will be filled from profile if needed
-        role: 'user',
-        type: 'user' as const,
-      }
-      setSessionCookie(sessionUser)
-    } else if (auth_mode === 'new') {
+    if (auth_mode === 'new') {
       if (!name || !email || !password) {
         return NextResponse.json({ error: 'Name, email and password required' }, { status: 400 })
       }
@@ -125,31 +86,48 @@ export async function POST(request: NextRequest) {
       }
 
       userId = newUser.id
+      console.log('Created new user:', newUser.id, newUser.email)
 
-      // Create related records
-      await supabase.from('user_profiles').insert([{
-        user_id: newUser.id,
-        newsletter_opt_in: newsletter === true,
-      }])
+      // Create related records (best effort - don't fail the whole request)
+      try {
+        await supabase.from('user_profiles').insert([{
+          user_id: newUser.id,
+          newsletter_opt_in: newsletter === true,
+        }])
+      } catch (err) {
+        console.error('user_profiles insert error:', err)
+      }
 
-      await supabase.from('user_wallets').insert([{
-        user_id: newUser.id,
-        balance: 0,
-      }])
+      try {
+        await supabase.from('user_wallets').insert([{
+          user_id: newUser.id,
+          balance: 0,
+        }])
+      } catch (err) {
+        console.error('user_wallets insert error:', err)
+      }
 
-      await supabase.from('user_rewards').insert([{
-        user_id: newUser.id,
-        points: 0,
-        lifetime_points: 0,
-        tier: 'Bronze',
-      }])
+      try {
+        await supabase.from('user_rewards').insert([{
+          user_id: newUser.id,
+          points: 0,
+          lifetime_points: 0,
+          tier: 'Bronze',
+        }])
+      } catch (err) {
+        console.error('user_rewards insert error:', err)
+      }
 
       if (newsletter === true) {
-        await supabase.from('newsletter_subscribers').upsert([{
-          email: email.trim().toLowerCase(),
-          name: name.trim(),
-          subscribed: true,
-        }], { onConflict: 'email' })
+        try {
+          await supabase.from('newsletter_subscribers').upsert([{
+            email: email.trim().toLowerCase(),
+            name: name.trim(),
+            subscribed: true,
+          }], { onConflict: 'email' })
+        } catch (err) {
+          console.error('newsletter_subscribers upsert error:', err)
+        }
       }
 
       // Create session
@@ -161,6 +139,50 @@ export async function POST(request: NextRequest) {
         type: 'user' as const,
       }
       setSessionCookie(sessionUser)
+      console.log('Session cookie set for new user:', newUser.id)
+    } else if (auth_mode === 'existing') {
+      // Check if already logged in
+      const currentUser = getCurrentUser()
+      if (currentUser) {
+        userId = currentUser.id
+        console.log('Using existing logged-in user:', currentUser.id)
+      } else {
+        if (!email || !password) {
+          return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+        }
+
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('id, email, password_hash, status, email_verified, name')
+          .eq('email', email.trim().toLowerCase())
+          .single()
+
+        if (userError || !user) {
+          return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+        }
+
+        if (user.status !== 'active') {
+          return NextResponse.json({ error: 'Account inactive' }, { status: 403 })
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password_hash)
+        if (!validPassword) {
+          return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+        }
+
+        userId = user.id
+
+        // Create session
+        const sessionUser = {
+          id: user.id,
+          email: user.email,
+          name: user.name || '',
+          role: 'user',
+          type: 'user' as const,
+        }
+        setSessionCookie(sessionUser)
+        console.log('Session cookie set for existing user:', user.id)
+      }
     } else {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
