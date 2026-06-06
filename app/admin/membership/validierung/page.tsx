@@ -221,9 +221,19 @@ export default function AdminMembershipValidationPage() {
       <style>{`
         @media print {
           @page { size: A4 portrait; margin: 0; }
-          body { background: white !important; }
-          body > div { display: none !important; }
-          .print-only { display: block !important; }
+          html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
+          body > div { visibility: hidden !important; }
+          .print-only {
+            visibility: visible !important;
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: white !important;
+            z-index: 99999 !important;
+          }
           .print-only * { visibility: visible !important; }
         }
       `}</style>
