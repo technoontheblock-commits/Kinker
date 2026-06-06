@@ -72,6 +72,27 @@ function SuccessContent() {
               </div>
             )}
 
+            {paymentMethod === 'twint' && cardNumber && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-5 text-left">
+                <div className="flex items-center gap-2 mb-4">
+                  <Wallet className="w-5 h-5 text-yellow-400" />
+                  <h3 className="text-yellow-400 font-semibold text-sm">TWINT-Zahlung</h3>
+                </div>
+                <p className="text-white/70 text-sm mb-3">
+                  Bitte überweise <strong className="text-white">CHF {parseFloat(price).toFixed(2)}</strong> per TWINT.
+                </p>
+                <div className="mt-3 pt-3 border-t border-yellow-500/20">
+                  <p className="text-white/60 text-xs">Verwendungszweck:</p>
+                  <p className="text-yellow-400 font-mono text-sm font-semibold">{purpose}</p>
+                </div>
+                <div className="mt-3 bg-black/30 rounded-lg p-3">
+                  <p className="text-white/80 text-sm">
+                    Die Bezahlung muss noch bestätigt werden. Dies kann <strong className="text-white">1–2 Werktage</strong> dauern.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {paymentMethod === 'cash' && cardNumber && (
               <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-5 text-left">
                 <div className="flex items-center gap-2 mb-4">
@@ -92,7 +113,7 @@ function SuccessContent() {
               </div>
             )}
 
-            {paymentMethod !== 'cash' && (
+            {paymentMethod !== 'cash' && paymentMethod !== 'twint' && (
               <div className="flex items-center gap-3 bg-neutral-900/50 rounded-xl p-4 border border-white/5">
                 <ArrowRight className="w-5 h-5 text-red-500 shrink-0" />
                 <p className="text-white/80 text-sm text-left">

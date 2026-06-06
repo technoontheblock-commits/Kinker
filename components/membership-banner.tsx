@@ -4,20 +4,13 @@ import { useState, useEffect } from 'react';
 import { X, Crown } from 'lucide-react';
 import Link from 'next/link';
 
-const STORAGE_KEY = 'membership-banner-dismissed';
-
 export function MembershipBanner() {
   const [visible, setVisible] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
 
   useEffect(() => {
-    const dismissed = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
-    if (dismissed === 'true') return;
-
     const timer = setTimeout(() => {
       setVisible(true);
-      // Trigger animation on next frame
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setAnimateIn(true);
@@ -29,11 +22,7 @@ export function MembershipBanner() {
   }, []);
 
   const handleDismiss = () => {
-    if (dontShowAgain && typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, 'true');
-    }
     setAnimateIn(false);
-    // Wait for animation to finish before unmounting
     setTimeout(() => setVisible(false), 500);
   };
 
@@ -75,20 +64,6 @@ export function MembershipBanner() {
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
-
-          <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={dontShowAgain}
-                onChange={(e) => setDontShowAgain(e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 text-red-500 focus:ring-red-500/50 focus:ring-1"
-              />
-              <span className="text-white/40 group-hover:text-white/60 text-xs transition-colors">
-                Don&apos;t show again
-              </span>
-            </label>
           </div>
         </div>
       </div>

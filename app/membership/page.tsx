@@ -336,6 +336,12 @@ export default function BonusCardPage() {
                         </button>
                       ))}
                     </div>
+
+                    {formData.payment_method === 'twint' && (
+                      <p className="text-yellow-400/80 text-xs mt-2">
+                        Hinweis: Die Bezahlung muss noch bestätigt werden. Dies kann 1–2 Werktage dauern.
+                      </p>
+                    )}
                   </div>
 
                   <button
