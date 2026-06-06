@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Camera, Check, X, CreditCard, ScanLine, Volume2, VolumeX, Hash, AlertCircle } from 'lucide-react'
+import { Camera, Check, X, CreditCard, ScanLine, Volume2, VolumeX, Hash, AlertCircle, Clock, ListChecks } from 'lucide-react'
+
+type ScanHistoryItem = {
+  id: string
+  cardNumber: string
+  holderName: string
+  valid: boolean
+  message: string
+  timestamp: number
+}
 
 type ScanResult = {
   valid: boolean
@@ -25,6 +34,7 @@ export default function ScannerPage() {
   const [scanCount, setScanCount] = useState(0)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([])
 
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const scannerRef = useRef<any>(null)
@@ -140,6 +150,33 @@ export default function ScannerPage() {
         playBeep('success')
       } else {
         playBeep('error')
+      }
+
+      // Add to history
+      if (scanResult.card) {
+        setScanHistory(prev => [
+          {
+            id: qrCode + '-' + Date.now(),
+            cardNumber: scanResult.card!.card_number,
+            holderName: scanResult.card!.holder_name,
+            valid: scanResult.valid,
+            message: scanResult.message,
+            timestamp: Date.now()
+          },
+          ...prev
+        ].slice(0, 50))
+      } else if (!scanResult.valid) {
+        setScanHistory(prev => [
+          {
+            id: qrCode + '-' + Date.now(),
+            cardNumber: '—',
+            holderName: '—',
+            valid: false,
+            message: scanResult.message,
+            timestamp: Date.now()
+          },
+          ...prev
+        ].slice(0, 50))
       }
 
       timeoutRef.current = setTimeout(clearResult, 2500)
@@ -383,20 +420,7 @@ export default function ScannerPage() {
                   QR-Code scannen...
                 </div>
 
-                {/* Manual fallback while scanning */}
-                <div className="absolute bottom-16 left-4 right-4 z-10">
-                  <input
-                    type="text"
-                    placeholder="oder manuell eingeben ↵"
-                    className="w-full px-4 py-2.5 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10 text-white text-sm placeholder-white/40 focus:border-red-500 focus:outline-none transition-colors"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        validateCode(e.currentTarget.value)
-                        e.currentTarget.value = ''
-                      }
-                    }}
-                  />
-                </div>
+  
 
                 {/* Result Overlay */}
                 <AnimatePresence>
@@ -458,6 +482,48 @@ export default function ScannerPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Scan History */}
+          {scanHistory.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <ListChecks className="w-4 h-4 text-white/60" />
+                <h3 className="text-white/60 text-sm font-medium">Scan-Verlauf</h3>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {scanHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                      item.valid
+                        ? 'bg-green-500/10 border-green-500/20'
+                        : 'bg-red-500/10 border-red-500/20'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">
+                        {item.cardNumber !== '—' ? item.cardNumber : item.message}
+                      </p>
+                      {item.cardNumber !== '—' && (
+                        <p className="text-white/50 text-xs">{item.holderName}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <div className="flex items-center gap-1 text-white/40 text-xs">
+                        <Clock className="w-3 h-3" />
+                        {new Date(item.timestamp).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </div>
+                      {item.valid ? (
+                        <Check className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-400" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
