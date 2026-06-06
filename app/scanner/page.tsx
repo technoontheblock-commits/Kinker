@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Camera, Check, X, CreditCard, ScanLine, Volume2, VolumeX, Hash } from 'lucide-react'
+import { Camera, Check, X, CreditCard, ScanLine, Volume2, VolumeX, Hash, AlertCircle } from 'lucide-react'
 
 type ScanResult = {
   valid: boolean
@@ -19,6 +19,7 @@ type ScanResult = {
 
 export default function ScannerPage() {
   const [scanning, setScanning] = useState(false)
+  const [starting, setStarting] = useState(false)
   const [result, setResult] = useState<ScanResult | null>(null)
   const [error, setError] = useState('')
   const [scanCount, setScanCount] = useState(0)
@@ -138,20 +139,47 @@ export default function ScannerPage() {
   }, [isProcessing, playBeep, clearResult])
 
   const startScanner = useCallback(async () => {
-    if (!videoContainerRef.current) return
+    if (!videoContainerRef.current) {
+      setError('Video-Element nicht gefunden. Bitte Seite neu laden.')
+      return
+    }
+
     setError('')
     setResult(null)
+    setStarting(true)
 
     try {
-      const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+      const html5QrcodeModule = await import('html5-qrcode')
+      const Html5Qrcode = html5QrcodeModule.default?.Html5Qrcode || html5QrcodeModule.Html5Qrcode
+      const Html5QrcodeSupportedFormats = html5QrcodeModule.default?.Html5QrcodeSupportedFormats || html5QrcodeModule.Html5QrcodeSupportedFormats
+
+      if (!Html5Qrcode) {
+        throw new Error('Scanner-Library konnte nicht geladen werden')
+      }
+
+      // Alte Instanz aufräumen falls vorhanden
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            await scannerRef.current.stop()
+          }
+          await scannerRef.current.clear()
+        } catch {
+          // ignorieren
+        }
+        scannerRef.current = null
+      }
 
       scannerRef.current = new Html5Qrcode('scanner-video-container')
 
+      // Kamera starten – fallback auf default camera wenn environment nicht verfügbar
+      const cameraConfig = { facingMode: 'environment' }
+
       await scannerRef.current.start(
-        { facingMode: 'environment' },
+        cameraConfig,
         {
           fps: 10,
-          qrbox: { width: 260, height: 260 },
+          qrbox: { width: 250, height: 250 },
           formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
           aspectRatio: 1.0,
         },
@@ -166,8 +194,19 @@ export default function ScannerPage() {
       setScanning(true)
     } catch (err: any) {
       console.error('Scanner start error:', err)
-      setError(err?.message || 'Kamera konnte nicht gestartet werden. Bitte Berechtigungen prüfen.')
+      const msg = err?.message || err?.toString?.() || ''
+      if (msg.includes('Permission') || msg.includes('permission')) {
+        setError('Kamera-Zugriff verweigert. Bitte Berechtigungen in den Browsereinstellungen erlauben.')
+      } else if (msg.includes('NotFound') || msg.includes('not found') || msg.includes('DevicesNotFound')) {
+        setError('Keine Kamera gefunden. Bitte stelle sicher, dass eine Kamera angeschlossen ist.')
+      } else if (msg.includes('NotAllowed')) {
+        setError('Kamera-Zugriff nicht erlaubt. Die Seite muss über HTTPS aufgerufen werden.')
+      } else {
+        setError(`Kamera konnte nicht gestartet werden: ${msg}`)
+      }
       setScanning(false)
+    } finally {
+      setStarting(false)
     }
   }, [handleScan])
 
@@ -232,14 +271,19 @@ export default function ScannerPage() {
             )}
           </div>
 
-          {!scanning && !result && (
+          {!scanning && (
             <div className="space-y-4">
               <button
                 onClick={startScanner}
-                className="w-full py-6 bg-red-500 hover:bg-red-600 rounded-xl flex items-center justify-center gap-3 text-white font-semibold transition-colors"
+                disabled={starting}
+                className="w-full py-6 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl flex items-center justify-center gap-3 text-white font-semibold transition-colors"
               >
-                <Camera className="w-6 h-6" />
-                Scanner starten
+                {starting ? (
+                  <ScanLine className="w-6 h-6 animate-spin" />
+                ) : (
+                  <Camera className="w-6 h-6" />
+                )}
+                {starting ? 'Kamera wird gestartet...' : 'Scanner starten'}
               </button>
 
               <div className="bg-neutral-900 rounded-xl p-6 border border-white/10">
@@ -281,7 +325,10 @@ export default function ScannerPage() {
 
               {/* Video Container */}
               <div className="relative aspect-square bg-neutral-900 rounded-xl overflow-hidden border border-white/10">
-                <div id="scanner-video-container" ref={videoContainerRef} className="w-full h-full" />
+                <div
+                  ref={videoContainerRef}
+                  className="w-full h-full"
+                />
 
                 {/* Scanner Overlay */}
                 <div className="absolute inset-0 pointer-events-none">
@@ -370,8 +417,9 @@ export default function ScannerPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="mt-4 p-4 bg-red-500/20 text-red-400 rounded-lg text-center text-sm"
+                className="mt-4 p-4 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-center text-sm flex items-center justify-center gap-2"
               >
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 {error}
               </motion.div>
             )}
