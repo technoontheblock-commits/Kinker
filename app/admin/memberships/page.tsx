@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, Search, Filter, Check, X, Eye } from 'lucide-react'
+import { CreditCard, Search, Filter, Check, X, Eye, QrCode } from 'lucide-react'
 import Link from 'next/link'
 import { AdminSidebar } from '@/components/admin-sidebar'
 
@@ -78,9 +78,18 @@ export default function AdminBonusCardsPage() {
         >
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-white">Memberships</h1>
-            <div className="flex items-center gap-2 text-white/60 text-sm">
-              <CreditCard className="w-4 h-4" />
-              {cards.length} Karten
+            <div className="flex items-center gap-3">
+              <Link
+                href="/admin/membership/validierung"
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-500/50 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <QrCode className="w-4 h-4" />
+                Validierung
+              </Link>
+              <div className="flex items-center gap-2 text-white/60 text-sm">
+                <CreditCard className="w-4 h-4" />
+                {cards.length} Karten
+              </div>
             </div>
           </div>
 
