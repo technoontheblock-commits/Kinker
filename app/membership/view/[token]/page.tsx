@@ -75,14 +75,14 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
   const isValid = isPaid && isActive
 
   return (
-    <div className="min-h-screen bg-black pt-24 pb-8">
-      <div className="container mx-auto px-4 max-w-2xl">
+    <div className="min-h-screen bg-black pt-20 pb-8 md:pt-24">
+      <div className="container mx-auto px-4 max-w-md md:max-w-2xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {/* Card - Landscape */}
-          <div className="relative bg-gradient-to-br from-neutral-900 to-black rounded-3xl p-6 border border-white/10 overflow-hidden mb-6 aspect-[1.586/1] max-w-2xl mx-auto">
+          {/* Card - Portrait on mobile, Landscape on desktop */}
+          <div className="relative bg-gradient-to-br from-neutral-900 to-black rounded-3xl p-5 md:p-6 border border-white/10 overflow-hidden mb-6 aspect-[3/4] md:aspect-[1.586/1] max-w-md md:max-w-2xl mx-auto">
             {/* Decorative */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/10 rounded-full blur-3xl" />
             
@@ -93,8 +93,8 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
                   <p className="text-red-500 font-bold text-sm tracking-wider">KINKER BASEL</p>
                   <p className="text-white/40 text-xs">MEMBERSHIP</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className={`inline-flex items-center gap-1.5 px-2 md:px-3 py-1 rounded-full text-xs font-medium ${
                     isValid 
                       ? 'bg-green-500/20 text-green-400' 
                       : 'bg-yellow-500/20 text-yellow-400'
@@ -102,39 +102,45 @@ export default function BonusCardViewPage({ params }: { params: { token: string 
                     {isValid ? (
                       <><Check className="w-3 h-3" /> Aktiv</>
                     ) : (
-                      <><AlertTriangle className="w-3 h-3" /> {isPaid ? 'Gesperrt' : 'Zahlung ausstehend'}</>
+                      <><AlertTriangle className="w-3 h-3" /> {isPaid ? 'Gesperrt' : 'Ausstehend'}</>
                     )}
                   </div>
-                  <CreditCard className="w-8 h-8 text-red-500/30" />
+                  <CreditCard className="w-6 h-6 md:w-8 md:h-8 text-red-500/30" />
+                </div>
+              </div>
+
+              {/* Middle - QR Code (larger on mobile) */}
+              <div className="flex flex-col items-center justify-center flex-1 py-4 md:py-0">
+                <div className="bg-white rounded-2xl p-2 md:p-3 inline-block">
+                  {qrCode ? (
+                    <img 
+                      src={qrCode} 
+                      alt="QR Code" 
+                      className="block w-48 h-48 md:w-28 md:h-28" 
+                    />
+                  ) : (
+                    <QrCode className="w-48 h-48 md:w-28 md:h-28 text-neutral-300" />
+                  )}
                 </div>
               </div>
 
               {/* Bottom row */}
-              <div className="flex items-end justify-between gap-4">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-white/30 text-xs mb-1">KARTENINHABER</p>
-                    <p className="text-white text-xl font-medium">{card.holder_name}</p>
-                  </div>
-                  <div className="flex items-end gap-6 md:gap-8">
+              <div className="space-y-3 md:space-y-4">
+                <div>
+                  <p className="text-white/30 text-xs mb-1">KARTENINHABER</p>
+                  <p className="text-white text-lg md:text-xl font-medium truncate">{card.holder_name}</p>
+                </div>
+                <div className="flex items-end justify-between gap-4">
+                  <div className="flex items-end gap-4 md:gap-8">
                     <div>
                       <p className="text-white/30 text-xs mb-1">KARTENNUMMER</p>
-                      <p className="text-white font-mono text-sm">{card.card_number}</p>
+                      <p className="text-white font-mono text-xs md:text-sm">{card.card_number}</p>
                     </div>
                     <div>
                       <p className="text-white/30 text-xs mb-1">GÜLTIG BIS</p>
-                      <p className="text-white font-mono text-sm">{new Date(card.expires_at).toLocaleDateString('de-CH')}</p>
+                      <p className="text-white font-mono text-xs md:text-sm">{new Date(card.expires_at).toLocaleDateString('de-CH')}</p>
                     </div>
                   </div>
-                </div>
-                
-                {/* QR Code */}
-                <div className="bg-white rounded-xl p-2 inline-block shrink-0">
-                  {qrCode ? (
-                    <img src={qrCode} alt="QR Code" width="100" height="100" className="block" />
-                  ) : (
-                    <QrCode className="w-24 h-24 text-neutral-300" />
-                  )}
                 </div>
               </div>
             </div>
