@@ -2,11 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
-import { generateCardNumber, generateBonusCardToken } from '@/lib/bonuscard'
+import { Resend } from 'resend'
+import { renderToBuffer } from '@react-pdf/renderer'
+import {
+  generateCardNumber,
+  generateBonusCardToken,
+  generateQRCodeDataUrl,
+  generateQRCodeBuffer,
+  generateCardViewUrl,
+} from '@/lib/bonuscard'
+import { generateBonusCardEmail } from '@/lib/email-bonuscard'
+import { BonusCardPDF } from '@/lib/bonuscard-pdf'
+import { wrapEmail } from '@/lib/email-layout'
 import { createSignedSession, setSessionCookie, getCurrentUser } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 export async function POST(request: NextRequest) {
   try {
@@ -231,6 +243,139 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('Claim update error:', updateError)
+    }
+
+    // Create admin notification
+    try {
+      await supabase.from('notifications').insert([{
+        type: 'membership',
+        title: 'Neue Membership (Claim)',
+        message: `${holder_name.trim()} hat eine Membership (${cardNumber}) via QR-Claim erhalten.`,
+        read: false,
+      }])
+    } catch (notifErr) {
+      console.error('Notification creation error:', notifErr)
+    }
+
+    // Send admin emails
+    if (resend) {
+      try {
+        const { data: admins, error: adminsError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('role', 'admin')
+
+        if (!adminsError && admins && admins.length > 0) {
+          const adminEmails = admins.map((a: any) => a.email).filter(Boolean)
+          if (adminEmails.length > 0) {
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kinker.ch'
+            const emailHtml = wrapEmail(
+              `<tr>
+                <td style="padding: 40px 32px; text-align: left;">
+                  <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #111111; font-family: sans-serif;">
+                    Neue Membership (QR-Claim)
+                  </h2>
+                  <p style="margin: 0 0 24px; font-size: 15px; color: #666666; line-height: 1.5; font-family: sans-serif;">
+                    Eine Membership wurde via QR-Code Claim aktiviert.
+                  </p>
+                  <div style="background-color: #fafafa; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px;">
+                    <p style="margin: 0 0 8px; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>Name:</strong> ${holder_name.trim()}
+                    </p>
+                    <p style="margin: 0 0 8px; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>E-Mail:</strong> ${holder_email.trim().toLowerCase()}
+                    </p>
+                    <p style="margin: 0 0 8px; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>Kartennummer:</strong> ${cardNumber}
+                    </p>
+                    <p style="margin: 0; font-size: 15px; color: #111111; font-family: sans-serif;">
+                      <strong>Status:</strong> Aktiviert (bezahlt)
+                    </p>
+                  </div>
+                  <p style="margin: 24px 0 0; font-size: 14px; color: #666666; font-family: sans-serif;">
+                    <a href="${siteUrl}/admin/memberships" style="color: #dc2626; text-decoration: none; font-weight: 600;">
+                      Zur Membership-Verwaltung →
+                    </a>
+                  </p>
+                </td>
+              </tr>`,
+              'Neue Membership (QR-Claim)'
+            )
+
+            await resend.emails.send({
+              from: `${process.env.RESEND_FROM_NAME || 'KINKER Basel'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+              to: adminEmails,
+              subject: `Neue Membership via Claim: ${holder_name.trim()}`,
+              html: emailHtml,
+            })
+          }
+        }
+      } catch (adminEmailErr) {
+        console.error('Admin email notification error:', adminEmailErr)
+      }
+    }
+
+    // Generate QR code for PDF and email
+    let qrCodeDataUrl: string | undefined
+    let qrCodeBuffer: Buffer | undefined
+    try {
+      [qrCodeDataUrl, qrCodeBuffer] = await Promise.all([
+        generateQRCodeDataUrl(qrToken),
+        generateQRCodeBuffer(qrToken),
+      ])
+    } catch (err) {
+      console.error('QR generation error:', err)
+    }
+
+    // Send confirmation email with PDF attachment
+    if (resend) {
+      try {
+        const emailHtml = generateBonusCardEmail({
+          holderName: holder_name.trim(),
+          cardNumber,
+          cardViewUrl: generateCardViewUrl(qrToken),
+          paymentMethod: 'cash',
+          paymentStatus: 'paid',
+          qrCodeDataUrl,
+        })
+
+        let pdfBuffer: Buffer | undefined
+        try {
+          if (qrCodeBuffer) {
+            const pdfElement = BonusCardPDF({
+              holderName: holder_name.trim(),
+              cardNumber,
+              purchaseDate: new Date().toLocaleDateString('de-CH'),
+              qrCodeSrc: { data: qrCodeBuffer, format: 'png' },
+              paymentMethod: 'cash',
+              isPaid: true,
+            })
+            pdfBuffer = await renderToBuffer(pdfElement)
+          }
+        } catch (pdfErr) {
+          console.error('PDF generation error:', pdfErr)
+        }
+
+        const attachments = pdfBuffer
+          ? [{ filename: `KINKER-Membership-${cardNumber}.pdf`, content: pdfBuffer }]
+          : undefined
+
+        const { error: emailError } = await resend.emails.send({
+          from: `${process.env.RESEND_FROM_NAME || 'KINKER Basel'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+          to: holder_email.trim().toLowerCase(),
+          subject: 'Deine Kinker Membership ist aktiv',
+          html: emailHtml,
+          attachments,
+        })
+
+        if (emailError) {
+          console.error('Resend email error:', emailError)
+        }
+      } catch (emailErr) {
+        console.error('Bonus card email error:', emailErr)
+      }
+    } else {
+      console.warn('Resend not configured, skipping email')
     }
 
     return NextResponse.json({
