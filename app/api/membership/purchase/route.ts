@@ -182,13 +182,21 @@ export async function POST(request: NextRequest) {
       console.warn('Resend not configured, skipping email')
     }
 
+    const priceChf = purchasePrice / 100
+    const paymentPurpose = cardNumber
+    const twintUrl = `https://go.twint.ch/1/e/tw?tw=acq.1QpEtdXaTp67RTtZAon-LmYwb6Dc4bSzry9O70XYAuuhdI6rCR5vezGx9qyHMQfc&amount=${priceChf.toFixed(2)}&trxInfo=${encodeURIComponent(paymentPurpose)}`
+
     return NextResponse.json({
       success: true,
       card: {
         id: bonusCard.id,
         card_number: cardNumber,
         view_url: generateCardViewUrl(qrToken)
-      }
+      },
+      price: priceChf,
+      payment_purpose: paymentPurpose,
+      payment_url: twintUrl,
+      product_name: 'Membership'
     })
   } catch (error) {
     console.error('Bonus card purchase error:', error)

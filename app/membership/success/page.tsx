@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react'
 import { motion } from 'framer-motion'
-import { Check, Mail, ArrowRight, Banknote } from 'lucide-react'
+import { Check, Mail, ArrowRight, Banknote, Wallet } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -12,6 +12,7 @@ function SuccessContent() {
   const viewUrl = searchParams.get('url')
   const paymentMethod = searchParams.get('method')
   const price = searchParams.get('price') || '100'
+  const purpose = searchParams.get('purpose') || cardNumber || '---'
 
   return (
     <div className="min-h-screen bg-black pt-20">
@@ -66,17 +67,39 @@ function SuccessContent() {
                 </div>
                 <div className="mt-3 pt-3 border-t border-yellow-500/20">
                   <p className="text-white/60 text-xs">Verwendungszweck:</p>
-                  <p className="text-yellow-400 font-mono text-sm font-semibold">{cardNumber}</p>
+                  <p className="text-yellow-400 font-mono text-sm font-semibold">{purpose}</p>
                 </div>
               </div>
             )}
 
-            <div className="flex items-center gap-3 bg-neutral-900/50 rounded-xl p-4 border border-white/5">
-              <ArrowRight className="w-5 h-5 text-red-500 shrink-0" />
-              <p className="text-white/80 text-sm text-left">
-                Die Karte wird nach Zahlungseingang aktiviert.
-              </p>
-            </div>
+            {paymentMethod === 'cash' && cardNumber && (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-5 text-left">
+                <div className="flex items-center gap-2 mb-4">
+                  <Wallet className="w-5 h-5 text-green-400" />
+                  <h3 className="text-green-400 font-semibold text-sm">Barzahlung vor Ort</h3>
+                </div>
+                <p className="text-white/70 text-sm mb-3">
+                  Bitte halte folgende Kartennummer an der Abendkasse bereit:
+                </p>
+                <div className="bg-black/30 rounded-lg p-3 mb-3">
+                  <p className="text-white font-mono text-sm font-semibold">{cardNumber}</p>
+                </div>
+                <ol className="space-y-2 text-sm text-white/80 list-decimal list-inside">
+                  <li>Kartenummer an der Abendkasse bereithalten</li>
+                  <li>Bezahlen</li>
+                  <li>Karte aktivieren lassen</li>
+                </ol>
+              </div>
+            )}
+
+            {paymentMethod !== 'cash' && (
+              <div className="flex items-center gap-3 bg-neutral-900/50 rounded-xl p-4 border border-white/5">
+                <ArrowRight className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-white/80 text-sm text-left">
+                  Die Karte wird nach Zahlungseingang aktiviert.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-8 space-y-3">

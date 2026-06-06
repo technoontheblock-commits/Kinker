@@ -15,7 +15,7 @@ export default function BonusCardPage() {
     holder_name: '',
     holder_email: '',
     holder_phone: '',
-    payment_method: 'bank_transfer',
+    payment_method: 'card',
     referral_code: ''
   })
   const [referralValidation, setReferralValidation] = useState<{
@@ -55,19 +55,19 @@ export default function BonusCardPage() {
       const data = await response.json()
 
       if (data.success) {
-        const price = referralValidation?.valid ? '90' : '100'
+        const price = data.price
+        const purpose = data.payment_purpose || ''
         if (formData.payment_method === 'twint') {
-          const twintUrl = `https://go.twint.ch/1/e/tw?tw=acq.1QpEtdXaTp67RTtZAon-LmYwb6Dc4bSzry9O70XYAuuhdI6rCR5vezGx9qyHMQfc&amount=${price}.00&trxInfo=Kinker+Membership`
-          window.open(twintUrl, '_blank')
-          router.push(`/membership/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}`)
+          window.open(data.payment_url, '_blank')
+          router.push(`/membership/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}&purpose=${encodeURIComponent(purpose)}`)
         } else if (formData.payment_method === 'card') {
           // Create SumUp checkout for card payment
           const sumupRes = await fetch('/api/sumup/checkout', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              amount: parseFloat(price),
-              description: 'Kinker Membership',
+              amount: price,
+              description: purpose || data.product_name || 'Kinker Order',
               checkout_reference: data.card.card_number,
             }),
           })
@@ -82,7 +82,7 @@ export default function BonusCardPage() {
             alert('Keine Checkout-URL erhalten')
           }
         } else {
-          router.push(`/membership/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}`)
+          router.push(`/membership/success?card=${data.card.card_number}&url=${encodeURIComponent(data.card.view_url)}&method=${formData.payment_method}&price=${price}&purpose=${encodeURIComponent(purpose)}`)
         }
       } else {
         alert(data.error || 'Ein Fehler ist aufgetreten')
