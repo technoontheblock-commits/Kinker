@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Dynamic Payment Links**: Zahlungslinks und Verwendungszwecke werden jetzt dynamisch vom Backend generiert (Preis, Produktname, Verwendungszweck)
+- **Cash Payment Instructions**: Bei Barzahlung wird auf der Erfolgsseite eine Schritt-für-Schritt-Anleitung angezeigt (Kartennummer bereithalten → Bezahlen → Aktivieren lassen)
+- **QR Code Scanner**: Vollständiger QR-Code-Scanner für Membership-Karten mit `html5-qrcode`
+  - Kamera-Berechtigung wird explizit beim Start angefragt
+  - Audio-Feedback (Beep bei gültig/ungültig) und haptisches Feedback (Vibration)
+  - Dauerscan-Modus mit automatischer Weiterschaltung nach 2.5 Sekunden
+  - Session-basierte Sperre: Dieselbe Karte kann nicht doppelt gescannt werden
+  - Scan-Verlauf mit Zeitstempel und Status-Indikator
+  - Manueller Fallback-Eingabe jederzeit verfügbar
+  - Vollbildmodus: Scanner nimmt die gesamte Bildschirmgrösse ein
+- **Scanner Admin Navigation**: Scanner-Link in der Admin-Sidebar hinzugefügt
+- **Admin Membership Details**: Ablaufdatum (`Gültig bis`) wird jetzt auf der Admin Detailseite angezeigt
 - **SumUp Online Payments**: Vollständige Integration des SumUp SDK für Kreditkarten- und Wallet-Zahlungen
   - `@sumup/sdk` als Payment-Provider installiert
   - `lib/sumup.ts`: SDK-Client mit Error Handling, Problem Details (RFC 9457) Typen und Helpers
@@ -63,3 +75,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Event delete error**: Better error logging for event delete + client error display.
 - **Eventfrog large IDs**: Handle Eventfrog large IDs exceeding JS `Number.MAX_SAFE_INTEGER`.
 - **Membership View Padding**: Top padding auf `/membership/view/[token]` von `pt-8` auf `pt-24` erhöht, damit die Karte nicht mehr in die fixe Navigation reinragt.
+
+### Changed
+- **Membership Card View (Mobile)**: Karte wechselt auf Mobile ins Portrait-Format (`3:4`) mit deutlich vergrössertem QR-Code (192×192px) für einfaches Scannen an der Abendkasse
+- **Admin Status Buttons**: Status-Änderungen (bezahlt/aktivieren/sperren) werden jetzt sofort live übernommen ohne Seiten-Neuladen
+- **Scanner Layout**: Manuelle Eingabe und Scan-Verlauf wurden unter das Scanner-Fenster verschoben
+
+### Fixed
+- **Membership PDF Attachment**: PDF wird jetzt zuverlässig als E-Mail-Anhang verschickt durch Verwendung eines PNG-Buffers für den QR-Code statt Data-URL
+- **Referral Points Sync**: Referral-Belohnungen (200 Punkte) werden jetzt korrekt in das Rewards-System synchronisiert (`user_rewards` + `points_history`) und sind auf `/rewards` sichtbar
