@@ -31,6 +31,7 @@ export default function ScannerPage() {
   const lastScanRef = useRef<string>('')
   const lastScanTimeRef = useRef<number>(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const initStartedRef = useRef(false)
 
   const playBeep = useCallback((type: 'success' | 'error') => {
     if (!soundEnabled) return
@@ -138,77 +139,93 @@ export default function ScannerPage() {
     }
   }, [isProcessing, playBeep, clearResult])
 
-  const startScanner = useCallback(async () => {
-    if (!videoContainerRef.current) {
-      setError('Video-Element nicht gefunden. Bitte Seite neu laden.')
-      return
-    }
-
+  // Step 1: Ask for permission and set scanning state
+  const requestCamera = useCallback(async () => {
     setError('')
     setResult(null)
     setStarting(true)
 
     try {
-      const html5QrcodeModule = await import('html5-qrcode')
-      const Html5Qrcode = html5QrcodeModule.default?.Html5Qrcode || html5QrcodeModule.Html5Qrcode
-      const Html5QrcodeSupportedFormats = html5QrcodeModule.default?.Html5QrcodeSupportedFormats || html5QrcodeModule.Html5QrcodeSupportedFormats
+      // Explicitly ask for camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      // Stop the stream immediately – html5-qrcode will request its own
+      stream.getTracks().forEach(track => track.stop())
 
-      if (!Html5Qrcode) {
-        throw new Error('Scanner-Library konnte nicht geladen werden')
-      }
-
-      // Alte Instanz aufräumen falls vorhanden
-      if (scannerRef.current) {
-        try {
-          if (scannerRef.current.isScanning) {
-            await scannerRef.current.stop()
-          }
-          await scannerRef.current.clear()
-        } catch {
-          // ignorieren
-        }
-        scannerRef.current = null
-      }
-
-      scannerRef.current = new Html5Qrcode('scanner-video-container')
-
-      // Kamera starten – fallback auf default camera wenn environment nicht verfügbar
-      const cameraConfig = { facingMode: 'environment' }
-
-      await scannerRef.current.start(
-        cameraConfig,
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          aspectRatio: 1.0,
-        },
-        (decodedText: string) => {
-          handleScan(decodedText)
-        },
-        () => {
-          // QR-Code nicht im Frame – ignorieren
-        }
-      )
-
+      // Permission granted – render the video container
       setScanning(true)
     } catch (err: any) {
-      console.error('Scanner start error:', err)
-      const msg = err?.message || err?.toString?.() || ''
-      if (msg.includes('Permission') || msg.includes('permission')) {
-        setError('Kamera-Zugriff verweigert. Bitte Berechtigungen in den Browsereinstellungen erlauben.')
-      } else if (msg.includes('NotFound') || msg.includes('not found') || msg.includes('DevicesNotFound')) {
+      const msg = err?.name || err?.message || ''
+      if (msg.includes('NotAllowed') || msg.includes('Permission')) {
+        setError('Kamera-Zugriff verweigert. Bitte erlaube den Zugriff in den Browsereinstellungen.')
+      } else if (msg.includes('NotFound') || msg.includes('DevicesNotFound')) {
         setError('Keine Kamera gefunden. Bitte stelle sicher, dass eine Kamera angeschlossen ist.')
-      } else if (msg.includes('NotAllowed')) {
-        setError('Kamera-Zugriff nicht erlaubt. Die Seite muss über HTTPS aufgerufen werden.')
+      } else if (msg.includes('NotReadable') || msg.includes('TrackStart')) {
+        setError('Kamera wird bereits von einer anderen Anwendung verwendet.')
       } else {
-        setError(`Kamera konnte nicht gestartet werden: ${msg}`)
+        setError(`Kamera-Fehler: ${msg}`)
       }
-      setScanning(false)
-    } finally {
       setStarting(false)
     }
-  }, [handleScan])
+  }, [])
+
+  // Step 2: Start html5-qrcode once the DOM is ready
+  useEffect(() => {
+    if (!scanning || initStartedRef.current) return
+
+    async function initScanner() {
+      initStartedRef.current = true
+
+      // Wait for React to render the container into the DOM
+      await new Promise(resolve => setTimeout(resolve, 150))
+
+      if (!videoContainerRef.current) {
+        setError('Scanner konnte nicht initialisiert werden. Bitte Seite neu laden.')
+        setScanning(false)
+        setStarting(false)
+        initStartedRef.current = false
+        return
+      }
+
+      try {
+        const html5QrcodeModule = await import('html5-qrcode')
+        const Html5Qrcode = html5QrcodeModule.default?.Html5Qrcode || html5QrcodeModule.Html5Qrcode
+        const Html5QrcodeSupportedFormats = html5QrcodeModule.default?.Html5QrcodeSupportedFormats || html5QrcodeModule.Html5QrcodeSupportedFormats
+
+        if (!Html5Qrcode) {
+          throw new Error('Scanner-Library konnte nicht geladen werden')
+        }
+
+        scannerRef.current = new Html5Qrcode('scanner-video-container')
+
+        await scannerRef.current.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+            aspectRatio: 1.0,
+          },
+          (decodedText: string) => {
+            handleScan(decodedText)
+          },
+          () => {
+            // QR-Code nicht im Frame – ignorieren
+          }
+        )
+
+        setStarting(false)
+      } catch (err: any) {
+        console.error('Scanner init error:', err)
+        const msg = err?.message || err?.toString?.() || ''
+        setError(`Scanner-Fehler: ${msg}`)
+        setScanning(false)
+        setStarting(false)
+        initStartedRef.current = false
+      }
+    }
+
+    initScanner()
+  }, [scanning, handleScan])
 
   const stopScanner = useCallback(async () => {
     if (timeoutRef.current) {
@@ -227,6 +244,7 @@ export default function ScannerPage() {
         scannerRef.current = null
       }
     }
+    initStartedRef.current = false
     setScanning(false)
     setResult(null)
     setIsProcessing(false)
@@ -274,7 +292,7 @@ export default function ScannerPage() {
           {!scanning && (
             <div className="space-y-4">
               <button
-                onClick={startScanner}
+                onClick={requestCamera}
                 disabled={starting}
                 className="w-full py-6 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl flex items-center justify-center gap-3 text-white font-semibold transition-colors"
               >
@@ -326,6 +344,7 @@ export default function ScannerPage() {
               {/* Video Container */}
               <div className="relative aspect-square bg-neutral-900 rounded-xl overflow-hidden border border-white/10">
                 <div
+                  id="scanner-video-container"
                   ref={videoContainerRef}
                   className="w-full h-full"
                 />
