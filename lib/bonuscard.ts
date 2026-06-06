@@ -73,6 +73,22 @@ export function extractTokenFromQR(qrData: string): string | null {
 }
 
 /**
+ * Generate a QR code as PNG Buffer for server-side PDF rendering
+ */
+export async function generateQRCodeBuffer(token: string): Promise<Buffer> {
+  const qrData = generateQRData(token)
+  return QRCode.toBuffer(qrData, {
+    type: 'png',
+    width: 512,
+    margin: 2,
+    color: {
+      dark: '#000000',
+      light: '#ffffff'
+    }
+  })
+}
+
+/**
  * Generate SVG QR code for server-side rendering (emails, PDFs)
  */
 export async function generateQRSvg(token: string): Promise<string> {

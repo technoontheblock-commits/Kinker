@@ -7,6 +7,7 @@ import {
   generateBonusCardToken, 
   generateCardNumber, 
   generateQRCodeDataUrl,
+  generateQRCodeBuffer,
   generateCardViewUrl 
 } from '@/lib/bonuscard'
 import { generateBonusCardEmail } from '@/lib/email-bonuscard'
@@ -119,10 +120,14 @@ export async function POST(request: NextRequest) {
       console.error('Notification creation error:', notifErr)
     }
 
-    // Generate QR code for PDF
+    // Generate QR code for PDF and email
     let qrCodeDataUrl: string | undefined
+    let qrCodeBuffer: Buffer | undefined
     try {
-      qrCodeDataUrl = await generateQRCodeDataUrl(qrToken)
+      [qrCodeDataUrl, qrCodeBuffer] = await Promise.all([
+        generateQRCodeDataUrl(qrToken),
+        generateQRCodeBuffer(qrToken)
+      ])
     } catch (err) {
       console.error('QR generation error:', err)
     }
@@ -139,15 +144,15 @@ export async function POST(request: NextRequest) {
           qrCodeDataUrl
         })
 
-        // Generate PDF (separate try-catch so email still sends if PDF fails)
+        // Generate PDF
         let pdfBuffer: Buffer | undefined
         try {
-          if (qrCodeDataUrl) {
+          if (qrCodeBuffer) {
             const pdfElement = BonusCardPDF({
               holderName: holder_name.trim(),
               cardNumber,
               purchaseDate: new Date().toLocaleDateString('de-CH'),
-              qrCodeDataUrl,
+              qrCodeSrc: { data: qrCodeBuffer, format: 'png' },
               paymentMethod: payment_method,
               isPaid: false,
             })

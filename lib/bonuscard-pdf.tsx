@@ -123,7 +123,7 @@ interface BonusCardPDFProps {
   holderName: string
   cardNumber: string
   purchaseDate: string
-  qrCodeDataUrl: string
+  qrCodeSrc: string | { data: Buffer; format: 'png' }
   paymentMethod: string
   isPaid: boolean
   purchasePrice?: number
@@ -133,7 +133,7 @@ export function BonusCardPDF({
   holderName,
   cardNumber,
   purchaseDate,
-  qrCodeDataUrl,
+  qrCodeSrc,
   paymentMethod,
   isPaid,
   purchasePrice = 10000,
@@ -159,7 +159,7 @@ export function BonusCardPDF({
           </View>
 
           <View style={styles.qrOnCard}>
-            <Image src={qrCodeDataUrl} style={styles.qrOnCardImage} />
+            <Image src={qrCodeSrc} style={styles.qrOnCardImage} />
           </View>
 
           <View style={styles.bottomRow}>
