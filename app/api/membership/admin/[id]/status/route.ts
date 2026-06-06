@@ -80,13 +80,53 @@ export async function PATCH(
             .single()
 
           if (refCode) {
+            const referrerUserId = refCode.user_id
+
+            // 1. Insert into referral_points
             await supabase
               .from('referral_points')
               .insert([{
-                user_id: refCode.user_id,
+                user_id: referrerUserId,
                 points: 200,
                 source_bonus_card_id: card.id
               }])
+
+            // 2. Update or create user_rewards
+            const { data: existingRewards } = await supabase
+              .from('user_rewards')
+              .select('id, points, lifetime_points')
+              .eq('user_id', referrerUserId)
+              .single()
+
+            if (existingRewards) {
+              await supabase
+                .from('user_rewards')
+                .update({
+                  points: (existingRewards.points || 0) + 200,
+                  lifetime_points: (existingRewards.lifetime_points || 0) + 200,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', existingRewards.id)
+            } else {
+              await supabase
+                .from('user_rewards')
+                .insert({
+                  user_id: referrerUserId,
+                  points: 200,
+                  lifetime_points: 200,
+                  tier: 'Bronze'
+                })
+            }
+
+            // 3. Insert into points_history
+            await supabase
+              .from('points_history')
+              .insert({
+                user_id: referrerUserId,
+                points_change: 200,
+                reason: 'Referral-Belohnung',
+                reference_type: 'referral'
+              })
           }
         }
       } catch (pointsError) {
