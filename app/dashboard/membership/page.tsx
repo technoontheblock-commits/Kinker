@@ -158,7 +158,7 @@ export default function DashboardBonusCardPage() {
               </div>
 
               <p className="text-white/60 text-sm">
-                Gib den Code oder den Link an Freunde weiter. Sie erhalten 10% Rabatt auf ihre Membership und du erhältst 200 Punkte pro erfolgreicher Bestellung.
+                Gib den Code oder den Link an Freunde weiter. Du erhältst 200 Punkte pro erfolgreicher Bestellung.
               </p>
 
               {referralInfo.total_points > 0 && (

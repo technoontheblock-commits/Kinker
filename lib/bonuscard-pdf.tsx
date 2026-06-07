@@ -140,7 +140,6 @@ export function BonusCardPDF({
 }: BonusCardPDFProps) {
   const showPaymentInfo = paymentMethod === 'bank_transfer' && !isPaid
   const priceChf = (purchasePrice / 100).toFixed(2)
-  const hasDiscount = purchasePrice < 10000
 
   return (
     <Document>
@@ -169,7 +168,7 @@ export function BonusCardPDF({
             </View>
             <View>
               <Text style={styles.price}>CHF {priceChf}</Text>
-              {hasDiscount && <Text style={{ fontSize: 10, color: '#16a34a', marginTop: 4 }}>10% Rabatt</Text>}
+              {/* Referral discount removed */}
             </View>
           </View>
         </View>

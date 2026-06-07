@@ -39,10 +39,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       valid: true,
-      code: referralCode.code,
-      discount_percent: 10,
-      discount_amount: 1000, // 10 CHF in Rappen
-      final_price: 9000 // 90 CHF in Rappen
+      code: referralCode.code
     })
   } catch (error) {
     console.error('Referral validate error:', error)

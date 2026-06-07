@@ -193,12 +193,9 @@ export default function BonusCardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-white/30 text-xs mb-1">PREIS</p>
-                    <p className={`font-bold text-2xl ${referralValidation?.valid ? 'text-green-500' : 'text-red-500'}`}>
-                      CHF {referralValidation?.valid ? '90' : '100'}
+                    <p className="font-bold text-2xl text-red-500">
+                      CHF 100
                     </p>
-                    {referralValidation?.valid && (
-                      <p className="text-green-400 text-xs">10% Rabatt</p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -328,7 +325,7 @@ export default function BonusCardPage() {
                       <p className="text-white/40 text-xs mt-1">Wird geprüft...</p>
                     )}
                     {referralValidation?.valid && (
-                      <p className="text-green-400 text-xs mt-1">✓ Code gültig – 10% Rabatt</p>
+                      <p className="text-green-400 text-xs mt-1">✓ Code gültig</p>
                     )}
                     {referralValidation?.error && (
                       <p className="text-red-400 text-xs mt-1">✗ {referralValidation.error}</p>
@@ -376,7 +373,7 @@ export default function BonusCardPage() {
                     ) : (
                       <>
                         <CreditCard className="w-5 h-5" />
-                        Membership für CHF {referralValidation?.valid ? '90' : '100'} bestellen
+                        Membership für CHF 100 bestellen
                       </>
                     )}
                   </button>

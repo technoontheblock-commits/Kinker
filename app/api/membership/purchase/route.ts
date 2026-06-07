@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
         // Prevent self-referral
         if (refCode.user_id !== userId) {
           referralCodeId = refCode.id
-          purchasePrice = 9000 // 90 CHF in Rappen (10% Rabatt)
         }
       }
     }

@@ -66,8 +66,7 @@ export function generateBonusCardEmail(data: BonusCardEmailData): string {
   const paymentInstructions = getPaymentInstructions(data.paymentMethod, data.cardNumber, data.purchasePrice || 10000)
   const isPaid = data.paymentStatus === 'paid'
   const priceChf = ((data.purchasePrice || 10000) / 100).toFixed(2)
-  const originalPriceChf = '100.00'
-  const hasDiscount = (data.purchasePrice || 10000) < 10000
+  const hasDiscount = false
 
   const contentHtml = `
     <tr>
@@ -85,9 +84,6 @@ export function generateBonusCardEmail(data: BonusCardEmailData): string {
           Kartennummer: <span style="color: #dc2626; font-family: monospace; font-weight: 600;">${data.cardNumber}</span>
         </p>
         ${hasDiscount ? `
-        <p style="margin: 0; font-size: 14px; color: #16a34a; font-family: sans-serif;">
-          Preis: <span style="text-decoration: line-through; color: #888888;">CHF ${originalPriceChf}</span> <strong>CHF ${priceChf}</strong> (10% Rabatt mit Referral-Code)
-        </p>
         ` : `
         <p style="margin: 0; font-size: 14px; color: #888888; font-family: sans-serif;">
           Preis: <strong>CHF ${priceChf}</strong>
