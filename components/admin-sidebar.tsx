@@ -20,6 +20,7 @@ import {
   LogOut,
   ScanLine,
   Printer,
+  Gift,
 } from 'lucide-react'
 import { useAdminTab } from '@/app/admin/components/AdminTabContext'
 
@@ -39,6 +40,7 @@ const tabs = [
   { id: 'advertising', label: 'Werbung', icon: Printer, href: '/admin/advertising' },
   { id: 'dj-roster', label: 'DJ Roster', icon: Disc, href: '/admin' },
   { id: 'developer', label: 'Developer', icon: Code, href: '/admin' },
+  { id: 'referrals', label: 'Referrals', icon: Gift, href: '/admin/referrals' },
 ]
 
 export function AdminSidebar({ onClose }: { onClose?: () => void }) {
