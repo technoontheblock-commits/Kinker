@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Gift, Calendar, CreditCard, Search, ArrowRightLeft } from 'lucide-react'
+import { Users, Gift, Calendar, CreditCard, Search, ArrowRightLeft, Briefcase } from 'lucide-react'
 
 interface ReferralRedemption {
   id: string
@@ -16,6 +16,7 @@ interface ReferralRedemption {
   referrer_id: string
   referrer_name: string
   referrer_email: string
+  referrer_role: string
   referee_id: string | null
   referee_name: string
   referee_email: string
@@ -55,6 +56,7 @@ export default function AdminReferralsPage() {
   const [redemptions, setRedemptions] = useState<ReferralRedemption[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [coworkerOnly, setCoworkerOnly] = useState(false)
 
   useEffect(() => {
     loadReferrals()
@@ -75,8 +77,13 @@ export default function AdminReferralsPage() {
     }
   }
 
+  // Apply coworker filter first
+  const filteredByCoworker = coworkerOnly
+    ? redemptions.filter(r => r.referrer_role === 'coworker')
+    : redemptions
+
   // Group by month
-  const monthGroups = redemptions.reduce<MonthGroup[]>((groups, redemption) => {
+  const monthGroups = filteredByCoworker.reduce<MonthGroup[]>((groups, redemption) => {
     const monthKey = formatMonthKey(redemption.purchased_at)
     const existingGroup = groups.find(g => g.monthKey === monthKey)
 
@@ -105,8 +112,9 @@ export default function AdminReferralsPage() {
     )
   })).filter(group => group.redemptions.length > 0)
 
-  const totalCount = redemptions.length
-  const totalSaved = redemptions.reduce((sum, r) => sum + (10000 - r.purchase_price), 0)
+  const totalCount = filteredByCoworker.length
+  const totalSaved = filteredByCoworker.reduce((sum, r) => sum + (10000 - r.purchase_price), 0)
+  const coworkerCount = redemptions.filter(r => r.referrer_role === 'coworker').length
 
   return (
     <div className="min-h-screen bg-black pt-20">
@@ -129,7 +137,7 @@ export default function AdminReferralsPage() {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-2xl font-bold text-white">{totalCount}</p>
-                <p className="text-white/40 text-sm">Eingelöst</p>
+                <p className="text-white/40 text-sm">{coworkerOnly ? 'CoWorker' : 'Total'}</p>
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-red-500">{formatPrice(totalSaved)}</p>
@@ -138,16 +146,36 @@ export default function AdminReferralsPage() {
             </div>
           </div>
 
-          {/* Search */}
-          <div className="relative mb-8">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-            <input
-              type="text"
-              placeholder="Suchen nach Code, Name, E-Mail oder Kartennummer..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-neutral-900 rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none"
-            />
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+              <input
+                type="text"
+                placeholder="Suchen nach Code, Name, E-Mail oder Kartennummer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-neutral-900 rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none"
+              />
+            </div>
+            <button
+              onClick={() => setCoworkerOnly(!coworkerOnly)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl border transition-colors font-medium ${
+                coworkerOnly
+                  ? 'bg-green-500/20 border-green-500/50 text-green-500'
+                  : 'bg-neutral-900 border-white/10 text-white/70 hover:text-white hover:border-white/20'
+              }`}
+            >
+              <Briefcase className="w-5 h-5" />
+              CoWorker
+              {coworkerCount > 0 && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  coworkerOnly ? 'bg-green-500/30 text-green-400' : 'bg-white/10 text-white/50'
+                }`}>
+                  {coworkerCount}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Content */}
@@ -159,7 +187,11 @@ export default function AdminReferralsPage() {
             <div className="text-center py-20">
               <Gift className="w-16 h-16 text-white/20 mx-auto mb-4" />
               <p className="text-white/40 text-lg">
-                {searchQuery ? 'Keine Treffer für deine Suche' : 'Noch keine Referrals eingelöst'}
+                {coworkerOnly
+                  ? 'Noch keine CoWorker-Referrals'
+                  : searchQuery
+                    ? 'Keine Treffer für deine Suche'
+                    : 'Noch keine Referrals eingelöst'}
               </p>
             </div>
           ) : (

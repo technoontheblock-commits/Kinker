@@ -17,6 +17,7 @@ interface ReferralRedemption {
   referrer_id: string
   referrer_name: string
   referrer_email: string
+  referrer_role: string
   referee_id: string | null
   referee_name: string
   referee_email: string
@@ -70,7 +71,7 @@ export async function GET() {
 
     const { data: users, error: usersError } = await supabase
       .from('users')
-      .select('id, name, email')
+      .select('id, name, email, role')
       .in('id', userIds)
 
     if (usersError) {
@@ -100,6 +101,7 @@ export async function GET() {
         referrer_id: code?.user_id || '',
         referrer_name: referrer?.name || referrer?.email?.split('@')[0] || 'Unbekannt',
         referrer_email: referrer?.email || '',
+        referrer_role: referrer?.role || 'user',
         referee_id: card.user_id,
         referee_name: referee?.name || card.holder_name || 'Unbekannt',
         referee_email: referee?.email || card.holder_email || ''

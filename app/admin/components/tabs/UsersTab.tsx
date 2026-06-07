@@ -85,7 +85,10 @@ export default function UsersTab({
                   <td className="px-6 py-4 text-white/60">{user.email}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs capitalize ${
-                      user.role === 'admin' ? 'bg-red-500/20 text-red-500' : 'bg-white/10 text-white/70'
+                      user.role === 'admin' ? 'bg-red-500/20 text-red-500'
+                      : user.role === 'coworker' ? 'bg-green-500/20 text-green-500'
+                      : user.role === 'moderator' ? 'bg-blue-500/20 text-blue-500'
+                      : 'bg-white/10 text-white/70'
                     }`}>
                       {user.role}
                     </span>
@@ -163,6 +166,8 @@ export default function UsersTab({
                 >
                   <option value="user">User</option>
                   <option value="admin">Admin</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="coworker">Coworker</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-4">
@@ -234,6 +239,8 @@ export default function UsersTab({
                 >
                   <option value="user">User</option>
                   <option value="admin">Admin</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="coworker">Coworker</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-4">

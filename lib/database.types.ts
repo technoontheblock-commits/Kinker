@@ -88,7 +88,7 @@ export interface Database {
           name: string
           email: string
           password_hash: string
-          role: 'admin' | 'user' | 'moderator'
+          role: 'admin' | 'user' | 'moderator' | 'coworker'
           status: 'active' | 'inactive'
           created_at: string
           updated_at: string
@@ -112,7 +112,7 @@ export interface Database {
           name: string
           email: string
           password_hash: string
-          role?: 'admin' | 'user' | 'moderator'
+          role?: 'admin' | 'user' | 'moderator' | 'coworker'
           status?: 'active' | 'inactive'
           created_at?: string
           updated_at?: string
@@ -136,7 +136,7 @@ export interface Database {
           name?: string
           email?: string
           password_hash?: string
-          role?: 'admin' | 'user' | 'moderator'
+          role?: 'admin' | 'user' | 'moderator' | 'coworker'
           status?: 'active' | 'inactive'
           created_at?: string
           updated_at?: string
