@@ -106,3 +106,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Lösung: `AdminTabContext` eingeführt, der `activeTab`-State zwischen Layout und Seite teilt. Interne Tabs matchen jetzt über den Context, externe Seiten weiterhin per URL
 - **Membership PDF Attachment**: PDF wird jetzt zuverlässig als E-Mail-Anhang verschickt durch Verwendung eines PNG-Buffers für den QR-Code statt Data-URL
 - **Referral Points Sync**: Referral-Belohnungen (200 Punkte) werden jetzt korrekt in das Rewards-System synchronisiert (`user_rewards` + `points_history`) und sind auf `/rewards` sichtbar
+
+### Fixed
+- **Dashboard Navigation Highlight**: Sidebar hebt im Dashboard-Bereich (`/dashboard/*`) jetzt nur noch den tatsächlich aktiven Menüpunkt hervor. Vorher wurde `/dashboard` fälschlicherweise auch als aktiv markiert, wenn man auf einer Unterseite wie `/dashboard/membership` war.
+- **Referral Code via Link/QR**: Referral-Code aus der URL (`?ref=CODE`) wird jetzt als festgelegt (hardcoded) in das Membership-Formular eingetragen und kann vom Benutzer nicht mehr geändert oder gelöscht werden.
+
+### Changed
+- **Referral Rabatt entfernt**: Der 10% Rabatt für das Referral-System wurde komplett entfernt. Memberships kosten immer CHF 100, unabhängig davon, ob ein Referral-Code verwendet wird. Referral-Codes werden weiterhin validiert und getrackt.
+- **Referral Belohnung reduziert**: Punkte-Belohnung für erfolgreiche Referrals von 200 auf 100 Punkte reduziert (API + Dashboard-Text).
+
+### Performance
+- **Supabase RLS Optimization**: `auth_rls_initplan`-Warnungen behoben durch Wrappen aller `auth.uid()` / `auth.jwt()`-Aufrufe in RLS Policies mit `(select auth.<function>())`. Betrifft 35 Policies über 14 Tabellen (user_profiles, user_wallets, wallet_transactions, orders, order_items, user_rewards, points_history, vip_bookings, forum_*, kanban_*). Keine funktionale oder visuelle Änderung.
