@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, QrCode, ExternalLink, AlertTriangle, Check, Gift, Copy } from 'lucide-react'
+import { CreditCard, QrCode, ExternalLink, AlertTriangle, Check, Gift, Copy, Link2, Share2 } from 'lucide-react'
 import Link from 'next/link'
+import QRCode from 'qrcode'
 
 interface BonusCard {
   id: string
@@ -26,7 +27,14 @@ export default function DashboardBonusCardPage() {
   const [cards, setCards] = useState<BonusCard[]>([])
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null)
   const [loading, setLoading] = useState(true)
-  const [copied, setCopied] = useState(false)
+  const [copiedCode, setCopiedCode] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState('')
+  const [showQrModal, setShowQrModal] = useState(false)
+
+  const referralUrl = referralInfo?.code
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/membership?ref=${referralInfo.code}`
+    : ''
 
   useEffect(() => {
     async function loadData() {
@@ -54,11 +62,32 @@ export default function DashboardBonusCardPage() {
     loadData()
   }, [])
 
+  // Generate QR code when referral code is loaded
+  useEffect(() => {
+    if (referralUrl) {
+      QRCode.toDataURL(referralUrl, {
+        width: 400,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      })
+        .then(setQrDataUrl)
+        .catch(console.error)
+    }
+  }, [referralUrl])
+
   const copyCode = () => {
     if (referralInfo?.code) {
       navigator.clipboard.writeText(referralInfo.code)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopiedCode(true)
+      setTimeout(() => setCopiedCode(false), 2000)
+    }
+  }
+
+  const copyLink = () => {
+    if (referralUrl) {
+      navigator.clipboard.writeText(referralUrl)
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 2000)
     }
   }
 
@@ -82,31 +111,105 @@ export default function DashboardBonusCardPage() {
 
           {referralInfo && (
             <div className="bg-gradient-to-br from-neutral-900 to-black rounded-2xl p-6 border border-white/10 mb-6">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-5">
                 <Gift className="w-5 h-5 text-red-500" />
                 <h2 className="text-lg font-semibold text-white">Dein Referral-Code</h2>
               </div>
-              <div className="flex items-center gap-3 mb-3">
-                <code className="flex-1 bg-black rounded-xl px-4 py-3 text-white font-mono text-lg border border-white/10">
-                  {referralInfo.code}
-                </code>
-                <button
-                  onClick={copyCode}
-                  className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
-                  title="Code kopieren"
-                >
-                  {copied ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5 text-white/60" />}
-                </button>
+
+              {/* Referral Code */}
+              <div className="mb-4">
+                <label className="text-white/40 text-xs uppercase tracking-wider mb-1.5 block">Code</label>
+                <div className="flex items-center gap-3">
+                  <code className="flex-1 bg-black rounded-xl px-4 py-3 text-white font-mono text-lg border border-white/10">
+                    {referralInfo.code}
+                  </code>
+                  <button
+                    onClick={copyCode}
+                    className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                    title="Code kopieren"
+                  >
+                    {copiedCode ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5 text-white/60" />}
+                  </button>
+                </div>
               </div>
+
+              {/* Referral Link */}
+              <div className="mb-4">
+                <label className="text-white/40 text-xs uppercase tracking-wider mb-1.5 block">Link zum Teilen</label>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 bg-black rounded-xl px-4 py-3 border border-white/10 min-w-0">
+                    <p className="text-white/80 text-sm truncate">{referralUrl}</p>
+                  </div>
+                  <button
+                    onClick={copyLink}
+                    className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                    title="Link kopieren"
+                  >
+                    {copiedLink ? <Check className="w-5 h-5 text-green-400" /> : <Link2 className="w-5 h-5 text-white/60" />}
+                  </button>
+                  <button
+                    onClick={() => setShowQrModal(true)}
+                    className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                    title="QR-Code anzeigen"
+                  >
+                    <QrCode className="w-5 h-5 text-white/60" />
+                  </button>
+                </div>
+              </div>
+
               <p className="text-white/60 text-sm">
-                Gib diesen Code an Freunde weiter. Sie erhalten 10% Rabatt auf ihre Membership und du erhältst 200 Punkte pro erfolgreicher Bestellung.
+                Gib den Code oder den Link an Freunde weiter. Sie erhalten 10% Rabatt auf ihre Membership und du erhältst 200 Punkte pro erfolgreicher Bestellung.
               </p>
+
               {referralInfo.total_points > 0 && (
                 <div className="mt-4 pt-4 border-t border-white/10">
                   <p className="text-white/40 text-sm">Gesammelte Punkte</p>
                   <p className="text-2xl font-bold text-white">{referralInfo.total_points}</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* QR Code Modal */}
+          {showQrModal && qrDataUrl && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-neutral-900 rounded-2xl border border-white/10 p-8 max-w-sm w-full text-center"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-white">Referral QR-Code</h3>
+                  <button
+                    onClick={() => setShowQrModal(false)}
+                    className="p-2 text-white/40 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <img src={qrDataUrl} alt="Referral QR Code" className="w-64 h-64 mx-auto rounded-xl border-4 border-white/10 mb-4" />
+                <p className="text-white/60 text-sm mb-6">
+                  Scanne den Code, um direkt zur Membership-Seite mit deinem Referral-Code zu gelangen.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      copyLink()
+                      setShowQrModal(false)
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors"
+                  >
+                    <Link2 className="w-4 h-4" />
+                    Link kopieren
+                  </button>
+                  <button
+                    onClick={() => setShowQrModal(false)}
+                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors"
+                  >
+                    Schliessen
+                  </button>
+                </div>
+              </motion.div>
             </div>
           )}
 

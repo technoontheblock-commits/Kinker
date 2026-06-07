@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, Check, Loader2, Smartphone, Banknote, Calendar, LogIn, ShoppingCart, Download, ScanLine } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 export default function BonusCardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
@@ -25,6 +26,14 @@ export default function BonusCardPage() {
     error?: string
   } | null>(null)
   const [validatingCode, setValidatingCode] = useState(false)
+
+  // Auto-fill referral code from URL ?ref=CODE
+  useEffect(() => {
+    const refCode = searchParams.get('ref')
+    if (refCode) {
+      setFormData(prev => ({ ...prev, referral_code: refCode.toUpperCase() }))
+    }
+  }, [searchParams])
 
   useEffect(() => {
     async function checkAuth() {
