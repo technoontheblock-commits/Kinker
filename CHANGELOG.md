@@ -81,6 +81,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Admin Status Buttons**: Status-Änderungen (bezahlt/aktivieren/sperren) werden jetzt sofort live übernommen ohne Seiten-Neuladen
 - **Scanner Layout**: Manuelle Eingabe und Scan-Verlauf wurden unter das Scanner-Fenster verschoben
 
+### Added
+- **Admin Mobile Layout**: Vollständig responsives Admin-Dashboard für mobile Geräte
+  - Neues `app/admin/layout.tsx` mit zentralem Auth-Guard und Sidebar-Management
+  - Mobile Slide-in-Navigation mit Hamburger-Menü, Overlay und Animation
+  - Sidebar wird auf Desktop fixed, auf Mobile als Overlay dargestellt
+  - Alle Admin-Seiten (`/admin`, `/admin/memberships`, `/admin/membership/validierung`, `/admin/advertising`) nutzen jetzt das Shared Layout
+- **Admin Table Scroll**: Tabellen im Admin-Bereich sind jetzt horizontal scrollbar (`overflow-x-auto`) für kleine Bildschirme
+
 ### Fixed
 - **Membership PDF Attachment**: PDF wird jetzt zuverlässig als E-Mail-Anhang verschickt durch Verwendung eines PNG-Buffers für den QR-Code statt Data-URL
 - **Referral Points Sync**: Referral-Belohnungen (200 Punkte) werden jetzt korrekt in das Rewards-System synchronisiert (`user_rewards` + `points_history`) und sind auf `/rewards` sichtbar
