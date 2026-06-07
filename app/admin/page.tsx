@@ -6,7 +6,6 @@ import {
   Users, 
   Bell, 
   Briefcase, 
-  Home,
   Search,
   Plus,
   Trash2,
@@ -19,7 +18,6 @@ import {
   DollarSign,
   Eye,
   EyeOff,
-  LogOut,
   Building,
   Phone,
   FileText,
@@ -29,15 +27,11 @@ import {
   Ban,
   QrCode,
   Gift,
-  CreditCard,
-  MessageSquare,
   Crown,
-  Layout,
   ExternalLink,
   Disc,
   Shirt,
   Loader2,
-  Code
 } from 'lucide-react'
 import Link from 'next/link'
 import { getEvents } from '@/lib/events'
@@ -217,22 +211,6 @@ export default function AdminDashboard() {
     const eventDate = new Date(event.date)
     return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
   }).length
-
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'users', label: 'User Management', icon: Users },
-    { id: 'bonuscards', label: 'Memberships', icon: CreditCard, href: '/admin/memberships' },
-    { id: 'vip-bookings', label: 'VIP Bookings', icon: Crown, href: '/admin/vip-bookings' },
-    { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
-    { id: 'newsletter', label: 'Newsletter', icon: Mail, href: '/admin/newsletter' },
-    { id: 'careers', label: 'Careers', icon: Briefcase },
-    { id: 'merchandise', label: 'Merch', icon: ShoppingBag },
-    { id: 'orders', label: 'Bestellungen', icon: Package },
-    { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
-    { id: 'board', label: 'Board', icon: Layout, href: '/admin/board' },
-    { id: 'dj-roster', label: 'DJ Roster', icon: Disc },
-    { id: 'developer', label: 'Developer', icon: Code },
-  ]
 
   const unreadCount = notifications.filter(n => !n.read).length
 
@@ -792,61 +770,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-black pt-20">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-neutral-900 h-[calc(100vh-5rem)] fixed left-0 top-20 border-r border-white/10 overflow-y-auto">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-white mb-8">Admin Panel</h2>
-            <nav className="space-y-2">
-              {tabs.map((tab) => {
-                const Icon = tab.icon
-                const isExternal = tab.href
-                
-                if (isExternal) {
-                  return (
-                    <Link
-                      key={tab.id}
-                      href={tab.href}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-white/70 hover:bg-white/5 hover:text-white"
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span>{tab.label}</span>
-                    </Link>
-                  )
-                }
-                
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      activeTab === tab.id
-                        ? 'bg-red-500/20 text-red-500'
-                        : 'text-white/70 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{tab.label}</span>
-                    {tab.id === 'notifications' && unreadCount > 0 && (
-                      <span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
-          <div className="p-6 border-t border-white/10 mt-auto">
-            <button className="flex items-center gap-3 text-white/70 hover:text-white transition-colors">
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 ml-64 p-8">
+      <main className="p-4 md:p-8">
           {/* Dashboard */}
           {activeTab === 'dashboard' && (
             <motion.div
@@ -941,8 +865,8 @@ export default function AdminDashboard() {
               </div>
 
               {/* Users Table */}
-              <div className="bg-neutral-900/50 rounded-xl border border-white/10 overflow-hidden">
-                <table className="w-full">
+              <div className="bg-neutral-900/50 rounded-xl border border-white/10 overflow-hidden overflow-x-auto">
+                <table className="w-full min-w-[600px]">
                   <thead className="bg-black/30">
                     <tr>
                       <th className="text-left text-white/60 font-medium px-6 py-4">Name</th>
@@ -1198,8 +1122,8 @@ export default function AdminDashboard() {
               </div>
 
               {/* Events Table */}
-              <div className="bg-neutral-900/50 rounded-xl border border-white/10 overflow-hidden">
-                <table className="w-full">
+              <div className="bg-neutral-900/50 rounded-xl border border-white/10 overflow-hidden overflow-x-auto">
+                <table className="w-full min-w-[600px]">
                   <thead className="bg-black/30">
                     <tr>
                       <th className="text-left text-white/60 font-medium px-6 py-4">Name</th>
@@ -2665,8 +2589,8 @@ export default function AdminDashboard() {
               {/* Orders */}
               <div>
                 <h2 className="text-xl font-bold text-white mb-4">Orders ({printfulOrders.length})</h2>
-                <div className="bg-neutral-900/50 rounded-xl border border-white/10 overflow-hidden">
-                  <table className="w-full">
+                <div className="bg-neutral-900/50 rounded-xl border border-white/10 overflow-hidden overflow-x-auto">
+                  <table className="w-full min-w-[500px]">
                     <thead className="bg-black/30">
                       <tr>
                         <th className="text-left text-white/60 font-medium px-6 py-4">Order ID</th>
@@ -2934,8 +2858,7 @@ export default function AdminDashboard() {
               </div>
             </motion.div>
           )}
-        </main>
-      </div>
+      </main>
     </div>
   )
 }

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Printer, Plus, QrCode, Copy, CheckCircle, XCircle, Clock } from 'lucide-react'
-import { AdminSidebar } from '@/components/admin-sidebar'
 import QRCode from 'qrcode'
 
 interface Claim {
@@ -85,8 +84,7 @@ export default function AdminMembershipValidationPage() {
 
   return (
     <div className="min-h-screen bg-black pt-20">
-      <AdminSidebar />
-      <div className="ml-64 p-8">
+      <main className="p-4 md:p-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-4xl font-bold text-white">Membership Validierung</h1>
@@ -163,8 +161,8 @@ export default function AdminMembershipValidationPage() {
           )}
 
           {/* Claims List */}
-          <div className="bg-neutral-900 rounded-xl border border-white/10 overflow-hidden">
-            <table className="w-full">
+          <div className="bg-neutral-900 rounded-xl border border-white/10 overflow-hidden overflow-x-auto">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-black/30">
                 <tr>
                   <th className="text-left text-white/60 font-medium px-6 py-4">Token</th>
@@ -216,7 +214,7 @@ export default function AdminMembershipValidationPage() {
             </table>
           </div>
         </motion.div>
-      </div>
+      </main>
 
       <style>{`
         @media print {

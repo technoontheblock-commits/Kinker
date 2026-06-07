@@ -40,7 +40,7 @@ const tabs = [
   { id: 'developer', label: 'Developer', icon: Code, href: '/admin' },
 ]
 
-export function AdminSidebar() {
+export function AdminSidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -60,16 +60,15 @@ export function AdminSidebar() {
     loadNotifications()
   }, [])
 
-  // Check if a tab is active based on current pathname
   const isActive = (tab: typeof tabs[0]) => {
     if (tab.href === '/admin' && pathname === '/admin') return true
-    if (tab.href !== '/admin' && pathname.startsWith(tab.href)) return true
+    if (tab.href !== '/admin' && pathname?.startsWith(tab.href)) return true
     return false
   }
 
   return (
-    <aside className="w-64 bg-neutral-900 h-[calc(100vh-5rem)] fixed left-0 top-20 border-r border-white/10 overflow-y-auto">
-      <div className="p-6">
+    <div className="flex flex-col h-full">
+      <div className="p-6 flex-1 overflow-y-auto">
         <h2 className="text-xl font-bold text-white mb-8">Admin Panel</h2>
         <nav className="space-y-2">
           {tabs.map((tab) => {
@@ -80,6 +79,7 @@ export function AdminSidebar() {
               <Link
                 key={tab.id}
                 href={tab.href}
+                onClick={onClose}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   active
                     ? 'bg-red-500/20 text-red-500'
@@ -98,7 +98,7 @@ export function AdminSidebar() {
           })}
         </nav>
       </div>
-      <div className="p-6 border-t border-white/10 mt-auto">
+      <div className="p-6 border-t border-white/10">
         <button
           onClick={async () => {
             await fetch('/api/auth/session', { method: 'DELETE' })
@@ -110,6 +110,6 @@ export function AdminSidebar() {
           <span>Logout</span>
         </button>
       </div>
-    </aside>
+    </div>
   )
 }

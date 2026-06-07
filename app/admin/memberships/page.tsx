@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, Search, Filter, Check, X, Eye, QrCode } from 'lucide-react'
 import Link from 'next/link'
-import { AdminSidebar } from '@/components/admin-sidebar'
 
 interface BonusCard {
   id: string
@@ -69,9 +68,8 @@ export default function AdminBonusCardsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-black pt-20 flex">
-      <AdminSidebar />
-      <main className="flex-1 ml-64 p-8">
+    <div className="min-h-screen bg-black pt-20">
+      <main className="p-4 md:p-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

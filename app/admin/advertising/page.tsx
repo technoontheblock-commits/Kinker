@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Printer, Check, CreditCard, Smartphone, Calendar, ShoppingCart, Download, ScanLine, Crown } from 'lucide-react'
-import { AdminSidebar } from '@/components/admin-sidebar'
 
 const A4_WIDTH = '210mm'
 const A4_HEIGHT = '297mm'
@@ -190,8 +189,7 @@ export default function AdminAdvertisingPage() {
 
   return (
     <div className="min-h-screen bg-black pt-20">
-      <AdminSidebar />
-      <div className="ml-64 p-8">
+      <main className="p-4 md:p-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -244,7 +242,7 @@ export default function AdminAdvertisingPage() {
             </div>
           </div>
         </motion.div>
-      </div>
+      </main>
     </div>
   )
 }
