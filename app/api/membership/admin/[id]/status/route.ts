@@ -87,7 +87,7 @@ export async function PATCH(
               .from('referral_points')
               .insert([{
                 user_id: referrerUserId,
-                points: 200,
+                points: 100,
                 source_bonus_card_id: card.id
               }])
 
@@ -102,8 +102,8 @@ export async function PATCH(
               await supabase
                 .from('user_rewards')
                 .update({
-                  points: (existingRewards.points || 0) + 200,
-                  lifetime_points: (existingRewards.lifetime_points || 0) + 200,
+                  points: (existingRewards.points || 0) + 100,
+                  lifetime_points: (existingRewards.lifetime_points || 0) + 100,
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', existingRewards.id)
@@ -112,7 +112,7 @@ export async function PATCH(
                 .from('user_rewards')
                 .insert({
                   user_id: referrerUserId,
-                  points: 200,
+                  points: 100,
                   lifetime_points: 200,
                   tier: 'Bronze'
                 })
