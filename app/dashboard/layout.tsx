@@ -129,7 +129,7 @@ export default function DashboardLayout({
           <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+              const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href + '/'))
               
               return (
                 <Link

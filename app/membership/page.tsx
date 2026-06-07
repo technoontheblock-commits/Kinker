@@ -28,10 +28,12 @@ export default function BonusCardPage() {
   const [validatingCode, setValidatingCode] = useState(false)
 
   // Auto-fill referral code from URL ?ref=CODE
+  const [hasHardcodedRef, setHasHardcodedRef] = useState(false)
   useEffect(() => {
     const refCode = searchParams.get('ref')
     if (refCode) {
       setFormData(prev => ({ ...prev, referral_code: refCode.toUpperCase() }))
+      setHasHardcodedRef(true)
     }
   }, [searchParams])
 
@@ -303,12 +305,23 @@ export default function BonusCardPage() {
                   </div>
 
                   <div>
-                    <label className="block text-white/60 text-sm mb-2">Referral-Code (optional)</label>
+                    <label className="block text-white/60 text-sm mb-2">
+                      Referral-Code {hasHardcodedRef ? '(festgelegt)' : '(optional)'}
+                    </label>
                     <input
                       type="text"
                       value={formData.referral_code}
-                      onChange={(e) => setFormData({ ...formData, referral_code: e.target.value.toUpperCase() })}
-                      className="w-full px-4 py-3 bg-black rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors uppercase"
+                      onChange={(e) => {
+                        if (!hasHardcodedRef) {
+                          setFormData({ ...formData, referral_code: e.target.value.toUpperCase() })
+                        }
+                      }}
+                      disabled={hasHardcodedRef}
+                      className={`w-full px-4 py-3 bg-black rounded-xl border text-white placeholder-white/30 focus:border-red-500 focus:outline-none transition-colors uppercase ${
+                        hasHardcodedRef
+                          ? 'border-green-500/50 bg-green-500/10 cursor-not-allowed'
+                          : 'border-white/10'
+                      }`}
                       placeholder="z.B. LUCA-2026-A7B2"
                     />
                     {validatingCode && (
