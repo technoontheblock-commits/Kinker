@@ -80,25 +80,25 @@ export default function AdminLayout({
         )}
       </AnimatePresence>
 
-      <div className="flex">
-        {/* Sidebar - Desktop: fixed, Mobile: slide-in overlay */}
-        <aside className={`
-          fixed z-50 bg-neutral-900 border-r border-white/10 flex flex-col
-          transition-transform duration-300 ease-in-out
-          md:left-0 md:top-20 md:w-64 md:h-[calc(100vh-5rem)] md:translate-x-0
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          top-[4.5rem] left-0 w-64 h-[calc(100vh-4.5rem)]
-        `}>
-          <AdminSidebar onClose={() => setSidebarOpen(false)} />
-        </aside>
+      <AdminTabProvider>
+        <div className="flex">
+          {/* Sidebar - Desktop: fixed, Mobile: slide-in overlay */}
+          <aside className={`
+            fixed z-50 bg-neutral-900 border-r border-white/10 flex flex-col
+            transition-transform duration-300 ease-in-out
+            md:left-0 md:top-20 md:w-64 md:h-[calc(100vh-5rem)] md:translate-x-0
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            top-[4.5rem] left-0 w-64 h-[calc(100vh-4.5rem)]
+          `}>
+            <AdminSidebar onClose={() => setSidebarOpen(false)} />
+          </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 md:ml-64 mt-10 md:mt-0 p-4 md:p-8 min-h-screen">
-          <AdminTabProvider>
+          {/* Main Content */}
+          <main className="flex-1 md:ml-64 mt-10 md:mt-0 p-4 md:p-8 min-h-screen">
             {children}
-          </AdminTabProvider>
-        </main>
-      </div>
+          </main>
+        </div>
+      </AdminTabProvider>
     </div>
   )
 }
