@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Membership Claim System**: Einlösung von Membership-Codes über `/membership/claim` mit automatischer Account-Erstellung für Gäste
+  - Gäste können Membership-Codes einlösen und erhalten automatisch einen Account
+  - Neue Accounts werden bei der Einlösung priorisiert erstellt (vorhandene Accounts werden korrekt erkannt)
+  - Admin-Panel (`/admin/membership/validierung`) zum Drucken und Verwalten von Claim-Codes
+  - Admin-Benachrichtigungen und E-Mail-Bestätigungen bei erfolgreicher Einlösung
+  - Admin-E-Mail an alle Admins bei neuer Claim-Einlösung
+  - Kunden-E-Mail-Bestätigung mit Membership-Details nach erfolgreicher Einlösung
+  - Druck-Optimierung: Claim-Bereich wird ohne Admin-Sidebar gedruckt
 - **Dynamic Payment Links**: Zahlungslinks und Verwendungszwecke werden jetzt dynamisch vom Backend generiert (Preis, Produktname, Verwendungszweck)
 - **Cash Payment Instructions**: Bei Barzahlung wird auf der Erfolgsseite eine Schritt-für-Schritt-Anleitung angezeigt (Kartennummer bereithalten → Bezahlen → Aktivieren lassen)
 - **QR Code Scanner**: Vollständiger QR-Code-Scanner für Membership-Karten mit `html5-qrcode`
@@ -93,6 +101,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Gruppiert nach Monaten
   - Suchfunktion nach Code, Name, E-Mail oder Kartennummer
   - Zeigt gesparten Betrag und Zahlungsstatus an
+  - Redesign der Tabellenansicht mit verbesserter Layout-Struktur
+- **Referral Shareable Link & QR Code**: Dashboard zeigt jetzt einen teilbaren Referral-Link und QR-Code an
+  - `/dashboard/membership`: Link und QR-Code zum Kopieren/Teilen
+  - QR-Code-Modal mit Download-Option
+- **CoWorker Role & Filter**: Admin-Referral-Seite unterstützt jetzt Filterung nach CoWorker-Rolle
+  - Mitarbeiter-Referrals können separat gefiltert werden
+  - Anzeige der gesamten Ersparnis pro Filter
 - **Admin Performance**: Ladezeit-Optimierungen im Admin-Dashboard
   - Auth-Check entfernt aus `page.tsx` (wird jetzt zentral im Layout gemacht)
   - On-Demand Datenladen: Nur Dashboard-Daten werden initial geladen, andere Tabs laden bei erstmaligem Öffnen
@@ -104,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Admin Navigation Highlight**: Sidebar hebt jetzt nur noch den tatsächlich ausgewählten Tab hervor
   - Problem: Alle internen Tabs (Dashboard, Users, Notifications, Careers, etc.) zeigten gleichzeitig den Aktiv-Zustand (rot), da sie alle `href: '/admin'` teilten und die Sidebar nur per `pathname === '/admin'` geprüft hat
   - Lösung: `AdminTabContext` eingeführt, der `activeTab`-State zwischen Layout und Seite teilt. Interne Tabs matchen jetzt über den Context, externe Seiten weiterhin per URL
+  - `AdminTabProvider` wird jetzt korrekt um Sidebar und Main Content gewrappt, sodass der Context in beiden Bereichen verfügbar ist
 - **Membership PDF Attachment**: PDF wird jetzt zuverlässig als E-Mail-Anhang verschickt durch Verwendung eines PNG-Buffers für den QR-Code statt Data-URL
 - **Referral Points Sync**: Referral-Belohnungen (200 Punkte) werden jetzt korrekt in das Rewards-System synchronisiert (`user_rewards` + `points_history`) und sind auf `/rewards` sichtbar
 
@@ -117,3 +133,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 - **Supabase RLS Optimization**: `auth_rls_initplan`-Warnungen behoben durch Wrappen aller `auth.uid()` / `auth.jwt()`-Aufrufe in RLS Policies mit `(select auth.<function>())`. Betrifft 35 Policies über 14 Tabellen (user_profiles, user_wallets, wallet_transactions, orders, order_items, user_rewards, points_history, vip_bookings, forum_*, kanban_*). Keine funktionale oder visuelle Änderung.
+
+### Performance Analysis (Identified, not yet implemented)
+- **Image Optimization OFF**: `next.config.js` has `images.unoptimized: true` which disables Next.js automatic image compression, WebP/AVIF conversion, and responsive sizing. Removing this would significantly improve LCP (Largest Contentful Paint).
+- **No Page Caching**: `app/page.tsx` and `app/events/page.tsx` use `export const dynamic = 'force-dynamic'` plus `cache: 'no-store'` on Eventfrog API calls. Every visitor triggers fresh API calls. Implementing `revalidate: 300` (ISR) would reduce this from N calls/minute to 1 call/5min.
+- **Missing `display: swap` on Fonts**: `app/layout.tsx` loads Inter and Space_Grotesk without `display: 'swap'`, causing potential FOIT (Flash of Invisible Text).
+- **Heavy Libraries in Main Bundle**: `framer-motion` is imported on almost every page. `html5-qrcode` is correctly lazy-loaded already. `@react-pdf/renderer` (~500kb) is loaded wherever PDFs are generated.
+- **Too Many Client Components**: Navigation, FooterWrapper, CookieConsentBanner, and AnalyticsWrapper are `use client` and load on every page. FooterWrapper could become a Server Component using `headers()`.
+- **No Bundle Analyzer**: No `@next/bundle-analyzer` installed, making it hard to identify which dependencies bloat the bundle.
+- **Scanner already optimized**: `html5-qrcode` is dynamically imported (`await import('html5-qrcode')`) in `app/scanner/page.tsx` — no action needed here.
