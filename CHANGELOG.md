@@ -96,5 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Admin-Hauptseite (`/admin`) in 12 lazy-loaded Tab-Komponenten aufgeteilt via `next/dynamic`, reduziert von 2875 auf 915 Zeilen (-68%)
 
 ### Fixed
+- **Admin Navigation Highlight**: Sidebar hebt jetzt nur noch den tatsächlich ausgewählten Tab hervor
+  - Problem: Alle internen Tabs (Dashboard, Users, Notifications, Careers, etc.) zeigten gleichzeitig den Aktiv-Zustand (rot), da sie alle `href: '/admin'` teilten und die Sidebar nur per `pathname === '/admin'` geprüft hat
+  - Lösung: `AdminTabContext` eingeführt, der `activeTab`-State zwischen Layout und Seite teilt. Interne Tabs matchen jetzt über den Context, externe Seiten weiterhin per URL
 - **Membership PDF Attachment**: PDF wird jetzt zuverlässig als E-Mail-Anhang verschickt durch Verwendung eines PNG-Buffers für den QR-Code statt Data-URL
 - **Referral Points Sync**: Referral-Belohnungen (200 Punkte) werden jetzt korrekt in das Rewards-System synchronisiert (`user_rewards` + `points_history`) und sind auf `/rewards` sichtbar
