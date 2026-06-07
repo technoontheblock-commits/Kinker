@@ -2,7 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Gift, Calendar, CreditCard, Search, ArrowRightLeft, Briefcase } from 'lucide-react'
+import {
+  Gift,
+  Calendar,
+  CreditCard,
+  Search,
+  Briefcase,
+  User,
+  ArrowRight,
+  Hash,
+  Clock
+} from 'lucide-react'
 
 interface ReferralRedemption {
   id: string
@@ -42,11 +52,16 @@ function formatPrice(cents: number): string {
   return `CHF ${(cents / 100).toFixed(2)}`
 }
 
-function formatDate(dateStr: string): string {
+function formatDateShort(dateStr: string): string {
   return new Date(dateStr).toLocaleString('de-CH', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric',
+    year: 'numeric'
+  })
+}
+
+function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleString('de-CH', {
     hour: '2-digit',
     minute: '2-digit'
   })
@@ -77,16 +92,13 @@ export default function AdminReferralsPage() {
     }
   }
 
-  // Apply coworker filter first
   const filteredByCoworker = coworkerOnly
     ? redemptions.filter(r => r.referrer_role === 'coworker')
     : redemptions
 
-  // Group by month
   const monthGroups = filteredByCoworker.reduce<MonthGroup[]>((groups, redemption) => {
     const monthKey = formatMonthKey(redemption.purchased_at)
     const existingGroup = groups.find(g => g.monthKey === monthKey)
-
     if (existingGroup) {
       existingGroup.redemptions.push(redemption)
     } else {
@@ -99,7 +111,6 @@ export default function AdminReferralsPage() {
     return groups
   }, [])
 
-  // Filter by search
   const filteredGroups = monthGroups.map(group => ({
     ...group,
     redemptions: group.redemptions.filter(r =>
@@ -118,13 +129,11 @@ export default function AdminReferralsPage() {
 
   return (
     <div className="min-h-screen bg-black pt-20">
-      <div className="max-w-5xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+      <div className="max-w-6xl mx-auto px-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                 <Gift className="w-8 h-8 text-red-500" />
@@ -134,14 +143,15 @@ export default function AdminReferralsPage() {
                 Übersicht aller eingelösten Referral-Codes
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
+            <div className="flex items-center gap-6 bg-neutral-900/50 rounded-xl border border-white/10 px-5 py-3">
+              <div className="text-center">
                 <p className="text-2xl font-bold text-white">{totalCount}</p>
-                <p className="text-white/40 text-sm">{coworkerOnly ? 'CoWorker' : 'Total'}</p>
+                <p className="text-white/40 text-xs">{coworkerOnly ? 'CoWorker' : 'Total'}</p>
               </div>
-              <div className="text-right">
+              <div className="w-px h-10 bg-white/10" />
+              <div className="text-center">
                 <p className="text-2xl font-bold text-red-500">{formatPrice(totalSaved)}</p>
-                <p className="text-white/40 text-sm">Erspart</p>
+                <p className="text-white/40 text-xs">Erspart</p>
               </div>
             </div>
           </div>
@@ -152,7 +162,7 @@ export default function AdminReferralsPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
               <input
                 type="text"
-                placeholder="Suchen nach Code, Name, E-Mail oder Kartennummer..."
+                placeholder="Suchen nach Name, E-Mail, Code oder Kartennummer..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-neutral-900 rounded-xl border border-white/10 text-white placeholder-white/30 focus:border-red-500 focus:outline-none"
@@ -160,7 +170,7 @@ export default function AdminReferralsPage() {
             </div>
             <button
               onClick={() => setCoworkerOnly(!coworkerOnly)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl border transition-colors font-medium ${
+              className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl border transition-colors font-medium ${
                 coworkerOnly
                   ? 'bg-green-500/20 border-green-500/50 text-green-500'
                   : 'bg-neutral-900 border-white/10 text-white/70 hover:text-white hover:border-white/20'
@@ -195,78 +205,173 @@ export default function AdminReferralsPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-10">
               {filteredGroups.map((group) => (
                 <div key={group.monthKey}>
                   {/* Month Header */}
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-5">
                     <Calendar className="w-5 h-5 text-red-500" />
                     <h2 className="text-xl font-bold text-white">{group.month}</h2>
-                    <span className="text-white/40 text-sm">
+                    <span className="text-white/40 text-sm bg-white/5 px-3 py-1 rounded-full">
                       {group.redemptions.length} {group.redemptions.length === 1 ? 'Eintrag' : 'Einträge'}
                     </span>
                     <div className="flex-1 h-px bg-white/10" />
                   </div>
 
-                  {/* Cards */}
-                  <div className="space-y-3">
-                    {group.redemptions.map((redemption) => (
+                  {/* Table Header (Desktop) */}
+                  <div className="hidden lg:grid grid-cols-12 gap-4 px-5 pb-2 text-white/40 text-sm font-medium">
+                    <div className="col-span-3">Eingelöst von</div>
+                    <div className="col-span-3">Code von</div>
+                    <div className="col-span-2">Code</div>
+                    <div className="col-span-2">Karte & Datum</div>
+                    <div className="col-span-2 text-right">Preis & Status</div>
+                  </div>
+
+                  {/* Rows */}
+                  <div className="space-y-2">
+                    {group.redemptions.map((r) => (
                       <div
-                        key={redemption.id}
-                        className="bg-neutral-900/50 rounded-xl border border-white/10 p-5 hover:border-red-500/30 transition-colors"
+                        key={r.id}
+                        className="bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/30 transition-colors overflow-hidden"
                       >
-                        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                          {/* Referee (who redeemed) */}
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                              <Users className="w-5 h-5 text-red-500" />
+                        {/* Desktop Layout */}
+                        <div className="hidden lg:grid grid-cols-12 gap-4 p-4 items-center">
+                          {/* Referee */}
+                          <div className="col-span-3 flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 bg-red-500/15 rounded-full flex items-center justify-center flex-shrink-0">
+                              <User className="w-4 h-4 text-red-500" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-white font-medium truncate">{redemption.referee_name}</p>
-                              <p className="text-white/40 text-sm truncate">{redemption.referee_email}</p>
+                              <p className="text-white font-medium text-sm truncate">{r.referee_name}</p>
+                              <p className="text-white/40 text-xs truncate">{r.referee_email}</p>
                             </div>
                           </div>
 
-                          {/* Arrow */}
-                          <div className="flex items-center gap-2 text-white/30 flex-shrink-0">
-                            <ArrowRightLeft className="w-4 h-4" />
-                            <span className="text-sm font-mono bg-white/5 px-2 py-1 rounded">
-                              {redemption.referral_code}
-                            </span>
-                          </div>
-
-                          {/* Referrer (who gave the code) */}
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                              <Gift className="w-5 h-5 text-green-500" />
+                          {/* Referrer */}
+                          <div className="col-span-3 flex items-center gap-3 min-w-0">
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              r.referrer_role === 'coworker' ? 'bg-green-500/15' : 'bg-green-500/15'
+                            }`}>
+                              <Gift className={`w-4 h-4 ${
+                                r.referrer_role === 'coworker' ? 'text-green-500' : 'text-green-500'
+                              }`} />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-white font-medium truncate">{redemption.referrer_name}</p>
-                              <p className="text-white/40 text-sm truncate">{redemption.referrer_email}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-white font-medium text-sm truncate">{r.referrer_name}</p>
+                                {r.referrer_role === 'coworker' && (
+                                  <span className="text-[10px] bg-green-500/20 text-green-500 px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0">
+                                    CW
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-white/40 text-xs truncate">{r.referrer_email}</p>
                             </div>
                           </div>
 
-                          {/* Meta */}
-                          <div className="flex items-center gap-4 flex-shrink-0 lg:text-right">
-                            <div>
-                              <p className="text-white font-mono text-sm">{redemption.card_number}</p>
-                              <p className="text-white/40 text-xs">{formatDate(redemption.purchased_at)}</p>
+                          {/* Code */}
+                          <div className="col-span-2">
+                            <div className="flex items-center gap-2">
+                              <Hash className="w-3.5 h-3.5 text-white/30" />
+                              <span className="text-white font-mono text-sm">{r.referral_code}</span>
                             </div>
-                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              redemption.payment_status === 'paid'
+                          </div>
+
+                          {/* Card & Date */}
+                          <div className="col-span-2">
+                            <p className="text-white font-mono text-sm">{r.card_number}</p>
+                            <div className="flex items-center gap-1 text-white/40 text-xs mt-0.5">
+                              <Clock className="w-3 h-3" />
+                              <span>{formatDateShort(r.purchased_at)} {formatTime(r.purchased_at)}</span>
+                            </div>
+                          </div>
+
+                          {/* Price & Status */}
+                          <div className="col-span-2 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <CreditCard className="w-3.5 h-3.5 text-white/40" />
+                              <span className="text-white font-medium text-sm">{formatPrice(r.purchase_price)}</span>
+                            </div>
+                            <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                              r.payment_status === 'paid'
                                 ? 'bg-green-500/20 text-green-500'
-                                : redemption.payment_status === 'pending'
+                                : r.payment_status === 'pending'
                                 ? 'bg-yellow-500/20 text-yellow-500'
                                 : 'bg-red-500/20 text-red-500'
                             }`}>
-                              {redemption.payment_status === 'paid' ? 'Bezahlt'
-                                : redemption.payment_status === 'pending' ? 'Ausstehend'
+                              {r.payment_status === 'paid' ? 'Bezahlt'
+                                : r.payment_status === 'pending' ? 'Ausstehend'
                                 : 'Storniert'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Mobile Layout */}
+                        <div className="lg:hidden p-4">
+                          {/* Top row: Referee → Referrer */}
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Eingelöst von</p>
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-red-500/15 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <User className="w-3.5 h-3.5 text-red-500" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-white font-medium text-sm truncate">{r.referee_name}</p>
+                                  <p className="text-white/40 text-xs truncate">{r.referee_email}</p>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 text-white/60">
-                              <CreditCard className="w-4 h-4" />
-                              <span className="text-sm font-medium">{formatPrice(redemption.purchase_price)}</span>
+                            <ArrowRight className="w-4 h-4 text-white/20 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Code von</p>
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-green-500/15 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <Gift className="w-3.5 h-3.5 text-green-500" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="text-white font-medium text-sm truncate">{r.referrer_name}</p>
+                                    {r.referrer_role === 'coworker' && (
+                                      <span className="text-[10px] bg-green-500/20 text-green-500 px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0">
+                                        CW
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-white/40 text-xs truncate">{r.referrer_email}</p>
+                                </div>
+                              </div>
                             </div>
+                          </div>
+
+                          {/* Bottom row: Code, Card, Price, Status */}
+                          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-white/10">
+                            <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                              <Hash className="w-3 h-3 text-white/40" />
+                              <span className="text-white font-mono text-xs">{r.referral_code}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-white/40 text-xs">Karte</span>
+                              <span className="text-white font-mono text-xs">{r.card_number}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 ml-auto">
+                              <CreditCard className="w-3 h-3 text-white/40" />
+                              <span className="text-white font-medium text-sm">{formatPrice(r.purchase_price)}</span>
+                            </div>
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                              r.payment_status === 'paid'
+                                ? 'bg-green-500/20 text-green-500'
+                                : r.payment_status === 'pending'
+                                ? 'bg-yellow-500/20 text-yellow-500'
+                                : 'bg-red-500/20 text-red-500'
+                            }`}>
+                              {r.payment_status === 'paid' ? 'Bezahlt'
+                                : r.payment_status === 'pending' ? 'Ausstehend'
+                                : 'Storniert'}
+                            </span>
+                            <span className="text-white/30 text-xs">
+                              {formatDateShort(r.purchased_at)}
+                            </span>
                           </div>
                         </div>
                       </div>
