@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Printer, Plus, QrCode, Copy, CheckCircle, XCircle, Clock } from 'lucide-react'
 import QRCode from 'qrcode'
+import Image from 'next/image'
 
 interface Claim {
   id: string
@@ -110,12 +111,12 @@ export default function AdminMembershipValidationPage() {
                 </div>
 
                 <div className="flex flex-col items-center gap-6">
-                  <img src="/images/logo.png" alt="KINKER" width={100} className="mb-2" />
+                  <Image src="/images/logo.png" alt="KINKER" width={100} height={100} className="mb-2" />
                   <h3 className="text-2xl font-bold text-white">KINKER <span className="text-red-500">MEMBERSHIP</span></h3>
                   <p className="text-white/60 text-sm text-center">Scanne den QR-Code, um deine Membership zu beanspruchen.</p>
                   
                   {qrDataUrl && (
-                    <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 rounded-xl border-4 border-white/10" />
+                    <Image src={qrDataUrl} alt="QR Code" width={256} height={256} className="w-64 h-64 rounded-xl border-4 border-white/10" />
                   )}
                   
                   <p className="text-white/40 text-xs text-center break-all px-4">
@@ -148,10 +149,10 @@ export default function AdminMembershipValidationPage() {
           {activeClaim && qrDataUrl && (
             <div className="print-only hidden">
               <div className="flex flex-col items-center justify-center gap-8 py-16">
-                <img src="/images/logo.png" alt="KINKER" width={140} />
+                <Image src="/images/logo.png" alt="KINKER" width={140} height={140} />
                 <h1 className="text-4xl font-bold text-black">KINKER <span className="text-red-600">MEMBERSHIP</span></h1>
                 <p className="text-black/60 text-base text-center">Scanne den QR-Code, um deine Membership zu beanspruchen.</p>
-                <img src={qrDataUrl} alt="QR Code" className="w-72 h-72" />
+                <Image src={qrDataUrl} alt="QR Code" width={288} height={288} className="w-72 h-72" />
                 <p className="text-black/40 text-sm text-center break-all px-8">
                   {typeof window !== 'undefined' && window.location.origin}/membership/claim?token={activeClaim.token}
                 </p>

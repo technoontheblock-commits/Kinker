@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { Upload, X, Image as ImageIcon, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
 
 interface DJ {
   name: string
@@ -579,10 +580,11 @@ export function EventForm({ event, onClose, onSuccess }: { event: any, onClose: 
               <span className="text-white/70 text-sm">Image Preview</span>
             </div>
             <div className="relative w-full h-48 rounded-lg overflow-hidden">
-              <img 
+              <Image 
                 src={previewUrl} 
                 alt="Preview" 
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
               <button
                 type="button"
