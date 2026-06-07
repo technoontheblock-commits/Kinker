@@ -88,6 +88,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Sidebar wird auf Desktop fixed, auf Mobile als Overlay dargestellt
   - Alle Admin-Seiten (`/admin`, `/admin/memberships`, `/admin/membership/validierung`, `/admin/advertising`) nutzen jetzt das Shared Layout
 - **Admin Table Scroll**: Tabellen im Admin-Bereich sind jetzt horizontal scrollbar (`overflow-x-auto`) für kleine Bildschirme
+- **Admin Referral Tracking**: Neue Seite `/admin/referrals` zur Nachverfolgung eingelöster Referral-Codes
+  - Zeigt an, wer einen Code eingelöst hat und von wem der Code stammt
+  - Gruppiert nach Monaten
+  - Suchfunktion nach Code, Name, E-Mail oder Kartennummer
+  - Zeigt gesparten Betrag und Zahlungsstatus an
 - **Admin Performance**: Ladezeit-Optimierungen im Admin-Dashboard
   - Auth-Check entfernt aus `page.tsx` (wird jetzt zentral im Layout gemacht)
   - On-Demand Datenladen: Nur Dashboard-Daten werden initial geladen, andere Tabs laden bei erstmaligem Öffnen
