@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { getEvents } from '@/lib/events'
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
+import { useAdminTab } from './components/AdminTabContext'
 
 // Mock Data
 const mockUsers = [
@@ -18,7 +19,7 @@ const mockUsers = [
 
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const { activeTab, setActiveTab } = useAdminTab()
   const [users, setUsers] = useState<any[]>([])
   const [notifications, setNotifications] = useState<any[]>([])
   const [jobs, setJobs] = useState<any[]>([])

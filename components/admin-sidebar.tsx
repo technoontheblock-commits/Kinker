@@ -21,6 +21,7 @@ import {
   ScanLine,
   Printer,
 } from 'lucide-react'
+import { useAdminTab } from '@/app/admin/components/AdminTabContext'
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/admin' },
@@ -42,6 +43,7 @@ const tabs = [
 
 export function AdminSidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
+  const { activeTab, setActiveTab } = useAdminTab()
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
@@ -61,9 +63,20 @@ export function AdminSidebar({ onClose }: { onClose?: () => void }) {
   }, [])
 
   const isActive = (tab: typeof tabs[0]) => {
-    if (tab.href === '/admin' && pathname === '/admin') return true
-    if (tab.href !== '/admin' && pathname?.startsWith(tab.href)) return true
-    return false
+    // External pages: match by pathname
+    if (tab.href !== '/admin') {
+      return pathname?.startsWith(tab.href)
+    }
+    // Internal tabs on /admin: match by activeTab context
+    return activeTab === tab.id
+  }
+
+  const handleClick = (tab: typeof tabs[0]) => {
+    // For internal tabs, update the active tab context
+    if (tab.href === '/admin') {
+      setActiveTab(tab.id)
+    }
+    onClose?.()
   }
 
   return (
@@ -79,7 +92,7 @@ export function AdminSidebar({ onClose }: { onClose?: () => void }) {
               <Link
                 key={tab.id}
                 href={tab.href}
-                onClick={onClose}
+                onClick={() => handleClick(tab)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   active
                     ? 'bg-red-500/20 text-red-500'

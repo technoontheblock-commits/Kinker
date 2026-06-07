@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Loader2 } from 'lucide-react'
 import { AdminSidebar } from '@/components/admin-sidebar'
+import { AdminTabProvider } from './components/AdminTabContext'
 
 export default function AdminLayout({ 
   children 
@@ -93,7 +94,9 @@ export default function AdminLayout({
 
         {/* Main Content */}
         <main className="flex-1 md:ml-64 mt-10 md:mt-0 p-4 md:p-8 min-h-screen">
-          {children}
+          <AdminTabProvider>
+            {children}
+          </AdminTabProvider>
         </main>
       </div>
     </div>
