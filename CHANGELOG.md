@@ -88,6 +88,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Sidebar wird auf Desktop fixed, auf Mobile als Overlay dargestellt
   - Alle Admin-Seiten (`/admin`, `/admin/memberships`, `/admin/membership/validierung`, `/admin/advertising`) nutzen jetzt das Shared Layout
 - **Admin Table Scroll**: Tabellen im Admin-Bereich sind jetzt horizontal scrollbar (`overflow-x-auto`) für kleine Bildschirme
+- **Admin Performance**: Ladezeit-Optimierungen im Admin-Dashboard
+  - Auth-Check entfernt aus `page.tsx` (wird jetzt zentral im Layout gemacht)
+  - On-Demand Datenladen: Nur Dashboard-Daten werden initial geladen, andere Tabs laden bei erstmaligem Öffnen
+  - `<img>` durch `next/image` ersetzt für Lazy Loading und automatische Optimierung
+  - Board-Page (`/admin/board`) in dedizierte Komponenten aufgeteilt (`SortableCard`, `SortableList`, `CardModal`, `types`)
+  - Admin-Hauptseite (`/admin`) in 12 lazy-loaded Tab-Komponenten aufgeteilt via `next/dynamic`, reduziert von 2875 auf 915 Zeilen (-68%)
 
 ### Fixed
 - **Membership PDF Attachment**: PDF wird jetzt zuverlässig als E-Mail-Anhang verschickt durch Verwendung eines PNG-Buffers für den QR-Code statt Data-URL
