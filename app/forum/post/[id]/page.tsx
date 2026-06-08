@@ -59,6 +59,13 @@ interface Comment {
   parent?: Comment
 }
 
+interface Reactions {
+  [emoji: string]: {
+    count: number
+    userIds: string[]
+  }
+}
+
 export default function PostDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -66,12 +73,15 @@ export default function PostDetailPage() {
   
   const [post, setPost] = useState<Post | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
+  const [reactions, setReactions] = useState<Reactions>({})
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState<Comment | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const REACTION_EMOJIS = ['👍', '❤️', '🔥', '😂', '😮']
 
   useEffect(() => {
     checkAuth()
@@ -103,6 +113,7 @@ export default function PostDetailPage() {
       if (data.post) {
         setPost(data.post)
         setComments(data.comments || [])
+        setReactions(data.reactions || {})
       }
     } catch (error) {
       console.error('Error loading post:', error)
@@ -207,6 +218,37 @@ export default function PostDetailPage() {
       }
     } catch (error) {
       console.error('Error locking post:', error)
+    }
+  }
+
+  const handleReaction = async (emoji: string) => {
+    if (!user) return
+    try {
+      const res = await fetch('/api/forum/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_id: postId, emoji })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setReactions(prev => {
+          const next = { ...prev }
+          if (data.added) {
+            if (!next[emoji]) next[emoji] = { count: 0, userIds: [] }
+            next[emoji].count++
+            next[emoji].userIds.push(user.id)
+          } else {
+            if (next[emoji]) {
+              next[emoji].count = Math.max(0, next[emoji].count - 1)
+              next[emoji].userIds = next[emoji].userIds.filter((id: string) => id !== user.id)
+              if (next[emoji].count === 0) delete next[emoji]
+            }
+          }
+          return next
+        })
+      }
+    } catch (error) {
+      console.error('Error toggling reaction:', error)
     }
   }
 
@@ -343,8 +385,33 @@ export default function PostDetailPage() {
           </div>
 
           {/* Content */}
-          <div className="prose prose-invert max-w-none">
+          <div className="prose prose-invert max-w-none mb-6">
             <p className="text-white/80 whitespace-pre-wrap text-lg">{post.content}</p>
+          </div>
+
+          {/* Reactions */}
+          <div className="flex items-center gap-2 pt-6 border-t border-white/10">
+            {REACTION_EMOJIS.map(emoji => {
+              const reaction = reactions[emoji]
+              const count = reaction?.count || 0
+              const hasReacted = user && reaction?.userIds?.includes(user.id)
+              return (
+                <button
+                  key={emoji}
+                  onClick={() => handleReaction(emoji)}
+                  disabled={!user}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                    hasReacted
+                      ? 'bg-red-500/20 border border-red-500/40 text-white'
+                      : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white'
+                  } ${!user ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                  title={user ? undefined : 'Melde dich an, um zu reagieren'}
+                >
+                  <span className="text-base">{emoji}</span>
+                  {count > 0 && <span className="font-medium">{count}</span>}
+                </button>
+              )
+            })}
           </div>
         </motion.article>
 

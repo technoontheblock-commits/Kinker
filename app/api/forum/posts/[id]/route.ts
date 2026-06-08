@@ -101,12 +101,28 @@ export async function GET(
       user: comment.user || { name: 'Anonym', email: '', avatar_url: null }
     }))
 
+    // Get reactions grouped by emoji
+    const { data: reactions } = await supabase
+      .from('post_reactions')
+      .select('emoji, user_id')
+      .eq('post_id', id)
+
+    const reactionCounts: Record<string, { count: number; userIds: string[] }> = {}
+    ;(reactions || []).forEach((r: any) => {
+      if (!reactionCounts[r.emoji]) {
+        reactionCounts[r.emoji] = { count: 0, userIds: [] }
+      }
+      reactionCounts[r.emoji].count++
+      reactionCounts[r.emoji].userIds.push(r.user_id)
+    })
+
     return NextResponse.json({
       post: {
         ...post,
         user: postUser || { name: 'Anonym', email: '', avatar_url: null }
       },
-      comments: commentsWithUsers
+      comments: commentsWithUsers,
+      reactions: reactionCounts
     })
 
   } catch (error: any) {
