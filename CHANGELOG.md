@@ -134,6 +134,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Performance
 - **Supabase RLS Optimization**: `auth_rls_initplan`-Warnungen behoben durch Wrappen aller `auth.uid()` / `auth.jwt()`-Aufrufe in RLS Policies mit `(select auth.<function>())`. Betrifft 35 Policies über 14 Tabellen (user_profiles, user_wallets, wallet_transactions, orders, order_items, user_rewards, points_history, vip_bookings, forum_*, kanban_*). Keine funktionale oder visuelle Änderung.
 
+### Added
+- **Forum Emoji Reactions**: Beiträge im Forum können jetzt mit Emojis reagiert werden
+  - Verfügbare Reaktionen: 👍 ❤️ 🔥 😂 😮
+  - Toggle-Verhalten: Klicken hinzufügen, nochmal klicken entfernen
+  - Eigene Reaktionen werden rot hervorgehoben
+  - Anzahl pro Emoji wird angezeigt
+  - Nur eingeloggte User können reagieren
+  - Neue Tabelle `post_reactions` mit RLS Policies
+  - API Route `POST /api/forum/reactions` zum Hinzufügen/Entfernen
+
 ### Performance Analysis (Identified, not yet implemented)
 - **Image Optimization OFF**: `next.config.js` has `images.unoptimized: true` which disables Next.js automatic image compression, WebP/AVIF conversion, and responsive sizing. Removing this would significantly improve LCP (Largest Contentful Paint).
 - **No Page Caching**: `app/page.tsx` and `app/events/page.tsx` use `export const dynamic = 'force-dynamic'` plus `cache: 'no-store'` on Eventfrog API calls. Every visitor triggers fresh API calls. Implementing `revalidate: 300` (ISR) would reduce this from N calls/minute to 1 call/5min.
