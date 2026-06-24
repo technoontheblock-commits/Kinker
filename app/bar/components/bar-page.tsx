@@ -55,6 +55,7 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Customer[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const resetTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -211,6 +212,7 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query)
     setSearchResults([])
+    setSearchError(null)
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
 
     if (query.trim().length < 2) {
@@ -228,14 +230,14 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
         })
         const data = await response.json()
         if (!response.ok) {
-          setError(data.error || 'Suche fehlgeschlagen')
+          setSearchError(data.error || 'Suche fehlgeschlagen')
           setSearchResults([])
         } else {
           setSearchResults(data.customers || [])
-          setError(null)
+          setSearchError(null)
         }
       } catch (err: any) {
-        setError(err.message || 'Netzwerkfehler bei der Suche')
+        setSearchError(err.message || 'Netzwerkfehler bei der Suche')
         setSearchResults([])
       } finally {
         setSearchLoading(false)
@@ -411,7 +413,13 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
                   </p>
                 )}
 
-                {!searchLoading && searchQuery.trim().length >= 2 && searchResults.length === 0 && (
+                {!searchLoading && searchError && (
+                  <p className="text-center text-red-400 py-6 text-sm px-4">
+                    {searchError}
+                  </p>
+                )}
+
+                {!searchLoading && !searchError && searchQuery.trim().length >= 2 && searchResults.length === 0 && (
                   <p className="text-center text-white/40 py-8 text-sm">
                     Keine Kunden gefunden
                   </p>

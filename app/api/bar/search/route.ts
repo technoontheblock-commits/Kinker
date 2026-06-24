@@ -29,26 +29,50 @@ export async function POST(request: NextRequest) {
 
     const supabaseAny = supabase as any
 
-    // 1. Find matching active users by name, email or phone
-    const { data: users, error: usersError } = await supabaseAny
-      .from('users')
-      .select('id, name, email, phone')
-      .eq('status', 'active')
-      .or(`name.ilike.${ilikeTerm},email.ilike.${ilikeTerm},phone.ilike.${ilikeTerm}`)
-      .limit(20)
+    // Search active users by name, email or phone in parallel.
+    // Three separate queries avoid PostgREST .or() parsing issues with
+    // special characters such as dots or @ in email addresses.
+    const selectColumns = 'id, name, email, phone'
+    const [nameResult, emailResult, phoneResult] = await Promise.all([
+      supabaseAny.from('users').select(selectColumns).eq('status', 'active').ilike('name', ilikeTerm).limit(20),
+      supabaseAny.from('users').select(selectColumns).eq('status', 'active').ilike('email', ilikeTerm).limit(20),
+      supabaseAny.from('users').select(selectColumns).eq('status', 'active').ilike('phone', ilikeTerm).limit(20),
+    ])
 
-    if (usersError) {
-      console.error('Bar search users error:', usersError)
-      return NextResponse.json({ error: usersError.message }, { status: 500 })
+    if (nameResult.error) {
+      console.error('Bar search name error:', nameResult.error)
+      return NextResponse.json({ error: nameResult.error.message }, { status: 500 })
+    }
+    if (emailResult.error) {
+      console.error('Bar search email error:', emailResult.error)
+      return NextResponse.json({ error: emailResult.error.message }, { status: 500 })
+    }
+    if (phoneResult.error) {
+      console.error('Bar search phone error:', phoneResult.error)
+      return NextResponse.json({ error: phoneResult.error.message }, { status: 500 })
     }
 
-    if (!users || users.length === 0) {
+    const userById = new Map<string, any>()
+    const addUsers = (rows: any[] | null) => {
+      for (const user of rows || []) {
+        if (user && user.id) {
+          userById.set(user.id, user)
+        }
+      }
+    }
+    addUsers(nameResult.data)
+    addUsers(emailResult.data)
+    addUsers(phoneResult.data)
+
+    const users = Array.from(userById.values()).slice(0, 20)
+
+    if (users.length === 0) {
       return NextResponse.json({ customers: [] })
     }
 
     const userIds = users.map((u: any) => u.id)
 
-    // 2. Load existing wallets for these users
+    // Load existing wallets for these users
     const { data: wallets, error: walletsError } = await supabaseAny
       .from('bar_wallets')
       .select('id, user_id, qr_token, balance, currency')
@@ -59,8 +83,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: walletsError.message }, { status: 500 })
     }
 
-    // 3. Ensure every found user has a wallet (create missing ones)
-    const walletByUserId = new Map((wallets || []).map((w: any) => [w.user_id, w]))
+    // Ensure every found user has a wallet (create missing ones)
+    const walletByUserId = new Map<string, any>((wallets || []).map((w: any) => [w.user_id, w]))
     const missingUserIds = userIds.filter((id: string) => !walletByUserId.has(id))
 
     if (missingUserIds.length > 0) {
