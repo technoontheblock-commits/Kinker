@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireBar } from '@/lib/auth'
 import { createServerSupabase } from '@/lib/supabase'
 import { generateOrderNumber } from '@/lib/bar'
+import { sendBarReceiptEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,6 +79,44 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Guthaben reicht nicht aus' }, { status: 409 })
       }
       return NextResponse.json({ error: message }, { status: 500 })
+    }
+
+    // Send receipt by email if requested. Email failures are logged but do not
+    // fail the payment itself.
+    if (receiptType === 'email' && data?.order_id) {
+      try {
+        const { data: user } = await (supabase as any)
+          .from('users')
+          .select('name, email')
+          .eq('id', customerId)
+          .single()
+
+        if (user?.email) {
+          await sendBarReceiptEmail({
+            to: user.email,
+            customerName: user.name?.split(' ')[0] || user.name || 'Gast',
+            orderNumber,
+            items: validItems.map(item => ({
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              total: item.price * item.quantity,
+            })),
+            subtotal: data.subtotal,
+            tip: data.tip,
+            total: data.total,
+            remainingBalance: data.remaining_balance,
+          })
+
+          // Mark receipt as sent
+          await (supabase as any)
+            .from('bar_orders')
+            .update({ receipt_sent: true })
+            .eq('id', data.order_id)
+        }
+      } catch (emailError) {
+        console.error('Bar receipt email error:', emailError)
+      }
     }
 
     return NextResponse.json({ success: true, result: data })
