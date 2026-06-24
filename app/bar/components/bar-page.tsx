@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Search, X, User, Mail, Phone, Loader2 } from 'lucide-react'
 import type { BarProduct } from '@/lib/database.types'
 import { formatChf } from '@/lib/bar'
 import { QrScanner } from './qr-scanner'
@@ -48,6 +49,12 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
   const [items, setItems] = useState<OrderItem[]>([])
   const [payResult, setPayResult] = useState<PayResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Customer[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const resetTimerRef = useRef<NodeJS.Timeout | null>(null)
   const keepAliveRef = useRef<NodeJS.Timeout | null>(null)
@@ -117,10 +124,17 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
     setItems([])
     setPayResult(null)
     setError(null)
+    setSearchQuery('')
+    setSearchResults([])
+    setSearchOpen(false)
     setStep('scan')
     if (resetTimerRef.current) {
       clearTimeout(resetTimerRef.current)
       resetTimerRef.current = null
+    }
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+      searchTimeoutRef.current = null
     }
   }, [])
 
@@ -193,6 +207,50 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
+  const handleSearch = useCallback(async (query: string) => {
+    setSearchQuery(query)
+    setSearchResults([])
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+
+    if (query.trim().length < 2) {
+      setSearchLoading(false)
+      return
+    }
+
+    setSearchLoading(true)
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch('/api/bar/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query.trim() }),
+        })
+        const data = await response.json()
+        if (!response.ok) {
+          setError(data.error || 'Suche fehlgeschlagen')
+          setSearchResults([])
+        } else {
+          setSearchResults(data.customers || [])
+          setError(null)
+        }
+      } catch (err: any) {
+        setError(err.message || 'Netzwerkfehler bei der Suche')
+        setSearchResults([])
+      } finally {
+        setSearchLoading(false)
+      }
+    }, 250)
+  }, [])
+
+  const selectCustomer = useCallback((customer: Customer) => {
+    setCustomer(customer)
+    setItems([])
+    setSearchOpen(false)
+    setSearchQuery('')
+    setSearchResults([])
+    setStep('order')
+  }, [])
+
   return (
     <div className="fixed inset-0 z-[100] bg-black text-white overflow-hidden">
       {/* Header bar */}
@@ -239,7 +297,10 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
               exit={{ opacity: 0 }}
               className="h-full"
             >
-              <QrScanner onScan={handleScanSuccess} />
+              <QrScanner
+                onScan={handleScanSuccess}
+                onManualSearch={() => setSearchOpen(true)}
+              />
             </motion.div>
           )}
 
@@ -294,6 +355,101 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Manual customer search modal */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-40 flex items-center justify-center bg-black/90 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-neutral-900 rounded-2xl p-6 w-full max-w-md border border-white/10"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-display font-bold">Kunde suchen</h2>
+                <button
+                  onClick={() => {
+                    setSearchOpen(false)
+                    setSearchQuery('')
+                    setSearchResults([])
+                  }}
+                  className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="relative mb-4">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Name, E-Mail oder Telefon"
+                  value={searchQuery}
+                  onChange={e => handleSearch(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors"
+                />
+              </div>
+
+              <div className="min-h-[120px]">
+                {searchLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 text-red-500 animate-spin" />
+                  </div>
+                )}
+
+                {!searchLoading && searchQuery.trim().length < 2 && (
+                  <p className="text-center text-white/40 py-8 text-sm">
+                    Mindestens 2 Zeichen eingeben
+                  </p>
+                )}
+
+                {!searchLoading && searchQuery.trim().length >= 2 && searchResults.length === 0 && (
+                  <p className="text-center text-white/40 py-8 text-sm">
+                    Keine Kunden gefunden
+                  </p>
+                )}
+
+                {!searchLoading && searchResults.length > 0 && (
+                  <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                    {searchResults.map(customer => (
+                      <button
+                        key={customer.id}
+                        onClick={() => selectCustomer(customer)}
+                        className="w-full text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-500/30 rounded-xl transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold text-white flex items-center gap-2">
+                            <User className="w-4 h-4 text-red-500" />
+                            {customer.name}
+                          </span>
+                          <span className="font-display font-bold text-white">
+                            {formatChf(customer.balance)}
+                          </span>
+                        </div>
+                        <div className="text-sm text-white/50 space-y-0.5">
+                          {customer.email && (
+                            <p className="flex items-center gap-2">
+                              <Mail className="w-3 h-3" />
+                              {customer.email}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Footer info */}
       <div className="absolute bottom-2 left-0 right-0 z-20 text-center text-[10px] text-white/30 pointer-events-none">

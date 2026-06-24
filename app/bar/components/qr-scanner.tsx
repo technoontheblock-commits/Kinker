@@ -2,16 +2,17 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Camera, ScanLine, RefreshCw, AlertCircle } from 'lucide-react'
+import { Camera, ScanLine, RefreshCw, AlertCircle, Search } from 'lucide-react'
 import jsQR from 'jsqr'
 import { cn } from '@/lib/utils'
 import { BAR_WALLET_QR_PREFIX } from '@/lib/bar'
 
 interface QrScannerProps {
   onScan: (qrCode: string) => void
+  onManualSearch?: () => void
 }
 
-export function QrScanner({ onScan }: QrScannerProps) {
+export function QrScanner({ onScan, onManualSearch }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -246,12 +247,21 @@ export function QrScanner({ onScan }: QrScannerProps) {
       </div>
 
       {/* Bottom info */}
-      <div className="absolute bottom-24 left-0 right-0 z-10 text-center px-6">
+      <div className="absolute bottom-24 left-0 right-0 z-10 text-center px-6 space-y-3">
         <p className="text-white/50 text-sm">
           Halte den Kunden-QR-Code im roten Rahmen
         </p>
         {torchOn && (
-          <p className="text-white/40 text-xs mt-1">Licht aktiviert</p>
+          <p className="text-white/40 text-xs">Licht aktiviert</p>
+        )}
+        {onManualSearch && (
+          <button
+            onClick={onManualSearch}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium transition-colors"
+          >
+            <Search className="w-4 h-4" />
+            Kunde manuell suchen
+          </button>
         )}
       </div>
 
