@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         name: user.name,
         firstName: getFirstName(user.name),
         email: user.email,
+        phone: user.phone,
         balance: Number(wallet.balance),
         currency: wallet.currency,
         walletToken: wallet.qr_token,

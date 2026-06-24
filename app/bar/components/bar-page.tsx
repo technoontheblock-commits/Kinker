@@ -17,6 +17,7 @@ export interface Customer {
   name: string
   firstName: string
   email: string | null
+  phone: string | null
   balance: number
   currency: string
   walletToken: string
@@ -438,6 +439,12 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
                             <p className="flex items-center gap-2">
                               <Mail className="w-3 h-3" />
                               {customer.email}
+                            </p>
+                          )}
+                          {customer.phone && (
+                            <p className="flex items-center gap-2">
+                              <Phone className="w-3 h-3" />
+                              {customer.phone}
                             </p>
                           )}
                         </div>
