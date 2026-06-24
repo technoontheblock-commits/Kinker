@@ -6,6 +6,9 @@
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
 ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'user', 'moderator', 'coworker', 'bar'));
 
+-- 1b. Ensure phone column exists on users (used for bar customer search)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+
 -- 2. Products available at the bar
 CREATE TABLE IF NOT EXISTS bar_products (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
