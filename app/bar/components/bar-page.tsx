@@ -195,16 +195,11 @@ export function BarPage({ staffName, initialProducts }: BarPageProps) {
 
         setPayResult(data.result as PayResult)
         setStep('success')
-
-        if (resetTimerRef.current) clearTimeout(resetTimerRef.current)
-        resetTimerRef.current = setTimeout(() => {
-          resetFlow()
-        }, 6000)
       } catch (err: any) {
         setError(err.message || 'Netzwerkfehler bei der Bezahlung')
       }
     },
-    [customer, items, resetFlow]
+    [customer, items]
   )
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)

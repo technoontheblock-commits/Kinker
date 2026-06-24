@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Check, RefreshCw } from 'lucide-react'
 import { formatChf } from '@/lib/bar'
@@ -12,21 +11,6 @@ interface SuccessViewProps {
 }
 
 export function SuccessView({ payResult, onDone }: SuccessViewProps) {
-  const [countdown, setCountdown] = useState(6)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
   return (
     <div className="flex flex-col items-center justify-center h-full px-6 text-center">
       <motion.div
@@ -65,7 +49,7 @@ export function SuccessView({ payResult, onDone }: SuccessViewProps) {
         className="flex items-center gap-2 px-8 py-4 bg-red-500 hover:bg-red-600 rounded-xl font-semibold transition-colors"
       >
         <RefreshCw className="w-5 h-5" />
-        Nächster Kunde {countdown > 0 && `(${countdown})`}
+        Nächster Kunde
       </button>
     </div>
   )
