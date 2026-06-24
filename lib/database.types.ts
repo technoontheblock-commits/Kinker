@@ -88,7 +88,7 @@ export interface Database {
           name: string
           email: string
           password_hash: string
-          role: 'admin' | 'user' | 'moderator' | 'coworker'
+          role: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar'
           status: 'active' | 'inactive'
           created_at: string
           updated_at: string
@@ -112,7 +112,7 @@ export interface Database {
           name: string
           email: string
           password_hash: string
-          role?: 'admin' | 'user' | 'moderator' | 'coworker'
+          role?: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar'
           status?: 'active' | 'inactive'
           created_at?: string
           updated_at?: string
@@ -136,7 +136,7 @@ export interface Database {
           name?: string
           email?: string
           password_hash?: string
-          role?: 'admin' | 'user' | 'moderator' | 'coworker'
+          role?: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar'
           status?: 'active' | 'inactive'
           created_at?: string
           updated_at?: string
@@ -471,12 +471,206 @@ export interface Database {
           created_at?: string
         }
       }
+      bar_products: {
+        Row: {
+          id: string
+          name: string
+          price: number
+          category: 'drink' | 'shot' | 'snack' | 'other'
+          active: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          price: number
+          category?: 'drink' | 'shot' | 'snack' | 'other'
+          active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          price?: number
+          category?: 'drink' | 'shot' | 'snack' | 'other'
+          active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      bar_wallets: {
+        Row: {
+          id: string
+          user_id: string
+          qr_token: string
+          balance: number
+          currency: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          qr_token?: string
+          balance?: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          qr_token?: string
+          balance?: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      bar_orders: {
+        Row: {
+          id: string
+          order_number: string
+          customer_id: string
+          staff_id: string
+          status: 'open' | 'paid' | 'cancelled' | 'refunded'
+          subtotal: number
+          tip_amount: number
+          total: number
+          currency: string
+          receipt_type: 'none' | 'app' | 'email'
+          receipt_sent: boolean
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_number: string
+          customer_id: string
+          staff_id: string
+          status?: 'open' | 'paid' | 'cancelled' | 'refunded'
+          subtotal?: number
+          tip_amount?: number
+          total?: number
+          currency?: string
+          receipt_type?: 'none' | 'app' | 'email'
+          receipt_sent?: boolean
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_number?: string
+          customer_id?: string
+          staff_id?: string
+          status?: 'open' | 'paid' | 'cancelled' | 'refunded'
+          subtotal?: number
+          tip_amount?: number
+          total?: number
+          currency?: string
+          receipt_type?: 'none' | 'app' | 'email'
+          receipt_sent?: boolean
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      bar_order_items: {
+        Row: {
+          id: string
+          order_id: string
+          product_id: string | null
+          name: string
+          price: number
+          quantity: number
+          total: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          product_id?: string | null
+          name: string
+          price: number
+          quantity: number
+          total: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          name?: string
+          price?: number
+          quantity?: number
+          total?: number
+          created_at?: string
+        }
+      }
+      bar_wallet_transactions: {
+        Row: {
+          id: string
+          wallet_id: string
+          user_id: string
+          order_id: string | null
+          amount: number
+          type: 'top_up' | 'payment' | 'tip' | 'refund' | 'cancel'
+          status: 'pending' | 'completed' | 'failed' | 'cancelled'
+          description: string | null
+          reference: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          wallet_id: string
+          user_id: string
+          order_id?: string | null
+          amount: number
+          type: 'top_up' | 'payment' | 'tip' | 'refund' | 'cancel'
+          status?: 'pending' | 'completed' | 'failed' | 'cancelled'
+          description?: string | null
+          reference?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          wallet_id?: string
+          user_id?: string
+          order_id?: string | null
+          amount?: number
+          type?: 'top_up' | 'payment' | 'tip' | 'refund' | 'cancel'
+          status?: 'pending' | 'completed' | 'failed' | 'cancelled'
+          description?: string | null
+          reference?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_bar_payment: {
+        Args: {
+          p_order_number: string
+          p_customer_id: string
+          p_staff_id: string
+          p_items: Json
+          p_tip_amount: number
+          p_receipt_type: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
@@ -495,3 +689,8 @@ export type BonusCard = Database['public']['Tables']['bonus_cards']['Row']
 export type BonusCardScan = Database['public']['Tables']['bonus_card_scans']['Row']
 export type ReferralCode = Database['public']['Tables']['referral_codes']['Row']
 export type ReferralPoint = Database['public']['Tables']['referral_points']['Row']
+export type BarProduct = Database['public']['Tables']['bar_products']['Row']
+export type BarWallet = Database['public']['Tables']['bar_wallets']['Row']
+export type BarOrder = Database['public']['Tables']['bar_orders']['Row']
+export type BarOrderItem = Database['public']['Tables']['bar_order_items']['Row']
+export type BarWalletTransaction = Database['public']['Tables']['bar_wallet_transactions']['Row']
