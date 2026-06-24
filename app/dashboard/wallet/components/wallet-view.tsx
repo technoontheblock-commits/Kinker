@@ -18,6 +18,7 @@ interface WalletViewProps {
     description: string | null
     reference: string | null
     created_at: string
+    items: { name: string; quantity: number; total: number }[]
   }[]
 }
 
@@ -96,6 +97,23 @@ export function WalletView({ wallet, transactions }: WalletViewProps) {
                         <p className="text-sm text-white/50 truncate">
                           {tx.description || tx.reference || '–'}
                         </p>
+                        {tx.items && tx.items.length > 0 && (
+                          <ul className="mt-2 space-y-1">
+                            {tx.items.map((item, idx) => (
+                              <li
+                                key={idx}
+                                className="flex items-center justify-between text-xs text-white/40 bg-black/20 rounded-lg px-3 py-2"
+                              >
+                                <span className="truncate">
+                                  {item.quantity}x {item.name}
+                                </span>
+                                <span className="whitespace-nowrap ml-3">
+                                  {formatChf(item.total)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                         <p className="text-xs text-white/30 mt-1">
                           {new Date(tx.created_at).toLocaleString('de-CH', {
                             day: '2-digit',
