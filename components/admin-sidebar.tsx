@@ -22,6 +22,7 @@ import {
   Printer,
   Gift,
   Wine,
+  Wallet,
 } from 'lucide-react'
 import { useAdminTab } from '@/app/admin/components/AdminTabContext'
 
@@ -37,6 +38,7 @@ const tabs = [
   { id: 'merchandise', label: 'Merch', icon: ShoppingBag, href: '/admin' },
   { id: 'orders', label: 'Bestellungen', icon: Package, href: '/admin' },
   { id: 'bar-products', label: 'Bar Produkte', icon: Wine, href: '/admin/bar-products' },
+  { id: 'topup', label: 'Guthaben aufladen', icon: Wallet, href: '/topup' },
   { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
   { id: 'board', label: 'Board', icon: Layout, href: '/admin/board' },
   { id: 'advertising', label: 'Werbung', icon: Printer, href: '/admin/advertising' },

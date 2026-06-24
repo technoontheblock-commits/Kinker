@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireBar } from '@/lib/auth'
+import { requireTopUp } from '@/lib/auth'
 import { createServerSupabase } from '@/lib/supabase'
 import { extractWalletTokenFromQR, getFirstName } from '@/lib/bar'
 
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireBar()
+    const auth = await requireTopUp()
     if (!auth.authorized) {
       return auth.response
     }
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error: any) {
-    console.error('Bar scan error:', error)
+    console.error('Top-up scan error:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

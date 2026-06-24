@@ -6,7 +6,8 @@ import { Minus, Plus, ShoppingCart, ArrowRight, X } from 'lucide-react'
 import type { BarProduct } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { formatChf } from '@/lib/bar'
-import type { Customer, OrderItem } from './bar-page'
+import type { Customer } from '@/components/bar/types'
+import type { OrderItem } from './bar-page'
 
 interface OrderMenuProps {
   customer: Customer

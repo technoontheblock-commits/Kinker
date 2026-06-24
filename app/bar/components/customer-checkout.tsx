@@ -5,7 +5,8 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Banknote, CreditCard, Mail, Smartphone, X, Delete } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatChf } from '@/lib/bar'
-import type { Customer, OrderItem } from './bar-page'
+import type { Customer } from '@/components/bar/types'
+import type { OrderItem } from './bar-page'
 
 interface CustomerCheckoutProps {
   customer: Customer

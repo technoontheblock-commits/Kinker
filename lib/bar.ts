@@ -23,6 +23,13 @@ export function generateOrderNumber(): string {
   return `BAR-${date}-${random}`
 }
 
+export function generateTopUpReference(): string {
+  const now = new Date()
+  const date = now.toISOString().slice(0, 10).replace(/-/g, '')
+  const random = Math.floor(100000 + Math.random() * 900000)
+  return `TOPUP-${date}-${random}`
+}
+
 export function getFirstName(fullName: string): string {
   return fullName?.split(' ')[0] || fullName || 'Gast'
 }

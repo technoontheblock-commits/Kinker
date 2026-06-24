@@ -144,6 +144,31 @@ export async function requireBar() {
   return { authorized: true as const, user }
 }
 
+export async function requireTopUp() {
+  const user = getCurrentUser()
+  if (!user) {
+    return { authorized: false as const, response: unauthorized('Not authenticated') }
+  }
+
+  const supabase = createServerSupabase()
+  if (!supabase) {
+    return { authorized: false as const, response: NextResponse.json({ error: 'Server not configured' }, { status: 500 }) }
+  }
+
+  // Top-up staff must be a normal user with role 'abendkasse' or 'admin' and active status
+  const { data: dbUser } = await (supabase as any)
+    .from('users')
+    .select('role, status')
+    .eq('id', user.id)
+    .single()
+
+  if (!dbUser || (dbUser.role !== 'abendkasse' && dbUser.role !== 'admin') || dbUser.status !== 'active') {
+    return { authorized: false as const, response: forbidden('Top-up access required') }
+  }
+
+  return { authorized: true as const, user }
+}
+
 export async function requireAuth() {
   const user = getCurrentUser()
   if (!user) {

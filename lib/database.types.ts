@@ -88,7 +88,7 @@ export interface Database {
           name: string
           email: string
           password_hash: string
-          role: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar'
+          role: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar' | 'abendkasse'
           status: 'active' | 'inactive'
           created_at: string
           updated_at: string
@@ -112,7 +112,7 @@ export interface Database {
           name: string
           email: string
           password_hash: string
-          role?: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar'
+          role?: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar' | 'abendkasse'
           status?: 'active' | 'inactive'
           created_at?: string
           updated_at?: string
@@ -136,7 +136,7 @@ export interface Database {
           name?: string
           email?: string
           password_hash?: string
-          role?: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar'
+          role?: 'admin' | 'user' | 'moderator' | 'coworker' | 'bar' | 'abendkasse'
           status?: 'active' | 'inactive'
           created_at?: string
           updated_at?: string
@@ -668,6 +668,16 @@ export interface Database {
           p_items: Json
           p_tip_amount: number
           p_receipt_type: string
+        }
+        Returns: Json
+      }
+      process_bar_topup: {
+        Args: {
+          p_customer_id: string
+          p_staff_id: string
+          p_amount: number
+          p_payment_method: string
+          p_reference: string
         }
         Returns: Json
       }
