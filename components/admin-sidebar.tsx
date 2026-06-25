@@ -23,6 +23,8 @@ import {
   Gift,
   Wine,
   Wallet,
+  CalendarDays,
+  BarChart3,
 } from 'lucide-react'
 import { useAdminTab } from '@/app/admin/components/AdminTabContext'
 
@@ -38,6 +40,8 @@ const tabs = [
   { id: 'merchandise', label: 'Merch', icon: ShoppingBag, href: '/admin' },
   { id: 'orders', label: 'Bestellungen', icon: Package, href: '/admin' },
   { id: 'bar-products', label: 'Bar Produkte', icon: Wine, href: '/admin/bar-products' },
+  { id: 'bar-events', label: 'Events & Bars', icon: CalendarDays, href: '/admin/bar-events' },
+  { id: 'bar-reports', label: 'Bar Reports', icon: BarChart3, href: '/admin/bar-reports' },
   { id: 'topup', label: 'Guthaben aufladen', icon: Wallet, href: '/topup' },
   { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
   { id: 'board', label: 'Board', icon: Layout, href: '/admin/board' },

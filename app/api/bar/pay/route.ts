@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { customerId, items, tip, receiptType } = body
+    const { customerId, items, tip, receiptType, eventId, barId } = body
 
     if (!customerId || typeof customerId !== 'string') {
       return NextResponse.json({ error: 'Kunde fehlt' }, { status: 400 })
@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
       p_items: validItems,
       p_tip_amount: parsedTip,
       p_receipt_type: receiptType,
+      p_event_id: eventId || null,
+      p_bar_id: barId || null,
     })
 
     if (error) {

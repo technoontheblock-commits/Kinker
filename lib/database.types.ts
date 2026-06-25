@@ -62,6 +62,64 @@ export interface Database {
           updated_at?: string
         }
       }
+      bar_events: {
+        Row: {
+          id: string
+          name: string
+          date: string
+          location: string | null
+          status: 'upcoming' | 'active' | 'closed' | 'cancelled'
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          date: string
+          location?: string | null
+          status?: 'upcoming' | 'active' | 'closed' | 'cancelled'
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          date?: string
+          location?: string | null
+          status?: 'upcoming' | 'active' | 'closed' | 'cancelled'
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      event_bars: {
+        Row: {
+          id: string
+          event_id: string
+          name: string
+          sort_order: number
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          name: string
+          sort_order?: number
+          active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          name?: string
+          sort_order?: number
+          active?: boolean
+          created_at?: string
+        }
+      }
       newsletter_subscribers: {
         Row: {
           id: string
@@ -538,6 +596,8 @@ export interface Database {
           order_number: string
           customer_id: string
           staff_id: string
+          event_id: string | null
+          bar_id: string | null
           status: 'open' | 'paid' | 'cancelled' | 'refunded'
           subtotal: number
           tip_amount: number
@@ -554,6 +614,8 @@ export interface Database {
           order_number: string
           customer_id: string
           staff_id: string
+          event_id?: string | null
+          bar_id?: string | null
           status?: 'open' | 'paid' | 'cancelled' | 'refunded'
           subtotal?: number
           tip_amount?: number
@@ -570,6 +632,8 @@ export interface Database {
           order_number?: string
           customer_id?: string
           staff_id?: string
+          event_id?: string | null
+          bar_id?: string | null
           status?: 'open' | 'paid' | 'cancelled' | 'refunded'
           subtotal?: number
           tip_amount?: number
@@ -620,6 +684,8 @@ export interface Database {
           wallet_id: string
           user_id: string
           order_id: string | null
+          event_id: string | null
+          bar_id: string | null
           amount: number
           type: 'top_up' | 'payment' | 'tip' | 'refund' | 'cancel'
           status: 'pending' | 'completed' | 'failed' | 'cancelled'
@@ -633,6 +699,8 @@ export interface Database {
           wallet_id: string
           user_id: string
           order_id?: string | null
+          event_id?: string | null
+          bar_id?: string | null
           amount: number
           type: 'top_up' | 'payment' | 'tip' | 'refund' | 'cancel'
           status?: 'pending' | 'completed' | 'failed' | 'cancelled'
@@ -646,6 +714,8 @@ export interface Database {
           wallet_id?: string
           user_id?: string
           order_id?: string | null
+          event_id?: string | null
+          bar_id?: string | null
           amount?: number
           type?: 'top_up' | 'payment' | 'tip' | 'refund' | 'cancel'
           status?: 'pending' | 'completed' | 'failed' | 'cancelled'
@@ -668,6 +738,8 @@ export interface Database {
           p_items: Json
           p_tip_amount: number
           p_receipt_type: string
+          p_event_id?: string
+          p_bar_id?: string
         }
         Returns: Json
       }
@@ -678,6 +750,14 @@ export interface Database {
           p_amount: number
           p_payment_method: string
           p_reference: string
+          p_event_id?: string
+          p_bar_id?: string
+        }
+        Returns: Json
+      }
+      get_event_bar_stats: {
+        Args: {
+          p_event_id: string
         }
         Returns: Json
       }
@@ -704,3 +784,5 @@ export type BarWallet = Database['public']['Tables']['bar_wallets']['Row']
 export type BarOrder = Database['public']['Tables']['bar_orders']['Row']
 export type BarOrderItem = Database['public']['Tables']['bar_order_items']['Row']
 export type BarWalletTransaction = Database['public']['Tables']['bar_wallet_transactions']['Row']
+export type BarEvent = Database['public']['Tables']['bar_events']['Row']
+export type EventBar = Database['public']['Tables']['event_bars']['Row']

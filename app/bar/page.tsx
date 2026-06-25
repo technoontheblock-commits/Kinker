@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { requireBar } from '@/lib/auth'
 import { createServerSupabase } from '@/lib/supabase'
 import { BarPage } from './components/bar-page'
-import type { BarProduct } from '@/lib/database.types'
+import type { BarProduct, BarEvent, EventBar } from '@/lib/database.types'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,10 +24,42 @@ export default async function BarRoute() {
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true })
 
+  // Load active event, or next upcoming event
+  const { data: activeEvents } = await (supabase as any)
+    .from('bar_events')
+    .select('*')
+    .eq('status', 'active')
+    .order('date', { ascending: true })
+
+  let currentEvent: BarEvent | null = activeEvents?.[0] || null
+
+  if (!currentEvent) {
+    const { data: upcomingEvents } = await (supabase as any)
+      .from('bar_events')
+      .select('*')
+      .eq('status', 'upcoming')
+      .order('date', { ascending: true })
+      .limit(1)
+    currentEvent = upcomingEvents?.[0] || null
+  }
+
+  let bars: EventBar[] = []
+  if (currentEvent) {
+    const { data: eventBars } = await (supabase as any)
+      .from('event_bars')
+      .select('*')
+      .eq('event_id', currentEvent.id)
+      .eq('active', true)
+      .order('sort_order', { ascending: true })
+    bars = eventBars || []
+  }
+
   return (
     <BarPage
       staffName={auth.user.name}
       initialProducts={(products || []) as BarProduct[]}
+      currentEvent={currentEvent}
+      bars={bars}
     />
   )
 }

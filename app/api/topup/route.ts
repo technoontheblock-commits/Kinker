@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { customerId, amount, paymentMethod, reference } = body
+    const { customerId, amount, paymentMethod, reference, eventId, barId } = body
 
     if (!customerId || typeof customerId !== 'string') {
       return NextResponse.json({ error: 'Kunde fehlt' }, { status: 400 })
@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
       p_amount: amount,
       p_payment_method: paymentMethod,
       p_reference: topUpReference,
+      p_event_id: eventId || null,
+      p_bar_id: barId || null,
     } as any)
 
     if (error) {

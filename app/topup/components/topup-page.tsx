@@ -6,6 +6,7 @@ import { QrScanner } from '@/components/bar/qr-scanner'
 import { CustomerSearch } from '@/components/bar/customer-search'
 import type { Customer } from '@/components/bar/types'
 import { formatChf, getFirstName } from '@/lib/bar'
+import type { BarEvent, EventBar } from '@/lib/database.types'
 import { Wallet, Banknote, CreditCard, RefreshCw, Check } from 'lucide-react'
 
 type Step = 'scan' | 'topup' | 'success'
@@ -22,11 +23,13 @@ interface TopUpResult {
 
 interface TopUpPageProps {
   staffName: string
+  currentEvent: BarEvent | null
+  bars: EventBar[]
 }
 
 const PRESET_AMOUNTS = [10, 20, 50, 100]
 
-export function TopUpPage({ staffName }: TopUpPageProps) {
+export function TopUpPage({ staffName, currentEvent, bars }: TopUpPageProps) {
   const [step, setStep] = useState<Step>('scan')
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [amount, setAmount] = useState<number>(0)
@@ -37,6 +40,7 @@ export function TopUpPage({ staffName }: TopUpPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [selectedBar, setSelectedBar] = useState<EventBar | null>(bars.length === 1 ? bars[0] : null)
 
   const resetFlow = useCallback(() => {
     setStep('scan')
@@ -80,6 +84,10 @@ export function TopUpPage({ staffName }: TopUpPageProps) {
 
   const handleTopUp = useCallback(async () => {
     if (!customer) return
+    if (!currentEvent || !selectedBar) {
+      setError('Kein Event oder keine Bar ausgewählt')
+      return
+    }
     if (effectiveAmount <= 0) {
       setError('Bitte einen gültigen Betrag eingeben')
       return
@@ -95,6 +103,8 @@ export function TopUpPage({ staffName }: TopUpPageProps) {
           amount: effectiveAmount,
           paymentMethod,
           reference: reference.trim(),
+          eventId: currentEvent.id,
+          barId: selectedBar.id,
         }),
       })
       const data = await response.json()
@@ -118,6 +128,11 @@ export function TopUpPage({ staffName }: TopUpPageProps) {
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           <span className="font-display font-bold text-lg tracking-tight">GUTHABEN AUFADEN</span>
+          {currentEvent && selectedBar && (
+            <span className="hidden sm:inline text-xs text-white/40">
+              {currentEvent.name} • {selectedBar.name}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-4 text-sm text-white/60">
           <span>{staffName}</span>
@@ -149,7 +164,50 @@ export function TopUpPage({ staffName }: TopUpPageProps) {
       {/* Main content */}
       <div className="absolute inset-0 pt-14">
         <AnimatePresence mode="wait">
-          {step === 'scan' && (
+          {step === 'scan' && !currentEvent && (
+            <motion.div
+              key="no-event"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="h-full flex items-center justify-center px-6"
+            >
+              <div className="max-w-md text-center">
+                <p className="text-white/60 mb-2">Kein aktives Event gefunden.</p>
+                <p className="text-white/40 text-sm">
+                  Bitte legen Sie im Admin-Bereich ein Event mit Status «active» an.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 'scan' && currentEvent && bars.length > 1 && !selectedBar && (
+            <motion.div
+              key="bar-select"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="h-full flex items-center justify-center px-6"
+            >
+              <div className="max-w-md w-full">
+                <h2 className="text-2xl font-bold text-white text-center mb-2">Bar auswählen</h2>
+                <p className="text-white/60 text-center mb-8">{currentEvent.name}</p>
+                <div className="space-y-3">
+                  {bars.map(bar => (
+                    <button
+                      key={bar.id}
+                      onClick={() => setSelectedBar(bar)}
+                      className="w-full py-5 px-6 bg-neutral-900 border border-white/10 rounded-xl text-left hover:border-red-500 transition-colors"
+                    >
+                      <span className="text-white font-semibold text-lg">{bar.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 'scan' && currentEvent && (bars.length <= 1 || selectedBar) && (
             <motion.div
               key="scan"
               initial={{ opacity: 0 }}
