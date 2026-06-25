@@ -4,6 +4,7 @@ import { AboutSection } from '@/components/about-section'
 import { LocationPreview } from '@/components/location-preview'
 import { NewsletterSection } from '@/components/newsletter-section'
 import { MembershipBanner } from '@/components/membership-banner'
+import { WalletPromoSection } from '@/components/wallet-promo-section'
 import { getEventfrogEvents, mergeEvents } from '@/lib/eventfrog'
 import { getUpcomingEvents } from '@/lib/events'
 
@@ -35,6 +36,7 @@ export default async function Home() {
       <HeroSection />
       <EventsSection events={upcoming} />
       <AboutSection />
+      <WalletPromoSection />
       <LocationPreview />
       <NewsletterSection />
       <MembershipBanner />
