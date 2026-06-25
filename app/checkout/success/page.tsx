@@ -52,11 +52,97 @@ export default async function CheckoutSuccessPage() {
       )
     }
 
+    // Handle wallet top-up checkouts first
+    let topUpResult: { previousBalance: number; newBalance: number; amount: number } | null = null
+    let topUpError = ''
+
+    if (checkout.checkout_reference?.startsWith('WALLET-TOPUP-') && supabaseUrl && supabaseServiceKey) {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      try {
+        // The checkout reference contains the wallet owner: WALLET-TOPUP-{userId}-{timestamp}
+        // We credit exactly that user, regardless of who is currently logged in,
+        // so a shared/pasted checkout link cannot credit the wrong wallet.
+        const refParts = checkout.checkout_reference.split('-')
+        const topUpUserId = refParts[2]
+
+        if (!topUpUserId) {
+          topUpError = 'Invalid wallet top-up reference'
+        } else {
+          // Check if already processed
+          const { data: existingTx } = await supabase
+            .from('bar_wallet_transactions')
+            .select('id')
+            .eq('reference', checkout.checkout_reference)
+            .maybeSingle()
+
+          if (existingTx) {
+            const { data: wallet } = await supabase
+              .from('bar_wallets')
+              .select('balance')
+              .eq('user_id', topUpUserId)
+              .single()
+            topUpResult = {
+              previousBalance: wallet?.balance ?? checkout.amount ?? 0,
+              newBalance: wallet?.balance ?? checkout.amount ?? 0,
+              amount: checkout.amount ?? 0,
+            }
+          } else {
+            const { data: wallet, error: walletError } = await supabase
+              .from('bar_wallets')
+              .select('id, balance')
+              .eq('user_id', topUpUserId)
+              .single()
+
+            if (walletError || !wallet) {
+              topUpError = walletError?.message || 'Wallet not found'
+            } else {
+              const amount = checkout.amount ?? 0
+              const newBalance = wallet.balance + amount
+
+              const { error: updateError } = await supabase
+                .from('bar_wallets')
+                .update({ balance: newBalance })
+                .eq('id', wallet.id)
+
+              if (updateError) {
+                topUpError = updateError.message
+              } else {
+                await supabase.from('bar_wallet_transactions').insert({
+                  wallet_id: wallet.id,
+                  user_id: topUpUserId,
+                  amount,
+                  type: 'top_up',
+                  status: 'completed',
+                  description: 'Guthaben aufgeladen (SumUp)',
+                  reference: checkout.checkout_reference,
+                  metadata: {
+                    previous_balance: wallet.balance,
+                    payment_method: 'sumup',
+                    checkout_id: checkoutId,
+                  },
+                })
+
+                topUpResult = {
+                  previousBalance: wallet.balance,
+                  newBalance,
+                  amount,
+                }
+              }
+            }
+          }
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        topUpError = `Exception: ${msg}`
+        console.error('[SumUp Success] Wallet top-up exception:', err)
+      }
+    }
+
     let order: { id: string; order_number: string } | null = null
     let orderItems: any[] = []
     let creationError = ''
 
-    if (supabaseUrl && supabaseServiceKey) {
+    if (!checkout.checkout_reference?.startsWith('WALLET-TOPUP-') && supabaseUrl && supabaseServiceKey) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
       try {
@@ -194,18 +280,38 @@ export default async function CheckoutSuccessPage() {
       creationError = 'Supabase not configured'
     }
 
+    const isWalletTopUp = checkout.checkout_reference?.startsWith('WALLET-TOPUP-')
+
     return (
       <div className="min-h-screen bg-black pt-24 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-white mb-2">Zahlung erfolgreich!</h1>
-          <p className="text-white/60 mb-2">Vielen Dank für deine Bestellung bei KINKER.</p>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {isWalletTopUp ? 'Guthaben aufgeladen!' : 'Zahlung erfolgreich!'}
+          </h1>
+          <p className="text-white/60 mb-2">
+            {isWalletTopUp
+              ? 'Dein Wallet-Guthaben wurde erfolgreich aufgeladen.'
+              : 'Vielen Dank für deine Bestellung bei KINKER.'}
+          </p>
 
           <div className="bg-white/5 rounded-lg p-4 mb-6 text-left text-sm space-y-1">
             <div className="flex justify-between"><span className="text-white/60">Referenz:</span><span className="text-white font-mono">{checkout.checkout_reference}</span></div>
             <div className="flex justify-between"><span className="text-white/60">Betrag:</span><span className="text-white">{checkout.amount?.toFixed(2)} {checkout.currency}</span></div>
             {checkout.transactions?.[0]?.transaction_code && (
               <div className="flex justify-between"><span className="text-white/60">Transaktion:</span><span className="text-white font-mono">{checkout.transactions[0].transaction_code}</span></div>
+            )}
+            {topUpResult && (
+              <>
+                <div className="flex justify-between pt-2 border-t border-white/10 mt-2">
+                  <span className="text-white/60">Vorheriges Guthaben:</span>
+                  <span className="text-white">{topUpResult.previousBalance.toFixed(2)} {checkout.currency}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/60">Neues Guthaben:</span>
+                  <span className="text-white font-bold">{topUpResult.newBalance.toFixed(2)} {checkout.currency}</span>
+                </div>
+              </>
             )}
             {order && (
               <div className="flex justify-between pt-2 border-t border-white/10 mt-2">
@@ -229,14 +335,25 @@ export default async function CheckoutSuccessPage() {
                 <p className="text-red-500 text-xs">Order creation: {creationError}</p>
               </div>
             )}
+            {topUpError && (
+              <div className="pt-2 border-t border-red-500/20 mt-2">
+                <p className="text-red-500 text-xs">Wallet top-up: {topUpError}</p>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/merch" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors">
-              <ArrowLeft className="w-4 h-4" />Weiter einkaufen
-            </Link>
-            <Link href="/dashboard/orders" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-colors">
-              <FileText className="w-4 h-4" />Order Übersicht
+            {isWalletTopUp ? (
+              <Link href="/dashboard/wallet" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors">
+                <ArrowLeft className="w-4 h-4" />Zum Wallet
+              </Link>
+            ) : (
+              <Link href="/merch" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors">
+                <ArrowLeft className="w-4 h-4" />Weiter einkaufen
+              </Link>
+            )}
+            <Link href={isWalletTopUp ? '/dashboard/wallet' : '/dashboard/orders'} className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-colors">
+              <FileText className="w-4 h-4" />{isWalletTopUp ? 'Wallet Übersicht' : 'Order Übersicht'}
             </Link>
           </div>
         </div>

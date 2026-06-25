@@ -1,6 +1,7 @@
 'use client'
 
-import { Wallet, ArrowUpRight, ArrowDownRight, Minus, CreditCard } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { Wallet, ArrowUpRight, ArrowDownRight, Minus, CreditCard, Plus, Loader2, CheckCircle } from 'lucide-react'
 import { formatChf } from '@/lib/bar'
 
 interface WalletViewProps {
@@ -30,7 +31,53 @@ const typeLabels: Record<string, string> = {
   cancel: 'Storno',
 }
 
+const PRESET_AMOUNTS = [10, 20, 50, 100]
+
 export function WalletView({ wallet, transactions }: WalletViewProps) {
+  const [amount, setAmount] = useState<number>(0)
+  const [customAmount, setCustomAmount] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const effectiveAmount = amount > 0 ? amount : parseFloat(customAmount.replace(',', '.')) || 0
+
+  const handleTopUp = useCallback(async () => {
+    if (!wallet || effectiveAmount <= 0) {
+      setError('Bitte einen gültigen Betrag eingeben')
+      return
+    }
+
+    setError(null)
+    setSuccess(null)
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/wallet/topup/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: effectiveAmount }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Aufladen fehlgeschlagen')
+        return
+      }
+
+      if (data.hosted_checkout_url) {
+        window.location.href = data.hosted_checkout_url
+      } else {
+        setError('Checkout-URL nicht gefunden')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Netzwerkfehler beim Aufladen')
+    } finally {
+      setLoading(false)
+    }
+  }, [wallet, effectiveAmount])
+
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl md:text-4xl font-display font-bold mb-6">Wallet</h1>
@@ -54,6 +101,82 @@ export function WalletView({ wallet, transactions }: WalletViewProps) {
               {formatChf(wallet.balance)}
             </p>
             <p className="text-white/40 text-sm mt-2">Währung: {wallet.currency}</p>
+          </div>
+
+          {/* Top-up card */}
+          <div className="bg-neutral-900/60 border border-white/10 rounded-2xl p-6 mb-8">
+            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+              <Plus className="w-5 h-5 text-red-500" />
+              Guthaben aufladen
+            </h2>
+
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {PRESET_AMOUNTS.map(preset => (
+                <button
+                  key={preset}
+                  onClick={() => {
+                    setAmount(preset)
+                    setCustomAmount('')
+                    setError(null)
+                    setSuccess(null)
+                  }}
+                  className={`py-3 rounded-xl font-display font-bold transition-colors ${
+                    amount === preset
+                      ? 'bg-red-500 text-white'
+                      : 'bg-black/50 border border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative mb-4">
+              <input
+                type="number"
+                min="0"
+                step="0.05"
+                placeholder="Eigener Betrag"
+                value={customAmount}
+                onChange={e => {
+                  setCustomAmount(e.target.value)
+                  setAmount(0)
+                  setError(null)
+                  setSuccess(null)
+                }}
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-medium">CHF</span>
+            </div>
+
+            {error && (
+              <p className="text-red-400 text-sm mb-4">{error}</p>
+            )}
+
+            {success && (
+              <p className="text-green-400 text-sm mb-4 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                {success}
+              </p>
+            )}
+
+            <button
+              onClick={handleTopUp}
+              disabled={loading || effectiveAmount <= 0}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-colors"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Wird weitergeleitet...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-5 h-5" />
+                  {effectiveAmount > 0 ? formatChf(effectiveAmount) : 'Betrag'} mit Karte aufladen
+                </>
+              )}
+            </button>
           </div>
 
           {/* Transactions */}
