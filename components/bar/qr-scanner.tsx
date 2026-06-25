@@ -184,13 +184,24 @@ export function QrScanner({ onScan, onManualSearch }: QrScannerProps) {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-display font-bold mb-2">Kamera konnte nicht gestartet werden</h2>
           <p className="text-white/60 mb-6">{errorMsg}</p>
-          <button
-            onClick={startCamera}
-            className="flex items-center justify-center gap-2 w-full py-4 bg-red-500 hover:bg-red-600 rounded-xl font-semibold transition-colors"
-          >
-            <RefreshCw className="w-5 h-5" />
-            Erneut versuchen
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={startCamera}
+              className="flex items-center justify-center gap-2 w-full py-4 bg-red-500 hover:bg-red-600 rounded-xl font-semibold transition-colors"
+            >
+              <RefreshCw className="w-5 h-5" />
+              Erneut versuchen
+            </button>
+            {onManualSearch && (
+              <button
+                onClick={onManualSearch}
+                className="flex items-center justify-center gap-2 w-full py-4 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-colors"
+              >
+                <Search className="w-5 h-5" />
+                Kunde manuell suchen
+              </button>
+            )}
+          </div>
         </div>
       </div>
     )
