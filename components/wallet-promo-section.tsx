@@ -53,8 +53,10 @@ export function WalletPromoSection() {
                   className="text-white/70 text-lg leading-relaxed mb-8"
                 >
                   Lade dein Wallet vor dem Event bequem online auf und bezahle
-                  an der Bar blitzschnell per QR-Code – ganz ohne Bargeld und
-                  ohne Wartezeit.
+                  an der Bar blitzschnell per QR-Code, ganz ohne Bargeld und
+                  ohne Wartezeit. Falls du dein Handy nicht dabei hast, kannst
+                  du Guthaben auch an der Abendkasse mit Bargeld oder Karte
+                  aufladen.
                 </motion.p>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -94,7 +96,7 @@ export function WalletPromoSection() {
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2">Online aufladen</h3>
                   <p className="text-white/60 text-sm">
-                    Wähle deinen Betrag und lade dein Wallet per Karte auf –
+                    Wähle deinen Betrag und lade dein Wallet per Karte auf,
                     sicher über SumUp.
                   </p>
                 </motion.div>
@@ -111,7 +113,7 @@ export function WalletPromoSection() {
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2">Per QR bezahlen</h3>
                   <p className="text-white/60 text-sm">
-                    Zeig einfach deinen Wallet-QR-Code an der Bar vor – fertig.
+                    Zeig einfach deinen Wallet QR Code an der Bar vor, fertig.
                   </p>
                 </motion.div>
 
