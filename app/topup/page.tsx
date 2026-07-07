@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { requireTopUp } from '@/lib/auth'
 import { createServerSupabase } from '@/lib/supabase'
 import { TopUpPage } from './components/topup-page'
-import type { BarEvent, EventBar } from '@/lib/database.types'
+import type { BarEvent } from '@/lib/database.types'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,22 +36,10 @@ export default async function TopUpRoute() {
     currentEvent = upcomingEvents?.[0] || null
   }
 
-  let bars: EventBar[] = []
-  if (currentEvent) {
-    const { data: eventBars } = await (supabase as any)
-      .from('event_bars')
-      .select('*')
-      .eq('event_id', currentEvent.id)
-      .eq('active', true)
-      .order('sort_order', { ascending: true })
-    bars = eventBars || []
-  }
-
   return (
     <TopUpPage
       staffName={auth.user.name}
       currentEvent={currentEvent}
-      bars={bars}
     />
   )
 }
