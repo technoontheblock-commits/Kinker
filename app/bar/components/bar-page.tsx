@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BarProduct, BarEvent, EventBar } from '@/lib/database.types'
-import { QrScanner } from '@/components/bar/qr-scanner'
-import { CustomerSearch } from '@/components/bar/customer-search'
-import type { Customer } from '@/components/bar/types'
+import { NfcScanner } from '@/components/bar/nfc-scanner'
+import type { Bracelet } from '@/components/bar/types'
 import { OrderMenu } from './order-menu'
 import { CustomerCheckout } from './customer-checkout'
 import { SuccessView } from './success-view'
@@ -37,17 +36,15 @@ interface BarPageProps {
 
 export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarPageProps) {
   const [step, setStep] = useState<Step>('scan')
-  const [customer, setCustomer] = useState<Customer | null>(null)
+  const [bracelet, setBracelet] = useState<Bracelet | null>(null)
   const [items, setItems] = useState<OrderItem[]>([])
   const [payResult, setPayResult] = useState<PayResult | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [searchOpen, setSearchOpen] = useState(false)
   const [selectedBar, setSelectedBar] = useState<EventBar | null>(bars.length === 1 ? bars[0] : null)
 
   const keepAliveRef = useRef<NodeJS.Timeout | null>(null)
   const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
-  // Keep the page "stuck": prevent back navigation and accidental reload
   useEffect(() => {
     history.pushState(null, '', location.href)
 
@@ -69,7 +66,6 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
     }
   }, [])
 
-  // Keep the session alive and request wake lock
   useEffect(() => {
     const requestWakeLock = async () => {
       try {
@@ -77,7 +73,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
           wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
         }
       } catch {
-        // Wake lock may fail (e.g. not supported or tab not active)
+        // Wake lock may fail
       }
     }
 
@@ -107,21 +103,20 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
   }, [])
 
   const resetFlow = useCallback(() => {
-    setCustomer(null)
+    setBracelet(null)
     setItems([])
     setPayResult(null)
     setError(null)
-    setSearchOpen(false)
     setStep('scan')
   }, [])
 
-  const handleScanSuccess = useCallback(async (qrCode: string) => {
+  const handleScanSuccess = useCallback(async (nfcUid: string) => {
     setError(null)
     try {
       const response = await fetch('/api/bar/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qr_code: qrCode }),
+        body: JSON.stringify({ nfc_uid: nfcUid }),
       })
 
       const data = await response.json()
@@ -131,7 +126,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
         return
       }
 
-      setCustomer(data.customer)
+      setBracelet(data.bracelet)
       setItems([])
       setStep('order')
     } catch (err: any) {
@@ -146,7 +141,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
 
   const handlePay = useCallback(
     async (tip: number, receiptType: 'none' | 'app' | 'email') => {
-      if (!customer) return
+      if (!bracelet) return
       if (!currentEvent || !selectedBar) {
         setError('Kein Event oder keine Bar ausgewählt')
         return
@@ -158,7 +153,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            customerId: customer.id,
+            nfcUid: bracelet.nfcUid,
             items,
             tip,
             receiptType,
@@ -180,16 +175,10 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
         setError(err.message || 'Netzwerkfehler bei der Bezahlung')
       }
     },
-    [customer, items]
+    [bracelet, items, currentEvent, selectedBar]
   )
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-
-  const selectCustomer = useCallback((selectedCustomer: Customer) => {
-    setCustomer(selectedCustomer)
-    setItems([])
-    setStep('order')
-  }, [])
 
   return (
     <div className="fixed inset-0 z-[100] bg-black text-white overflow-hidden">
@@ -285,14 +274,11 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
               exit={{ opacity: 0 }}
               className="h-full"
             >
-              <QrScanner
-                onScan={handleScanSuccess}
-                onManualSearch={() => setSearchOpen(true)}
-              />
+              <NfcScanner onScan={handleScanSuccess} />
             </motion.div>
           )}
 
-          {step === 'order' && customer && (
+          {step === 'order' && bracelet && (
             <motion.div
               key="order"
               initial={{ opacity: 0, x: 50 }}
@@ -301,7 +287,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
               className="h-full"
             >
               <OrderMenu
-                customer={customer}
+                bracelet={bracelet}
                 products={initialProducts}
                 onConfirm={handleConfirmOrder}
                 onCancel={resetFlow}
@@ -309,7 +295,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
             </motion.div>
           )}
 
-          {step === 'checkout' && customer && (
+          {step === 'checkout' && bracelet && (
             <motion.div
               key="checkout"
               initial={{ opacity: 0, x: 50 }}
@@ -318,7 +304,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
               className="h-full"
             >
               <CustomerCheckout
-                customer={customer}
+                bracelet={bracelet}
                 items={items}
                 subtotal={subtotal}
                 onPay={handlePay}
@@ -343,13 +329,6 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
           )}
         </AnimatePresence>
       </div>
-
-      <CustomerSearch
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onSelect={selectCustomer}
-        searchEndpoint="/api/bar/search"
-      />
 
       {/* Footer info */}
       <div className="absolute bottom-2 left-0 right-0 z-20 text-center text-[10px] text-white/30 pointer-events-none">

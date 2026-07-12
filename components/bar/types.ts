@@ -1,10 +1,9 @@
-export interface Customer {
+export interface Bracelet {
   id: string
-  name: string
-  firstName: string
-  email: string | null
-  phone: string | null
+  nfcUid: string
+  displayUid: string
   balance: number
   currency: string
-  walletToken: string
+  status: string
+  eventId: string | null
 }

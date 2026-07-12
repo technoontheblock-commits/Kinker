@@ -52,11 +52,9 @@ export function WalletPromoSection() {
                   transition={{ duration: 0.5, delay: 0.3 }}
                   className="text-white/70 text-lg leading-relaxed mb-8"
                 >
-                  Lade dein Wallet vor dem Event bequem online auf und bezahle
-                  an der Bar blitzschnell per QR-Code, ganz ohne Bargeld und
-                  ohne Wartezeit. Falls du dein Handy nicht dabei hast, kannst
-                  du Guthaben auch an der Abendkasse mit Bargeld oder Karte
-                  aufladen.
+                  Bezahle an der Bar blitzschnell mit deinem NFC-Armband, ganz
+                  ohne Bargeld und ohne Wartezeit. Lade dein Armband bequem an
+                  unseren Aufladestationen mit Bargeld oder Karte auf.
                 </motion.p>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -66,19 +64,12 @@ export function WalletPromoSection() {
                   className="flex flex-col sm:flex-row gap-4"
                 >
                   <Link
-                    href="/dashboard/wallet"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors font-semibold"
-                  >
-                    <Wallet className="w-5 h-5" />
-                    Guthaben aufladen
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link
                     href="/membership"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors font-semibold"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors font-semibold"
                   >
                     <Smartphone className="w-5 h-5" />
                     Member werden
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                 </motion.div>
               </div>
@@ -94,10 +85,10 @@ export function WalletPromoSection() {
                   <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mb-4">
                     <CreditCard className="w-6 h-6 text-red-500" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Online aufladen</h3>
+                  <h3 className="text-lg font-bold text-white mb-2">Vor Ort aufladen</h3>
                   <p className="text-white/60 text-sm">
-                    Wähle deinen Betrag und lade dein Wallet per Karte auf,
-                    sicher über SumUp.
+                    Lade dein NFC-Armband an unseren Aufladestationen mit Bargeld
+                    oder Karte auf.
                   </p>
                 </motion.div>
 
@@ -111,9 +102,9 @@ export function WalletPromoSection() {
                   <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mb-4">
                     <Smartphone className="w-6 h-6 text-red-500" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Per QR bezahlen</h3>
+                  <h3 className="text-lg font-bold text-white mb-2">Per NFC bezahlen</h3>
                   <p className="text-white/60 text-sm">
-                    Zeig einfach deinen Wallet QR Code an der Bar vor, fertig.
+                    Halte dein Armband an der Bar einfach an den Reader, fertig.
                   </p>
                 </motion.div>
 
@@ -127,10 +118,10 @@ export function WalletPromoSection() {
                   <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mb-4">
                     <Wallet className="w-6 h-6 text-red-500" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Immer den Überblick</h3>
+                  <h3 className="text-lg font-bold text-white mb-2">Sicher & anonym</h3>
                   <p className="text-white/60 text-sm">
-                    Behalt dein Guthaben und alle Transaktionen jederzeit in
-                    deinem Dashboard im Blick.
+                    Dein Armband ist dein Wallet – keine App nötig, kein Konto
+                    erforderlich.
                   </p>
                 </motion.div>
               </div>

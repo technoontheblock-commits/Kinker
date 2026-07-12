@@ -6,17 +6,17 @@ import { Minus, Plus, ShoppingCart, ArrowRight, X } from 'lucide-react'
 import type { BarProduct } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { formatChf } from '@/lib/bar'
-import type { Customer } from '@/components/bar/types'
+import type { Bracelet } from '@/components/bar/types'
 import type { OrderItem } from './bar-page'
 
 interface OrderMenuProps {
-  customer: Customer
+  bracelet: Bracelet
   products: BarProduct[]
   onConfirm: (items: OrderItem[]) => void
   onCancel: () => void
 }
 
-export function OrderMenu({ customer, products, onConfirm, onCancel }: OrderMenuProps) {
+export function OrderMenu({ bracelet, products, onConfirm, onCancel }: OrderMenuProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({})
 
   const items: OrderItem[] = useMemo(() => {
@@ -37,7 +37,7 @@ export function OrderMenu({ customer, products, onConfirm, onCancel }: OrderMenu
     return items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   }, [items])
 
-  const hasEnoughBalance = subtotal <= customer.balance
+  const hasEnoughBalance = subtotal <= bracelet.balance
 
   const updateQuantity = (productId: string, delta: number) => {
     setQuantities(prev => {
@@ -84,8 +84,8 @@ export function OrderMenu({ customer, products, onConfirm, onCancel }: OrderMenu
       <div className="mb-4 p-4 bg-neutral-900/60 border border-white/10 rounded-2xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Kunde</p>
-            <h2 className="text-2xl font-display font-bold">{customer.firstName}</h2>
+            <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Armband</p>
+            <h2 className="text-2xl font-display font-bold font-mono">{bracelet.displayUid}</h2>
           </div>
           <div className="text-right">
             <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Guthaben</p>
@@ -93,7 +93,7 @@ export function OrderMenu({ customer, products, onConfirm, onCancel }: OrderMenu
               'text-2xl font-display font-bold',
               hasEnoughBalance ? 'text-white' : 'text-red-400'
             )}>
-              {formatChf(customer.balance)}
+              {formatChf(bracelet.balance)}
             </p>
           </div>
         </div>

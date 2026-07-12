@@ -561,31 +561,52 @@ export interface Database {
           updated_at?: string
         }
       }
-      bar_wallets: {
+      bar_bracelets: {
         Row: {
           id: string
-          user_id: string
-          qr_token: string
+          nfc_uid: string
           balance: number
           currency: string
+          status: 'active' | 'disabled' | 'lost' | 'refunded' | 'void'
+          event_id: string | null
+          issued_at: string
+          activated_at: string
+          deactivated_at: string | null
+          replaced_by_bracelet_id: string | null
+          note: string | null
+          metadata: Json
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          user_id: string
-          qr_token?: string
+          nfc_uid: string
           balance?: number
           currency?: string
+          status?: 'active' | 'disabled' | 'lost' | 'refunded' | 'void'
+          event_id?: string | null
+          issued_at?: string
+          activated_at?: string
+          deactivated_at?: string | null
+          replaced_by_bracelet_id?: string | null
+          note?: string | null
+          metadata?: Json
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
-          user_id?: string
-          qr_token?: string
+          nfc_uid?: string
           balance?: number
           currency?: string
+          status?: 'active' | 'disabled' | 'lost' | 'refunded' | 'void'
+          event_id?: string | null
+          issued_at?: string
+          activated_at?: string
+          deactivated_at?: string | null
+          replaced_by_bracelet_id?: string | null
+          note?: string | null
+          metadata?: Json
           created_at?: string
           updated_at?: string
         }
@@ -594,7 +615,7 @@ export interface Database {
         Row: {
           id: string
           order_number: string
-          customer_id: string
+          bracelet_id: string | null
           staff_id: string
           event_id: string | null
           bar_id: string | null
@@ -612,7 +633,7 @@ export interface Database {
         Insert: {
           id?: string
           order_number: string
-          customer_id: string
+          bracelet_id?: string | null
           staff_id: string
           event_id?: string | null
           bar_id?: string | null
@@ -630,7 +651,7 @@ export interface Database {
         Update: {
           id?: string
           order_number?: string
-          customer_id?: string
+          bracelet_id?: string | null
           staff_id?: string
           event_id?: string | null
           bar_id?: string | null
@@ -678,11 +699,10 @@ export interface Database {
           created_at?: string
         }
       }
-      bar_wallet_transactions: {
+      bar_bracelet_transactions: {
         Row: {
           id: string
-          wallet_id: string
-          user_id: string
+          bracelet_id: string
           order_id: string | null
           event_id: string | null
           bar_id: string | null
@@ -696,8 +716,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          wallet_id: string
-          user_id: string
+          bracelet_id: string
           order_id?: string | null
           event_id?: string | null
           bar_id?: string | null
@@ -711,8 +730,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          wallet_id?: string
-          user_id?: string
+          bracelet_id?: string
           order_id?: string | null
           event_id?: string | null
           bar_id?: string | null
@@ -730,10 +748,10 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      process_bar_payment: {
+      process_bracelet_payment: {
         Args: {
           p_order_number: string
-          p_customer_id: string
+          p_nfc_uid: string
           p_staff_id: string
           p_items: Json
           p_tip_amount: number
@@ -743,15 +761,38 @@ export interface Database {
         }
         Returns: Json
       }
-      process_bar_topup: {
+      process_bracelet_topup: {
         Args: {
-          p_customer_id: string
+          p_nfc_uid: string
           p_staff_id: string
           p_amount: number
           p_payment_method: string
           p_reference: string
           p_event_id?: string
           p_bar_id?: string
+        }
+        Returns: Json
+      }
+      get_bracelet_by_nfc_uid: {
+        Args: {
+          p_nfc_uid: string
+        }
+        Returns: Json
+      }
+      replace_bracelet: {
+        Args: {
+          p_old_nfc_uid: string
+          p_new_nfc_uid: string
+          p_staff_id: string
+          p_reference?: string
+        }
+        Returns: Json
+      }
+      refund_bracelet_balance: {
+        Args: {
+          p_nfc_uid: string
+          p_staff_id: string
+          p_reference?: string
         }
         Returns: Json
       }
@@ -780,9 +821,9 @@ export type BonusCardScan = Database['public']['Tables']['bonus_card_scans']['Ro
 export type ReferralCode = Database['public']['Tables']['referral_codes']['Row']
 export type ReferralPoint = Database['public']['Tables']['referral_points']['Row']
 export type BarProduct = Database['public']['Tables']['bar_products']['Row']
-export type BarWallet = Database['public']['Tables']['bar_wallets']['Row']
+export type BarBracelet = Database['public']['Tables']['bar_bracelets']['Row']
 export type BarOrder = Database['public']['Tables']['bar_orders']['Row']
 export type BarOrderItem = Database['public']['Tables']['bar_order_items']['Row']
-export type BarWalletTransaction = Database['public']['Tables']['bar_wallet_transactions']['Row']
+export type BarBraceletTransaction = Database['public']['Tables']['bar_bracelet_transactions']['Row']
 export type BarEvent = Database['public']['Tables']['bar_events']['Row']
 export type EventBar = Database['public']['Tables']['event_bars']['Row']

@@ -2,14 +2,14 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Banknote, CreditCard, Mail, Smartphone, X, Delete } from 'lucide-react'
+import { ArrowLeft, Banknote, X, Delete } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatChf } from '@/lib/bar'
-import type { Customer } from '@/components/bar/types'
+import type { Bracelet } from '@/components/bar/types'
 import type { OrderItem } from './bar-page'
 
 interface CustomerCheckoutProps {
-  customer: Customer
+  bracelet: Bracelet
   items: OrderItem[]
   subtotal: number
   onPay: (tip: number, receiptType: 'none' | 'app' | 'email') => void
@@ -18,15 +18,15 @@ interface CustomerCheckoutProps {
 
 const TIP_PRESETS = [0, 1, 2, 3, 5]
 
-export function CustomerCheckout({ customer, items, subtotal, onPay, onCancel }: CustomerCheckoutProps) {
+export function CustomerCheckout({ bracelet, items, subtotal, onPay, onCancel }: CustomerCheckoutProps) {
   const [tip, setTip] = useState(0)
   const [customTipMode, setCustomTipMode] = useState(false)
   const [customTipInput, setCustomTipInput] = useState('')
   const [showReceipt, setShowReceipt] = useState(false)
 
   const maxTip = useMemo(() => {
-    return Math.max(0, customer.balance - subtotal)
-  }, [customer.balance, subtotal])
+    return Math.max(0, bracelet.balance - subtotal)
+  }, [bracelet.balance, subtotal])
 
   const effectiveTip = useMemo(() => {
     if (customTipMode) {
@@ -37,7 +37,7 @@ export function CustomerCheckout({ customer, items, subtotal, onPay, onCancel }:
   }, [customTipMode, customTipInput, tip, maxTip])
 
   const total = subtotal + effectiveTip
-  const remaining = customer.balance - total
+  const remaining = bracelet.balance - total
 
   // Auto-cap custom tip input whenever it would exceed the remaining balance
   useEffect(() => {
@@ -69,8 +69,6 @@ export function CustomerCheckout({ customer, items, subtotal, onPay, onCancel }:
     setCustomTipInput(prev => prev.slice(0, -1))
   }
 
-  const hasEmail = Boolean(customer.email && customer.email.trim().length > 0)
-
   if (showReceipt) {
     return (
       <div className="flex flex-col h-full max-w-3xl mx-auto px-6 pt-8 pb-24">
@@ -79,42 +77,6 @@ export function CustomerCheckout({ customer, items, subtotal, onPay, onCancel }:
         </h2>
 
         <div className="grid gap-4 mb-8">
-          <button
-            onClick={() => onPay(effectiveTip, 'app')}
-            className="flex items-center gap-4 p-6 bg-neutral-900/60 border border-white/10 hover:border-red-500/50 rounded-2xl transition-colors text-left"
-          >
-            <div className="p-3 bg-red-500/20 rounded-xl">
-              <Smartphone className="w-7 h-7 text-red-400" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold">In der App speichern</p>
-              <p className="text-white/50 text-sm">Beleg ist im Kundenkonto verfügbar</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onPay(effectiveTip, 'email')}
-            disabled={!hasEmail}
-            className={cn(
-              'flex items-center gap-4 p-6 border rounded-2xl transition-colors text-left',
-              hasEmail
-                ? 'bg-neutral-900/60 border-white/10 hover:border-red-500/50'
-                : 'bg-white/5 border-white/5 opacity-60 cursor-not-allowed'
-            )}
-          >
-            <div className="p-3 bg-red-500/20 rounded-xl">
-              <Mail className="w-7 h-7 text-red-400" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold">
-                {hasEmail ? 'Per E-Mail senden' : 'Keine Email Hinterlegt'}
-              </p>
-              {hasEmail && (
-                <p className="text-white/50 text-sm truncate max-w-[200px]">{customer.email}</p>
-              )}
-            </div>
-          </button>
-
           <button
             onClick={() => onPay(effectiveTip, 'none')}
             className="flex items-center gap-4 p-6 bg-neutral-900/60 border border-white/10 hover:border-red-500/50 rounded-2xl transition-colors text-left"
@@ -157,7 +119,7 @@ export function CustomerCheckout({ customer, items, subtotal, onPay, onCancel }:
 
       {/* Order summary */}
       <div className="bg-neutral-900/60 border border-white/10 rounded-2xl p-6 mb-6">
-        <h2 className="text-2xl font-display font-bold mb-4">Hallo {customer.firstName}</h2>
+        <h2 className="text-2xl font-display font-bold mb-4">Armband {bracelet.displayUid}</h2>
 
         <div className="space-y-2 mb-4">
           {items.map(item => (
@@ -190,7 +152,7 @@ export function CustomerCheckout({ customer, items, subtotal, onPay, onCancel }:
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-neutral-900/40 border border-white/10 rounded-2xl p-4 text-center">
           <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Aktuelles Guthaben</p>
-          <p className="text-xl font-display font-bold">{formatChf(customer.balance)}</p>
+          <p className="text-xl font-display font-bold">{formatChf(bracelet.balance)}</p>
         </div>
         <div className="bg-neutral-900/40 border border-white/10 rounded-2xl p-4 text-center">
           <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Restguthaben</p>
@@ -283,10 +245,10 @@ export function CustomerCheckout({ customer, items, subtotal, onPay, onCancel }:
       <div className="fixed bottom-0 left-0 right-0 z-30 bg-black/95 border-t border-white/10 px-6 py-4">
         <button
           onClick={() => setShowReceipt(true)}
-          disabled={total > customer.balance}
+          disabled={total > bracelet.balance}
           className={cn(
             'w-full max-w-3xl mx-auto flex items-center justify-center gap-3 py-5 rounded-xl font-display font-bold text-xl transition-colors',
-            total > customer.balance
+            total > bracelet.balance
               ? 'bg-white/10 text-white/40 cursor-not-allowed'
               : 'bg-red-500 hover:bg-red-600 text-white'
           )}
@@ -294,7 +256,7 @@ export function CustomerCheckout({ customer, items, subtotal, onPay, onCancel }:
           <Banknote className="w-6 h-6" />
           {formatChf(total)} bezahlen
         </button>
-        {total > customer.balance && (
+        {total > bracelet.balance && (
           <p className="text-center text-red-400 text-xs mt-2">Guthaben reicht nicht aus</p>
         )}
       </div>

@@ -2,10 +2,9 @@
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { QrScanner } from '@/components/bar/qr-scanner'
-import { CustomerSearch } from '@/components/bar/customer-search'
-import type { Customer } from '@/components/bar/types'
-import { formatChf, getFirstName } from '@/lib/bar'
+import { NfcScanner } from '@/components/bar/nfc-scanner'
+import type { Bracelet } from '@/components/bar/types'
+import { formatChf } from '@/lib/bar'
 import type { BarEvent } from '@/lib/database.types'
 import { Wallet, Banknote, CreditCard, RefreshCw, Check } from 'lucide-react'
 
@@ -13,7 +12,7 @@ type Step = 'scan' | 'topup' | 'success'
 
 interface TopUpResult {
   transaction_id: string
-  wallet_id: string
+  bracelet_id: string
   amount: number
   previous_balance: number
   new_balance: number
@@ -30,7 +29,7 @@ const PRESET_AMOUNTS = [10, 20, 50, 100]
 
 export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
   const [step, setStep] = useState<Step>('scan')
-  const [customer, setCustomer] = useState<Customer | null>(null)
+  const [bracelet, setBracelet] = useState<Bracelet | null>(null)
   const [amount, setAmount] = useState<number>(0)
   const [customAmount, setCustomAmount] = useState<string>('')
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'terminal'>('cash')
@@ -38,11 +37,10 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
   const [result, setResult] = useState<TopUpResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
 
   const resetFlow = useCallback(() => {
     setStep('scan')
-    setCustomer(null)
+    setBracelet(null)
     setAmount(0)
     setCustomAmount('')
     setPaymentMethod('cash')
@@ -50,38 +48,32 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
     setResult(null)
     setError(null)
     setLoading(false)
-    setSearchOpen(false)
   }, [])
 
-  const handleScanSuccess = useCallback(async (qrCode: string) => {
+  const handleScanSuccess = useCallback(async (nfcUid: string) => {
     setError(null)
     try {
       const response = await fetch('/api/topup/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qr_code: qrCode }),
+        body: JSON.stringify({ nfc_uid: nfcUid }),
       })
       const data = await response.json()
       if (!response.ok) {
         setError(data.error || 'Scan fehlgeschlagen')
         return
       }
-      setCustomer(data.customer)
+      setBracelet(data.bracelet)
       setStep('topup')
     } catch (err: any) {
       setError(err.message || 'Netzwerkfehler beim Scannen')
     }
   }, [])
 
-  const selectCustomer = useCallback((selectedCustomer: Customer) => {
-    setCustomer(selectedCustomer)
-    setStep('topup')
-  }, [])
-
   const effectiveAmount = amount > 0 ? amount : parseFloat(customAmount.replace(',', '.')) || 0
 
   const handleTopUp = useCallback(async () => {
-    if (!customer) return
+    if (!bracelet) return
     if (!currentEvent) {
       setError('Kein Event ausgewählt')
       return
@@ -97,7 +89,7 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerId: customer.id,
+          nfcUid: bracelet.nfcUid,
           amount: effectiveAmount,
           paymentMethod,
           reference: reference.trim(),
@@ -117,7 +109,7 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
     } finally {
       setLoading(false)
     }
-  }, [customer, currentEvent, effectiveAmount, paymentMethod, reference])
+  }, [bracelet, currentEvent, effectiveAmount, paymentMethod, reference])
 
   return (
     <div className="fixed inset-0 z-[100] bg-black text-white overflow-hidden">
@@ -187,14 +179,11 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
               exit={{ opacity: 0 }}
               className="h-full"
             >
-              <QrScanner
-                onScan={handleScanSuccess}
-                onManualSearch={() => setSearchOpen(true)}
-              />
+              <NfcScanner onScan={handleScanSuccess} />
             </motion.div>
           )}
 
-          {step === 'topup' && customer && (
+          {step === 'topup' && bracelet && (
             <motion.div
               key="topup"
               initial={{ opacity: 0, x: 50 }}
@@ -204,11 +193,11 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
             >
               <div className="flex flex-col items-center justify-center min-h-full px-6 py-8">
                 <div className="w-full max-w-md space-y-6">
-                  {/* Customer header */}
+                  {/* Bracelet header */}
                   <div className="text-center">
-                    <p className="text-white/50 text-sm mb-1">Gast</p>
-                    <h2 className="text-3xl font-display font-bold">{getFirstName(customer.name)}</h2>
-                    <p className="text-white/60 mt-1">Aktuelles Guthaben: <span className="text-white font-display font-bold">{formatChf(customer.balance)}</span></p>
+                    <p className="text-white/50 text-sm mb-1">Armband</p>
+                    <h2 className="text-3xl font-display font-bold font-mono">{bracelet.displayUid}</h2>
+                    <p className="text-white/60 mt-1">Aktuelles Guthaben: <span className="text-white font-display font-bold">{formatChf(bracelet.balance)}</span></p>
                   </div>
 
                   {/* Amount presets */}
@@ -306,7 +295,7 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">Neues Guthaben</span>
-                      <span className="text-xl font-display font-bold text-green-400">{formatChf(customer.balance + effectiveAmount)}</span>
+                      <span className="text-xl font-display font-bold text-green-400">{formatChf(bracelet.balance + effectiveAmount)}</span>
                     </div>
                   </div>
 
@@ -374,13 +363,6 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
           )}
         </AnimatePresence>
       </div>
-
-      <CustomerSearch
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onSelect={selectCustomer}
-        searchEndpoint="/api/topup/search"
-      />
 
       {/* Footer info */}
       <div className="absolute bottom-2 left-0 right-0 z-20 text-center text-[10px] text-white/30 pointer-events-none">

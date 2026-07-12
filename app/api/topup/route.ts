@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireTopUp } from '@/lib/auth'
 import { createServerSupabase } from '@/lib/supabase'
-import { generateTopUpReference } from '@/lib/bar'
+import { generateTopUpReference, normalizeNfcUid } from '@/lib/bar'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,10 +15,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { customerId, amount, paymentMethod, reference, eventId, barId } = body
+    const { nfcUid, amount, paymentMethod, reference, eventId, barId } = body
 
-    if (!customerId || typeof customerId !== 'string') {
-      return NextResponse.json({ error: 'Kunde fehlt' }, { status: 400 })
+    const normalizedUid = normalizeNfcUid(nfcUid)
+    if (!normalizedUid) {
+      return NextResponse.json({ error: 'NFC-UID fehlt' }, { status: 400 })
     }
 
     if (typeof amount !== 'number' || amount <= 0 || !Number.isFinite(amount)) {
@@ -38,8 +39,8 @@ export async function POST(request: NextRequest) {
       ? reference.trim()
       : generateTopUpReference()
 
-    const { data, error } = await (supabase as any).rpc('process_bar_topup', {
-      p_customer_id: customerId,
+    const { data, error } = await (supabase as any).rpc('process_bracelet_topup', {
+      p_nfc_uid: normalizedUid,
       p_staff_id: auth.user.id,
       p_amount: amount,
       p_payment_method: paymentMethod,
@@ -50,7 +51,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Top-up RPC error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      const message = error.message || 'Aufladung fehlgeschlagen'
+      if (message.includes('Bracelet is not active')) {
+        return NextResponse.json({ error: 'Armband ist nicht aktiv' }, { status: 403 })
+      }
+      return NextResponse.json({ error: message }, { status: 500 })
     }
 
     return NextResponse.json({ result: data })

@@ -39,7 +39,7 @@ export async function GET(
 
     // Top-ups by payment method for this event
     const { data: topUpStats, error: topUpStatsError } = await (supabase as any)
-      .from('bar_wallet_transactions')
+      .from('bar_bracelet_transactions')
       .select('metadata, amount')
       .eq('event_id', params.id)
       .eq('type', 'top_up')
@@ -51,7 +51,7 @@ export async function GET(
 
     // Total consumed balance (payments) for event
     const { data: paymentStats, error: paymentStatsError } = await (supabase as any)
-      .from('bar_wallet_transactions')
+      .from('bar_bracelet_transactions')
       .select('amount')
       .eq('event_id', params.id)
       .eq('type', 'payment')
@@ -63,7 +63,7 @@ export async function GET(
 
     // Total tips for event
     const { data: tipStats, error: tipStatsError } = await (supabase as any)
-      .from('bar_wallet_transactions')
+      .from('bar_bracelet_transactions')
       .select('bar_id, amount')
       .eq('event_id', params.id)
       .eq('type', 'tip')
