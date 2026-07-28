@@ -22,7 +22,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    const { name, price, category, sort_order, active } = body
+    const { name, price, category, sort_order, active, barcode } = body
 
     const updateData: Record<string, any> = {}
 
@@ -60,6 +60,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ error: 'Ungültiger Aktiv-Status' }, { status: 400 })
       }
       updateData.active = active
+    }
+
+    if (barcode !== undefined) {
+      updateData.barcode = typeof barcode === 'string' && barcode.trim().length > 0 ? barcode.trim() : null
     }
 
     const supabase = createServerSupabase()

@@ -537,6 +537,7 @@ export interface Database {
           category: 'drink' | 'shot' | 'snack' | 'other'
           active: boolean
           sort_order: number
+          barcode: string | null
           created_at: string
           updated_at: string
         }
@@ -547,6 +548,7 @@ export interface Database {
           category?: 'drink' | 'shot' | 'snack' | 'other'
           active?: boolean
           sort_order?: number
+          barcode?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -557,8 +559,50 @@ export interface Database {
           category?: 'drink' | 'shot' | 'snack' | 'other'
           active?: boolean
           sort_order?: number
+          barcode?: string | null
           created_at?: string
           updated_at?: string
+        }
+      }
+      bar_inventory_transactions: {
+        Row: {
+          id: string
+          product_id: string
+          bar_id: string | null
+          event_id: string | null
+          quantity_change: number
+          type: 'delivery' | 'transfer_out' | 'transfer_in' | 'sale' | 'correction'
+          order_id: string | null
+          order_item_id: string | null
+          created_by: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          bar_id?: string | null
+          event_id?: string | null
+          quantity_change: number
+          type: 'delivery' | 'transfer_out' | 'transfer_in' | 'sale' | 'correction'
+          order_id?: string | null
+          order_item_id?: string | null
+          created_by?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          bar_id?: string | null
+          event_id?: string | null
+          quantity_change?: number
+          type?: 'delivery' | 'transfer_out' | 'transfer_in' | 'sale' | 'correction'
+          order_id?: string | null
+          order_item_id?: string | null
+          created_by?: string | null
+          notes?: string | null
+          created_at?: string
         }
       }
       bar_bracelets: {
@@ -821,6 +865,7 @@ export type BonusCardScan = Database['public']['Tables']['bonus_card_scans']['Ro
 export type ReferralCode = Database['public']['Tables']['referral_codes']['Row']
 export type ReferralPoint = Database['public']['Tables']['referral_points']['Row']
 export type BarProduct = Database['public']['Tables']['bar_products']['Row']
+export type BarInventoryTransaction = Database['public']['Tables']['bar_inventory_transactions']['Row']
 export type BarBracelet = Database['public']['Tables']['bar_bracelets']['Row']
 export type BarOrder = Database['public']['Tables']['bar_orders']['Row']
 export type BarOrderItem = Database['public']['Tables']['bar_order_items']['Row']
