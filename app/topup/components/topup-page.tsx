@@ -72,6 +72,13 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
 
   const effectiveAmount = amount > 0 ? amount : parseFloat(customAmount.replace(',', '.')) || 0
 
+  const handleSkipScan = useCallback(() => {
+    const uid = window.prompt('NFC-UID manuell eingeben, um den Scan zu überspringen:')
+    if (uid && uid.trim().length > 0) {
+      handleScanSuccess(uid.trim())
+    }
+  }, [handleScanSuccess])
+
   const handleTopUp = useCallback(async () => {
     if (!bracelet) return
     if (!currentEvent) {
@@ -179,7 +186,7 @@ export function TopUpPage({ staffName, currentEvent }: TopUpPageProps) {
               exit={{ opacity: 0 }}
               className="h-full"
             >
-              <NfcScanner onScan={handleScanSuccess} />
+              <NfcScanner onScan={handleScanSuccess} onSkip={handleSkipScan} />
             </motion.div>
           )}
 

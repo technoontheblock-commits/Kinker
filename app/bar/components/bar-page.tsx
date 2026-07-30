@@ -134,6 +134,13 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
     }
   }, [])
 
+  const handleSkipScan = useCallback(() => {
+    const uid = window.prompt('NFC-UID manuell eingeben, um den Scan zu überspringen:')
+    if (uid && uid.trim().length > 0) {
+      handleScanSuccess(uid.trim())
+    }
+  }, [handleScanSuccess])
+
   const handleConfirmOrder = useCallback((orderItems: OrderItem[]) => {
     setItems(orderItems)
     setStep('checkout')
@@ -274,7 +281,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
               exit={{ opacity: 0 }}
               className="h-full"
             >
-              <NfcScanner onScan={handleScanSuccess} />
+              <NfcScanner onScan={handleScanSuccess} onSkip={handleSkipScan} />
             </motion.div>
           )}
 

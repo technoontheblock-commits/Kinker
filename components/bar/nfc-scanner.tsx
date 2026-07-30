@@ -1,14 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Wifi, Nfc } from 'lucide-react'
+import { Wifi, Nfc, SkipForward } from 'lucide-react'
 
 interface NfcScannerProps {
   onScan: (nfcUid: string) => void
   disabled?: boolean
+  onSkip?: () => void
 }
 
-export function NfcScanner({ onScan, disabled }: NfcScannerProps) {
+export function NfcScanner({ onScan, disabled, onSkip }: NfcScannerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [rawInput, setRawInput] = useState('')
 
@@ -80,6 +81,17 @@ export function NfcScanner({ onScan, disabled }: NfcScannerProps) {
         <p className="mt-4 text-xs text-white/30">
           Reader im Tastatur-Modus: UID wird automatisch übernommen.
         </p>
+
+        {onSkip && (
+          <button
+            onClick={onSkip}
+            type="button"
+            className="mt-6 inline-flex items-center gap-2 px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white/70 transition-colors"
+          >
+            <SkipForward className="w-4 h-4" />
+            NFC-Scan überspringen
+          </button>
+        )}
       </div>
     </div>
   )
