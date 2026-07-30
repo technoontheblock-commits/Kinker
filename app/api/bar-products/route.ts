@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, price, category, sort_order, active } = body
+    const { name, price, category, sort_order, active, barcode } = body
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Name ist erforderlich' }, { status: 400 })
@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
         category,
         sort_order: typeof sort_order === 'number' ? sort_order : 0,
         active: typeof active === 'boolean' ? active : true,
+        barcode: typeof barcode === 'string' && barcode.trim().length > 0 ? barcode.trim() : null,
       })
       .select()
       .single()

@@ -40,6 +40,7 @@ const tabs = [
   { id: 'merchandise', label: 'Merch', icon: ShoppingBag, href: '/admin' },
   { id: 'orders', label: 'Bestellungen', icon: Package, href: '/admin' },
   { id: 'bar-products', label: 'Bar Produkte', icon: Wine, href: '/admin/bar-products' },
+  { id: 'inventory', label: 'Inventar', icon: Package, href: '/admin/inventory' },
   { id: 'bracelets', label: 'Armbänder', icon: Watch, href: '/admin/bracelets' },
   { id: 'bar-reports', label: 'Bar Reports & Events', icon: CalendarDays, href: '/admin/bar-reports' },
   { id: 'topup', label: 'Guthaben aufladen', icon: Wallet, href: '/topup' },

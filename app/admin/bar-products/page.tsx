@@ -27,6 +27,7 @@ interface ProductFormData {
   price: string
   category: 'drink' | 'shot' | 'snack' | 'other'
   sort_order: string
+  barcode: string
   active: boolean
 }
 
@@ -35,6 +36,7 @@ const emptyForm: ProductFormData = {
   price: '',
   category: 'drink',
   sort_order: '0',
+  barcode: '',
   active: true,
 }
 
@@ -70,6 +72,7 @@ export default function BarProductsAdminPage() {
     const term = search.toLowerCase()
     return products.filter(p =>
       p.name.toLowerCase().includes(term) ||
+      (p.barcode && p.barcode.toLowerCase().includes(term)) ||
       categoryLabels[p.category]?.toLowerCase().includes(term)
     )
   }, [products, search])
@@ -87,6 +90,7 @@ export default function BarProductsAdminPage() {
       price: Number(product.price).toFixed(2),
       category: product.category,
       sort_order: product.sort_order.toString(),
+      barcode: product.barcode || '',
       active: product.active,
     })
     setModalOpen(true)
@@ -109,6 +113,7 @@ export default function BarProductsAdminPage() {
         price: parseFloat(form.price),
         category: form.category,
         sort_order: parseInt(form.sort_order || '0', 10),
+        barcode: form.barcode.trim(),
         active: form.active,
       }
 
@@ -300,6 +305,7 @@ export default function BarProductsAdminPage() {
                   <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Name</th>
                   <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Kategorie</th>
                   <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Preis</th>
+                  <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Barcode</th>
                   <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Sortierung</th>
                   <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Status</th>
                   <th className="text-right px-6 py-4 text-white/60 text-sm font-medium">Aktionen</th>
@@ -308,7 +314,7 @@ export default function BarProductsAdminPage() {
               <tbody className="divide-y divide-white/5">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-white/40">
+                    <td colSpan={7} className="px-6 py-12 text-center text-white/40">
                       Keine Produkte gefunden
                     </td>
                   </tr>
@@ -321,6 +327,9 @@ export default function BarProductsAdminPage() {
                       </td>
                       <td className="px-6 py-4 text-white/70">
                         {formatPrice(Number(product.price))}
+                      </td>
+                      <td className="px-6 py-4 text-white/70 font-mono text-xs">
+                        {product.barcode || '—'}
                       </td>
                       <td className="px-6 py-4 text-white/70">{product.sort_order}</td>
                       <td className="px-6 py-4">
@@ -440,6 +449,17 @@ export default function BarProductsAdminPage() {
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-white/70 text-sm mb-2">Barcode</label>
+                  <input
+                    type="text"
+                    value={form.barcode}
+                    onChange={e => setForm({ ...form, barcode: e.target.value })}
+                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors font-mono"
+                    placeholder="z. B. 7612345678900"
+                  />
                 </div>
 
                 <label className="flex items-center gap-3 cursor-pointer">
