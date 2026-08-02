@@ -136,6 +136,23 @@ export default function BarReportsPage() {
   const [stockError, setStockError] = useState<string | null>(null)
   const [eventStockRecords, setEventStockRecords] = useState<Record<string, BarStockRecord[]>>({})
 
+  const stockModalSubmittedInfo = useMemo(() => {
+    if (!stockModal.open || !stockModal.barId) {
+      return { isSubmitted: false, submittedAt: null }
+    }
+    const record = stockRecords.find(
+      r =>
+        r.bar_id === stockModal.barId &&
+        (stockModal.type === 'initial' ? r.initial_submitted_at != null : r.final_submitted_at != null)
+    )
+    const submittedAt =
+      stockModal.type === 'initial' ? record?.initial_submitted_at ?? null : record?.final_submitted_at ?? null
+    return {
+      isSubmitted: submittedAt != null,
+      submittedAt,
+    }
+  }, [stockModal, stockRecords])
+
   const fetchEvents = useCallback(async () => {
     setLoadingEvents(true)
     setError(null)
@@ -884,158 +901,140 @@ export default function BarReportsPage() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="bg-neutral-900 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-white/10"
             >
-              {(() => {
-                const isSubmitted = stockRecords.some(
-                  r =>
-                    r.bar_id === stockModal.barId &&
-                    (stockModal.type === 'initial' ? r.initial_submitted_at != null : r.final_submitted_at != null)
-                )
-                const submittedRecord = stockRecords.find(
-                  r =>
-                    r.bar_id === stockModal.barId &&
-                    (stockModal.type === 'initial' ? r.initial_submitted_at != null : r.final_submitted_at != null)
-                )
-                const submittedAt = stockModal.type === 'initial'
-                  ? submittedRecord?.initial_submitted_at
-                  : submittedRecord?.final_submitted_at
+              <>
+                <div className="flex items-center justify-between p-6 border-b border-white/10">
+                  <div>
+                    <h2 className="text-2xl font-display font-bold text-white">
+                      {stockModal.type === 'initial' ? 'Anfangsstock' : 'Endstock'}
+                    </h2>
+                    <p className="text-white/60 text-sm">{stockModal.barName}</p>
+                  </div>
+                  <button
+                    onClick={closeStockModal}
+                    className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
-                return (
-                  <>
-                    <div className="flex items-center justify-between p-6 border-b border-white/10">
-                      <div>
-                        <h2 className="text-2xl font-display font-bold text-white">
-                          {stockModal.type === 'initial' ? 'Anfangsstock' : 'Endstock'}
-                        </h2>
-                        <p className="text-white/60 text-sm">{stockModal.barName}</p>
+                <div className="p-6 overflow-y-auto flex-1">
+                  {stockError && (
+                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-sm">
+                      {stockError}
+                    </div>
+                  )}
+
+                  {stockModalSubmittedInfo.isSubmitted && stockModalSubmittedInfo.submittedAt && (
+                    <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-sm flex items-center gap-2">
+                      <Check className="w-4 h-4" />
+                      Bereits erfasst am {new Date(stockModalSubmittedInfo.submittedAt).toLocaleString('de-CH')}. Eine Änderung ist nicht mehr möglich.
+                    </div>
+                  )}
+
+                  {stockLoading ? (
+                    <div className="flex items-center justify-center gap-2 text-white/60 py-12">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Lade Produkte...
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative mb-4">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                        <input
+                          type="text"
+                          placeholder="Getränk suchen..."
+                          value={stockSearch}
+                          onChange={e => setStockSearch(e.target.value)}
+                          disabled={stockModalSubmittedInfo.isSubmitted}
+                          className="w-full pl-10 pr-4 py-2 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors disabled:opacity-50"
+                        />
                       </div>
-                      <button
-                        onClick={closeStockModal}
-                        className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
 
-                    <div className="p-6 overflow-y-auto flex-1">
-                      {stockError && (
-                        <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-sm">
-                          {stockError}
-                        </div>
-                      )}
-
-                      {isSubmitted && submittedAt && (
-                        <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-sm flex items-center gap-2">
-                          <Check className="w-4 h-4" />
-                          Bereits erfasst am {new Date(submittedAt).toLocaleString('de-CH')}. Eine Änderung ist nicht mehr möglich.
-                        </div>
-                      )}
-
-                      {stockLoading ? (
-                        <div className="flex items-center justify-center gap-2 text-white/60 py-12">
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Lade Produkte...
-                        </div>
+                      {filteredStockProducts.length === 0 ? (
+                        <p className="text-white/50 text-sm">Keine Produkte gefunden.</p>
                       ) : (
-                        <>
-                          <div className="relative mb-4">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                            <input
-                              type="text"
-                              placeholder="Getränk suchen..."
-                              value={stockSearch}
-                              onChange={e => setStockSearch(e.target.value)}
-                              disabled={isSubmitted}
-                              className="w-full pl-10 pr-4 py-2 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors disabled:opacity-50"
-                            />
-                          </div>
-
-                          {filteredStockProducts.length === 0 ? (
-                            <p className="text-white/50 text-sm">Keine Produkte gefunden.</p>
-                          ) : (
-                            <table className="w-full text-left">
-                              <thead className="bg-black/50 text-white/60 text-sm">
-                                <tr>
-                                  <th className="px-4 py-3 font-medium">Produkt</th>
-                                  <th className="px-4 py-3 font-medium text-right w-32">Flaschen</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-white/5">
-                                {filteredStockProducts.map(product => (
-                                  <tr key={product.id} className="hover:bg-white/5">
-                                    <td className="px-4 py-3 text-white">{product.name}</td>
-                                    <td className="px-4 py-3 text-right">
-                                      <div className="inline-flex items-center bg-black border border-white/10 rounded-lg overflow-hidden">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const current = parseInt(stockValues[product.id] || '0', 10)
-                                            if (current > 0) {
-                                              setStockValues(prev => ({ ...prev, [product.id]: String(current - 1) }))
-                                            }
-                                          }}
-                                          disabled={isSubmitted}
-                                          className="px-2.5 py-2 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 transition-colors"
-                                        >
-                                          <Minus className="w-4 h-4" />
-                                        </button>
-                                        <input
-                                          type="text"
-                                          inputMode="numeric"
-                                          value={stockValues[product.id] ?? '0'}
-                                          onChange={e => {
-                                            const val = e.target.value
-                                            if (val === '' || /^\d*$/.test(val)) {
-                                              setStockValues(prev => ({ ...prev, [product.id]: val }))
-                                            }
-                                          }}
-                                          disabled={isSubmitted}
-                                          className="w-12 px-1 py-2 bg-transparent text-white text-center focus:outline-none disabled:opacity-50"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const current = parseInt(stockValues[product.id] || '0', 10)
-                                            setStockValues(prev => ({ ...prev, [product.id]: String(current + 1) }))
-                                          }}
-                                          disabled={isSubmitted}
-                                          className="px-2.5 py-2 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 transition-colors"
-                                        >
-                                          <Plus className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          )}
-                        </>
+                        <table className="w-full text-left">
+                          <thead className="bg-black/50 text-white/60 text-sm">
+                            <tr>
+                              <th className="px-4 py-3 font-medium">Produkt</th>
+                              <th className="px-4 py-3 font-medium text-right w-32">Flaschen</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            {filteredStockProducts.map(product => (
+                              <tr key={product.id} className="hover:bg-white/5">
+                                <td className="px-4 py-3 text-white">{product.name}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <div className="inline-flex items-center bg-black border border-white/10 rounded-lg overflow-hidden">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const current = parseInt(stockValues[product.id] || '0', 10)
+                                        if (current > 0) {
+                                          setStockValues(prev => ({ ...prev, [product.id]: String(current - 1) }))
+                                        }
+                                      }}
+                                      disabled={stockModalSubmittedInfo.isSubmitted}
+                                      className="px-2.5 py-2 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 transition-colors"
+                                    >
+                                      <Minus className="w-4 h-4" />
+                                    </button>
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={stockValues[product.id] ?? '0'}
+                                      onChange={e => {
+                                        const val = e.target.value
+                                        if (val === '' || /^\d*$/.test(val)) {
+                                          setStockValues(prev => ({ ...prev, [product.id]: val }))
+                                        }
+                                      }}
+                                      disabled={stockModalSubmittedInfo.isSubmitted}
+                                      className="w-12 px-1 py-2 bg-transparent text-white text-center focus:outline-none disabled:opacity-50"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const current = parseInt(stockValues[product.id] || '0', 10)
+                                        setStockValues(prev => ({ ...prev, [product.id]: String(current + 1) }))
+                                      }}
+                                      disabled={stockModalSubmittedInfo.isSubmitted}
+                                      className="px-2.5 py-2 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 transition-colors"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       )}
-                    </div>
+                    </>
+                  )}
+                </div>
 
-                    <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
-                      <button
-                        type="button"
-                        onClick={closeStockModal}
-                        className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl font-medium transition-colors"
-                      >
-                        {isSubmitted ? 'Schliessen' : 'Abbrechen'}
-                      </button>
-                      {!isSubmitted && (
-                        <button
-                          type="button"
-                          onClick={submitStock}
-                          disabled={stockSaving || stockLoading}
-                          className="px-5 py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-xl font-medium transition-colors flex items-center gap-2"
-                        >
-                          {stockSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                          Speichern
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )
-              })()}
+                <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={closeStockModal}
+                    className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl font-medium transition-colors"
+                  >
+                    {stockModalSubmittedInfo.isSubmitted ? 'Schliessen' : 'Abbrechen'}
+                  </button>
+                  {!stockModalSubmittedInfo.isSubmitted && (
+                    <button
+                      type="button"
+                      onClick={submitStock}
+                      disabled={stockSaving || stockLoading}
+                      className="px-5 py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-xl font-medium transition-colors flex items-center gap-2"
+                    >
+                      {stockSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                      Speichern
+                    </button>
+                  )}
+                </div>
+              </>
             </motion.div>
           </motion.div>
         )}
