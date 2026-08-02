@@ -10,6 +10,7 @@ import {
   DollarSign,
   ShoppingCart,
   Plus,
+  Minus,
   Trash2,
   ChevronDown,
   ChevronUp,
@@ -963,19 +964,45 @@ export default function BarReportsPage() {
                                   <tr key={product.id} className="hover:bg-white/5">
                                     <td className="px-4 py-3 text-white">{product.name}</td>
                                     <td className="px-4 py-3 text-right">
-                                      <input
-                                        type="number"
-                                        min={0}
-                                        value={stockValues[product.id] ?? '0'}
-                                        onChange={e => {
-                                          const val = e.target.value
-                                          if (val === '' || /^\d*$/.test(val)) {
-                                            setStockValues(prev => ({ ...prev, [product.id]: val }))
-                                          }
-                                        }}
-                                        disabled={isSubmitted}
-                                        className="w-24 px-3 py-2 bg-black border border-white/10 rounded-lg text-white text-right focus:border-red-500 focus:outline-none disabled:opacity-50"
-                                      />
+                                      <div className="inline-flex items-center bg-black border border-white/10 rounded-lg overflow-hidden">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const current = parseInt(stockValues[product.id] || '0', 10)
+                                            if (current > 0) {
+                                              setStockValues(prev => ({ ...prev, [product.id]: String(current - 1) }))
+                                            }
+                                          }}
+                                          disabled={isSubmitted}
+                                          className="px-2.5 py-2 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 transition-colors"
+                                        >
+                                          <Minus className="w-4 h-4" />
+                                        </button>
+                                        <input
+                                          type="text"
+                                          inputMode="numeric"
+                                          value={stockValues[product.id] ?? '0'}
+                                          onChange={e => {
+                                            const val = e.target.value
+                                            if (val === '' || /^\d*$/.test(val)) {
+                                              setStockValues(prev => ({ ...prev, [product.id]: val }))
+                                            }
+                                          }}
+                                          disabled={isSubmitted}
+                                          className="w-12 px-1 py-2 bg-transparent text-white text-center focus:outline-none disabled:opacity-50"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const current = parseInt(stockValues[product.id] || '0', 10)
+                                            setStockValues(prev => ({ ...prev, [product.id]: String(current + 1) }))
+                                          }}
+                                          disabled={isSubmitted}
+                                          className="px-2.5 py-2 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 transition-colors"
+                                        >
+                                          <Plus className="w-4 h-4" />
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}
