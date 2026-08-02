@@ -901,7 +901,7 @@ export default function BarReportsPage() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="bg-neutral-900 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-white/10"
             >
-              <>
+              <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                   <div>
                     <h2 className="text-2xl font-display font-bold text-white">
@@ -1034,7 +1034,7 @@ export default function BarReportsPage() {
                     </button>
                   )}
                 </div>
-              </>
+              </div>
             </motion.div>
           </motion.div>
         )}
