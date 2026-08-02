@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { BarcodeScanner } from '@/components/inventory/barcode-scanner'
 import { cn } from '@/lib/utils'
-import type { BarProduct, BarEvent, EventBar, BarInventoryTransaction } from '@/lib/database.types'
+import type { BarProduct, BarEvent, EventBar, BarInventoryTransaction, BarProductCategory } from '@/lib/database.types'
 
 type Tab = 'scanner' | 'stock' | 'transactions'
 type InventoryAction = 'delivery' | 'transfer_to_bar'
@@ -58,13 +58,6 @@ interface TransactionWithRelations extends BarInventoryTransaction {
   event?: BarEvent | null
 }
 
-const categoryLabels: Record<string, string> = {
-  drink: 'Getränk',
-  shot: 'Shot',
-  snack: 'Snack',
-  other: 'Sonstiges',
-}
-
 export default function InventoryAdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>('scanner')
   const [loading, setLoading] = useState(true)
@@ -73,7 +66,16 @@ export default function InventoryAdminPage() {
   const [stock, setStock] = useState<StockItem[]>([])
   const [events, setEvents] = useState<EventWithBars[]>([])
   const [transactions, setTransactions] = useState<TransactionWithRelations[]>([])
+  const [categories, setCategories] = useState<BarProductCategory[]>([])
   const [transactionFilter, setTransactionFilter] = useState({ type: '', barId: '' })
+
+  const categoryLabelMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const c of categories) {
+      map[c.slug] = c.name
+    }
+    return map
+  }, [categories])
 
   const [action, setAction] = useState<InventoryAction>('delivery')
   const [selectedBarId, setSelectedBarId] = useState<string>('')
@@ -130,14 +132,25 @@ export default function InventoryAdminPage() {
     }
   }, [transactionFilter])
 
+  const loadCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/bar-product-categories')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Laden')
+      setCategories(data.categories || [])
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }, [])
+
   useEffect(() => {
     async function init() {
       setLoading(true)
-      await Promise.all([loadStock(), loadEvents(), loadTransactions()])
+      await Promise.all([loadStock(), loadEvents(), loadTransactions(), loadCategories()])
       setLoading(false)
     }
     init()
-  }, [loadStock, loadEvents, loadTransactions])
+  }, [loadStock, loadEvents, loadTransactions, loadCategories])
 
   const allBars = useMemo(() => {
     return events.flatMap(e => e.event_bars || []).filter(b => b.active)
@@ -358,7 +371,7 @@ export default function InventoryAdminPage() {
               </div>
               <div>
                 <h3 className="text-white font-semibold">{scannedProduct.name}</h3>
-                <p className="text-white/60 text-sm">{categoryLabels[scannedProduct.category]}</p>
+                <p className="text-white/60 text-sm">{categoryLabelMap[scannedProduct.category] || scannedProduct.category}</p>
                 <p className="text-white/40 text-xs font-mono mt-1">{scannedProduct.barcode}</p>
                 <div className="flex gap-3 mt-2 text-sm">
                   <span className="text-white/70">Lager: <span className={cn(scannedStock.warehouse < 0 && 'text-red-400')}>{scannedStock.warehouse}</span></span>
@@ -456,7 +469,7 @@ export default function InventoryAdminPage() {
                   <tr key={item.product.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 text-white font-medium">
                       {item.product.name}
-                      <p className="text-white/50 text-xs font-normal">{categoryLabels[item.product.category]}</p>
+                      <p className="text-white/50 text-xs font-normal">{categoryLabelMap[item.product.category] || item.product.category}</p>
                     </td>
                     <td className="px-6 py-4 text-white/70 font-mono text-xs">{item.product.barcode || '—'}</td>
                     <td className={cn('px-6 py-4 font-medium', item.warehouse < 0 && 'text-red-400')}>
@@ -623,13 +636,14 @@ export default function InventoryAdminPage() {
                 <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Typ</th>
                 <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Menge</th>
                 <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Ort</th>
+                <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Event</th>
                 <th className="text-left px-6 py-4 text-white/60 text-sm font-medium">Bemerkung</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-white/40">
+                  <td colSpan={7} className="px-6 py-12 text-center text-white/40">
                     Keine Bewegungen gefunden
                   </td>
                 </tr>
@@ -652,6 +666,9 @@ export default function InventoryAdminPage() {
                     </td>
                     <td className="px-6 py-4 text-white/70 text-sm">
                       {t.bar ? t.bar.name : 'Lager'}
+                    </td>
+                    <td className="px-6 py-4 text-white/70 text-sm">
+                      {t.event?.name || '—'}
                     </td>
                     <td className="px-6 py-4 text-white/50 text-sm">
                       {t.notes || '—'}

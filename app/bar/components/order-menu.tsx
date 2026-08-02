@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Minus, Plus, ShoppingCart, ArrowRight, X } from 'lucide-react'
-import type { BarProduct } from '@/lib/database.types'
+import type { BarProduct, BarProductCategory } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { formatChf } from '@/lib/bar'
 import type { Bracelet } from '@/components/bar/types'
@@ -12,11 +12,12 @@ import type { OrderItem } from './bar-page'
 interface OrderMenuProps {
   bracelet: Bracelet
   products: BarProduct[]
+  categories: BarProductCategory[]
   onConfirm: (items: OrderItem[]) => void
   onCancel: () => void
 }
 
-export function OrderMenu({ bracelet, products, onConfirm, onCancel }: OrderMenuProps) {
+export function OrderMenu({ bracelet, products, categories, onConfirm, onCancel }: OrderMenuProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({})
 
   const items: OrderItem[] = useMemo(() => {
@@ -71,12 +72,21 @@ export function OrderMenu({ bracelet, products, onConfirm, onCancel }: OrderMenu
     return groups
   }, [products])
 
-  const categoryLabels: Record<string, string> = {
-    drink: 'Getränke',
-    shot: 'Shots',
-    snack: 'Snacks',
-    other: 'Sonstiges',
-  }
+  const categoryLabelMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const c of categories) {
+      map[c.slug] = c.name
+    }
+    return map
+  }, [categories])
+
+  const sortedCategories = useMemo(() => {
+    return Object.keys(grouped).sort((a, b) => {
+      const orderA = categories.find(c => c.slug === a)?.sort_order ?? 999
+      const orderB = categories.find(c => c.slug === b)?.sort_order ?? 999
+      return orderA - orderB
+    })
+  }, [grouped, categories])
 
   return (
     <div className="flex flex-col h-full max-w-5xl mx-auto px-4 pt-4 pb-24">
@@ -101,13 +111,13 @@ export function OrderMenu({ bracelet, products, onConfirm, onCancel }: OrderMenu
 
       {/* Products */}
       <div className="flex-1 overflow-y-auto space-y-6 pr-1">
-        {Object.entries(grouped).map(([category, categoryProducts]) => (
+        {sortedCategories.map(category => (
           <div key={category}>
             <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-3 sticky top-0 bg-black/95 py-1">
-              {categoryLabels[category] || category}
+              {categoryLabelMap[category] || category}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {categoryProducts.map(product => {
+              {grouped[category].map(product => {
                 const qty = quantities[product.id] || 0
                 return (
                   <motion.div

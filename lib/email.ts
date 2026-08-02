@@ -11,6 +11,7 @@ export interface BarReceiptEmailData {
   total: number
   remainingBalance: number
   currency?: string
+  pdfBuffer?: Buffer
 }
 
 export async function sendBarReceiptEmail(data: BarReceiptEmailData): Promise<{ success: boolean; warning?: string; error?: string }> {
@@ -97,6 +98,14 @@ export async function sendBarReceiptEmail(data: BarReceiptEmailData): Promise<{ 
     to: data.to,
     subject: `Dein Bar-Beleg - ${data.orderNumber}`,
     html,
+    attachments: data.pdfBuffer
+      ? [
+          {
+            filename: `bar-beleg-${data.orderNumber}.pdf`,
+            content: Buffer.from(data.pdfBuffer).toString('base64'),
+          },
+        ]
+      : undefined,
   })
 
   return { success: true }

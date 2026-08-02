@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireBar } from '@/lib/auth'
 import { createServerSupabase } from '@/lib/supabase'
-import { generateOrderNumber, normalizeNfcUid } from '@/lib/bar'
+import { generateOrderNumber, normalizeNfcUid, getFirstName } from '@/lib/bar'
+import { sendBarReceiptEmail } from '@/lib/email'
+import { generateBarReceiptPdfBuffer } from '@/lib/bar-receipt-pdf-buffer'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { nfcUid, items, tip, receiptType, eventId, barId } = body
+    const { nfcUid, items, tip, receiptType, email, eventId, barId } = body
 
     const normalizedUid = normalizeNfcUid(nfcUid)
     if (!normalizedUid) {
@@ -35,6 +37,12 @@ export async function POST(request: NextRequest) {
 
     if (!['none', 'app', 'email'].includes(receiptType)) {
       return NextResponse.json({ error: 'Ungültige Beleg-Auswahl' }, { status: 400 })
+    }
+
+    if (receiptType === 'email') {
+      if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        return NextResponse.json({ error: 'Gültige E-Mail-Adresse erforderlich' }, { status: 400 })
+      }
     }
 
     const validItems: OrderItemInput[] = []
@@ -83,6 +91,81 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Armband ist nicht aktiv' }, { status: 403 })
       }
       return NextResponse.json({ error: message }, { status: 500 })
+    }
+
+    const result = data as {
+      order_id: string
+      order_number: string
+      subtotal: number
+      tip: number
+      total: number
+      remaining_balance: number
+    }
+
+    if (receiptType === 'email' && email) {
+      try {
+        const pdfBuffer = await generateBarReceiptPdfBuffer({
+          orderNumber: result.order_number,
+          createdAt: new Date().toLocaleString('de-CH', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          }),
+          items: validItems.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.price * item.quantity,
+          })),
+          subtotal: result.subtotal,
+          tip: result.tip,
+          total: result.total,
+          remainingBalance: result.remaining_balance,
+          currency: 'CHF',
+        })
+
+        const emailResult = await sendBarReceiptEmail({
+          to: email.trim(),
+          customerName: getFirstName(email.trim().split('@')[0]),
+          orderNumber: result.order_number,
+          items: validItems.map(item => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            total: item.price * item.quantity,
+          })),
+          subtotal: result.subtotal,
+          tip: result.tip,
+          total: result.total,
+          remainingBalance: result.remaining_balance,
+          currency: 'CHF',
+          pdfBuffer,
+        })
+
+        if (!emailResult.success) {
+          console.error('Bar receipt email failed:', emailResult.error)
+        } else {
+          await (supabase as any)
+            .from('bar_orders')
+            .update({ receipt_sent: true })
+            .eq('id', result.order_id)
+        }
+
+        return NextResponse.json({
+          success: true,
+          result: data,
+          emailSent: emailResult.success,
+          emailWarning: emailResult.warning,
+          emailError: emailResult.error,
+        })
+      } catch (emailError: any) {
+        console.error('Bar receipt email error:', emailError)
+        return NextResponse.json({
+          success: true,
+          result: data,
+          emailSent: false,
+          emailError: emailError.message || 'E-Mail-Versand fehlgeschlagen',
+        })
+      }
     }
 
     return NextResponse.json({ success: true, result: data })

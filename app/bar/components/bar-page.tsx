@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { BarProduct, BarEvent, EventBar } from '@/lib/database.types'
+import type { BarProduct, BarEvent, EventBar, BarProductCategory } from '@/lib/database.types'
 import { NfcScanner } from '@/components/bar/nfc-scanner'
 import type { Bracelet } from '@/components/bar/types'
 import { OrderMenu } from './order-menu'
@@ -30,11 +30,12 @@ export interface PayResult {
 interface BarPageProps {
   staffName: string
   initialProducts: BarProduct[]
+  initialCategories: BarProductCategory[]
   currentEvent: BarEvent | null
   bars: EventBar[]
 }
 
-export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarPageProps) {
+export function BarPage({ staffName, initialProducts, initialCategories, currentEvent, bars }: BarPageProps) {
   const [step, setStep] = useState<Step>('scan')
   const [bracelet, setBracelet] = useState<Bracelet | null>(null)
   const [items, setItems] = useState<OrderItem[]>([])
@@ -147,7 +148,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
   }, [])
 
   const handlePay = useCallback(
-    async (tip: number, receiptType: 'none' | 'app' | 'email') => {
+    async (tip: number, receiptType: 'none' | 'app' | 'email', email?: string) => {
       if (!bracelet) return
       if (!currentEvent || !selectedBar) {
         setError('Kein Event oder keine Bar ausgewählt')
@@ -164,6 +165,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
             items,
             tip,
             receiptType,
+            email: email || null,
             eventId: currentEvent.id,
             barId: selectedBar.id,
           }),
@@ -296,6 +298,7 @@ export function BarPage({ staffName, initialProducts, currentEvent, bars }: BarP
               <OrderMenu
                 bracelet={bracelet}
                 products={initialProducts}
+                categories={initialCategories}
                 onConfirm={handleConfirmOrder}
                 onCancel={resetFlow}
               />

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Calendar, Ticket, Building, Shirt, ExternalLink, Gift, Mail } from 'lucide-react'
+import { Calendar, Ticket, Building, Shirt, ExternalLink, Gift, Mail, MessageSquare } from 'lucide-react'
 
 interface DeveloperTabProps {
   testEmail: string
@@ -95,6 +95,15 @@ export default function DeveloperTab({
           <Mail className="w-8 h-8 text-red-500 mb-3" />
           <h3 className="text-white font-semibold">Email Test</h3>
           <p className="text-white/50 text-sm mt-1">E-Mails testen</p>
+        </a>
+
+        <a
+          href="/admin/forum"
+          className="p-6 bg-neutral-900/50 rounded-xl border border-white/10 hover:border-red-500/50 transition-all text-left block"
+        >
+          <MessageSquare className="w-8 h-8 text-red-500 mb-3" />
+          <h3 className="text-white font-semibold">Forum</h3>
+          <p className="text-white/50 text-sm mt-1">Forum verwalten</p>
         </a>
       </div>
 

@@ -3,45 +3,37 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, Search, Pencil, Trash2, Wine, Package, Check, X, Loader2
+  Plus, Search, Pencil, Trash2, Wine, Package, Check, X, Loader2,
+  Tags, GripVertical, ArrowUp, ArrowDown
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { BarProduct } from '@/lib/database.types'
-
-const categoryLabels: Record<string, string> = {
-  drink: 'Getränk',
-  shot: 'Shot',
-  snack: 'Snack',
-  other: 'Sonstiges',
-}
-
-const categoryOptions = [
-  { value: 'drink', label: 'Getränk' },
-  { value: 'shot', label: 'Shot' },
-  { value: 'snack', label: 'Snack' },
-  { value: 'other', label: 'Sonstiges' },
-]
+import type { BarProduct, BarProductCategory } from '@/lib/database.types'
 
 interface ProductFormData {
   name: string
   price: string
-  category: 'drink' | 'shot' | 'snack' | 'other'
+  category: string
   sort_order: string
   barcode: string
+  supplier: string
+  manufacturer: string
   active: boolean
 }
 
 const emptyForm: ProductFormData = {
   name: '',
   price: '',
-  category: 'drink',
+  category: '',
   sort_order: '0',
   barcode: '',
+  supplier: '',
+  manufacturer: '',
   active: true,
 }
 
 export default function BarProductsAdminPage() {
   const [products, setProducts] = useState<BarProduct[]>([])
+  const [categories, setCategories] = useState<BarProductCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -49,6 +41,20 @@ export default function BarProductsAdminPage() {
   const [form, setForm] = useState<ProductFormData>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+  const [categoryForm, setCategoryForm] = useState({ name: '', slug: '' })
+  const [savingCategory, setSavingCategory] = useState(false)
+  const [categoryError, setCategoryError] = useState<string | null>(null)
+
+  const activeCategories = useMemo(() => categories.filter(c => c.active), [categories])
+  const categoryLabelMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const c of categories) {
+      map[c.slug] = c.name
+    }
+    return map
+  }, [categories])
 
   const fetchProducts = async () => {
     try {
@@ -64,8 +70,19 @@ export default function BarProductsAdminPage() {
     }
   }
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/bar-product-categories')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Laden')
+      setCategories(data.categories || [])
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
   useEffect(() => {
-    fetchProducts()
+    Promise.all([fetchProducts(), fetchCategories()])
   }, [])
 
   const filteredProducts = useMemo(() => {
@@ -73,13 +90,16 @@ export default function BarProductsAdminPage() {
     return products.filter(p =>
       p.name.toLowerCase().includes(term) ||
       (p.barcode && p.barcode.toLowerCase().includes(term)) ||
-      categoryLabels[p.category]?.toLowerCase().includes(term)
+      (categoryLabelMap[p.category]?.toLowerCase() || p.category).includes(term)
     )
-  }, [products, search])
+  }, [products, search, categoryLabelMap])
 
   const openAdd = () => {
     setEditingProduct(null)
-    setForm(emptyForm)
+    setForm({
+      ...emptyForm,
+      category: activeCategories[0]?.slug || '',
+    })
     setModalOpen(true)
   }
 
@@ -91,6 +111,8 @@ export default function BarProductsAdminPage() {
       category: product.category,
       sort_order: product.sort_order.toString(),
       barcode: product.barcode || '',
+      supplier: product.supplier || '',
+      manufacturer: product.manufacturer || '',
       active: product.active,
     })
     setModalOpen(true)
@@ -114,6 +136,8 @@ export default function BarProductsAdminPage() {
         category: form.category,
         sort_order: parseInt(form.sort_order || '0', 10),
         barcode: form.barcode.trim(),
+        supplier: form.supplier.trim(),
+        manufacturer: form.manufacturer.trim(),
         active: form.active,
       }
 
@@ -173,6 +197,106 @@ export default function BarProductsAdminPage() {
     }
   }
 
+  const openCategoryModal = () => {
+    setCategoryForm({ name: '', slug: '' })
+    setCategoryError(null)
+    setCategoryModalOpen(true)
+  }
+
+  const closeCategoryModal = () => {
+    setCategoryModalOpen(false)
+    setCategoryForm({ name: '', slug: '' })
+    setCategoryError(null)
+  }
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingCategory(true)
+    setCategoryError(null)
+
+    try {
+      const name = categoryForm.name.trim()
+      if (!name) {
+        throw new Error('Name ist erforderlich')
+      }
+
+      const slug = categoryForm.slug.trim() || undefined
+      const res = await fetch('/api/bar-product-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, slug, sort_order: activeCategories.length }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Speichern')
+
+      await fetchCategories()
+      setCategoryForm({ name: '', slug: '' })
+    } catch (err: any) {
+      setCategoryError(err.message)
+    } finally {
+      setSavingCategory(false)
+    }
+  }
+
+  const handleDeleteCategory = async (category: BarProductCategory) => {
+    if (!window.confirm(`Kategorie „${category.name}" wirklich entfernen? Produkte dieser Kategorie werden zu „Sonstiges" verschoben.`)) return
+
+    try {
+      const res = await fetch(`/api/bar-product-categories/${category.id}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Löschen')
+
+      await Promise.all([fetchCategories(), fetchProducts()])
+    } catch (err: any) {
+      setCategoryError(err.message)
+    }
+  }
+
+  const moveCategory = (index: number, direction: -1 | 1) => {
+    const newCategories = [...activeCategories]
+    const targetIndex = index + direction
+    if (targetIndex < 0 || targetIndex >= newCategories.length) return
+
+    const temp = newCategories[index]
+    newCategories[index] = newCategories[targetIndex]
+    newCategories[targetIndex] = temp
+
+    // Update sort_order locally
+    const updated = newCategories.map((c, i) => ({ ...c, sort_order: i }))
+    setCategories(prev => prev.map(c => {
+      const found = updated.find(u => u.id === c.id)
+      return found ? { ...c, sort_order: found.sort_order } : c
+    }))
+  }
+
+  const saveCategoryOrder = async () => {
+    setSavingCategory(true)
+    setCategoryError(null)
+
+    try {
+      const res = await fetch('/api/bar-product-categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categories: activeCategories.map((c, i) => ({
+            id: c.id,
+            sort_order: i,
+          })),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Fehler beim Sortieren')
+      await fetchCategories()
+    } catch (err: any) {
+      setCategoryError(err.message)
+    } finally {
+      setSavingCategory(false)
+    }
+  }
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-CH', {
       style: 'currency',
@@ -205,13 +329,22 @@ export default function BarProductsAdminPage() {
               Produkte verwalten, die an der Bar verkauft werden
             </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Produkt hinzufügen
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={openCategoryModal}
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl font-medium transition-colors"
+            >
+              <Tags className="w-5 h-5" />
+              Kategorien bearbeiten
+            </button>
+            <button
+              onClick={openAdd}
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Produkt hinzufügen
+            </button>
+          </div>
         </motion.div>
 
         {/* Stats */}
@@ -237,24 +370,20 @@ export default function BarProductsAdminPage() {
               {products.filter(p => p.active).length}
             </p>
           </div>
-          <div className="bg-neutral-900/50 border border-white/10 rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <Wine className="w-5 h-5 text-yellow-500" />
-              <span className="text-white/50 text-sm">Getränke</span>
+          {activeCategories.slice(0, 2).map((category, index) => (
+            <div key={category.id} className="bg-neutral-900/50 border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <Wine className={cn(
+                  'w-5 h-5',
+                  index === 0 ? 'text-yellow-500' : 'text-blue-500'
+                )} />
+                <span className="text-white/50 text-sm">{category.name}</span>
+              </div>
+              <p className="text-2xl font-display font-bold">
+                {products.filter(p => p.category === category.slug).length}
+              </p>
             </div>
-            <p className="text-2xl font-display font-bold">
-              {products.filter(p => p.category === 'drink').length}
-            </p>
-          </div>
-          <div className="bg-neutral-900/50 border border-white/10 rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <Wine className="w-5 h-5 text-blue-500" />
-              <span className="text-white/50 text-sm">Shots</span>
-            </div>
-            <p className="text-2xl font-display font-bold">
-              {products.filter(p => p.category === 'shot').length}
-            </p>
-          </div>
+          ))}
         </motion.div>
 
         {/* Search */}
@@ -323,7 +452,7 @@ export default function BarProductsAdminPage() {
                     <tr key={product.id} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4 text-white font-medium">{product.name}</td>
                       <td className="px-6 py-4 text-white/70">
-                        {categoryLabels[product.category] || product.category}
+                        {categoryLabelMap[product.category] || product.category}
                       </td>
                       <td className="px-6 py-4 text-white/70">
                         {formatPrice(Number(product.price))}
@@ -378,7 +507,7 @@ export default function BarProductsAdminPage() {
         </motion.div>
       </div>
 
-      {/* Modal */}
+      {/* Product Modal */}
       <AnimatePresence>
         {modalOpen && (
           <motion.div
@@ -441,12 +570,14 @@ export default function BarProductsAdminPage() {
                 <div>
                   <label className="block text-white/70 text-sm mb-2">Kategorie</label>
                   <select
+                    required
                     value={form.category}
-                    onChange={e => setForm({ ...form, category: e.target.value as any })}
+                    onChange={e => setForm({ ...form, category: e.target.value })}
                     className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-red-500 transition-colors"
                   >
-                    {categoryOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option value="" disabled>Kategorie wählen</option>
+                    {activeCategories.map(category => (
+                      <option key={category.id} value={category.slug}>{category.name}</option>
                     ))}
                   </select>
                 </div>
@@ -460,6 +591,29 @@ export default function BarProductsAdminPage() {
                     className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors font-mono"
                     placeholder="z. B. 7612345678900"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Lieferant</label>
+                    <input
+                      type="text"
+                      value={form.supplier}
+                      onChange={e => setForm({ ...form, supplier: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors"
+                      placeholder="z. B. Getränke AG"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Hersteller</label>
+                    <input
+                      type="text"
+                      value={form.manufacturer}
+                      onChange={e => setForm({ ...form, manufacturer: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors"
+                      placeholder="z. B. Feldschlösschen"
+                    />
+                  </div>
                 </div>
 
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -490,6 +644,124 @@ export default function BarProductsAdminPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Categories Modal */}
+      <AnimatePresence>
+        {categoryModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-neutral-900 rounded-2xl p-6 md:p-8 w-full max-w-lg border border-white/10 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-display font-bold text-white">
+                  Kategorien bearbeiten
+                </h2>
+                <button
+                  onClick={closeCategoryModal}
+                  className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {categoryError && (
+                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200 text-sm">
+                  {categoryError}
+                </div>
+              )}
+
+              <form onSubmit={handleAddCategory} className="mb-6">
+                <label className="block text-white/70 text-sm mb-2">Neue Kategorie</label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={categoryForm.name}
+                    onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                    placeholder="Name z. B. Cocktails"
+                    className="flex-1 px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                  <input
+                    type="text"
+                    value={categoryForm.slug}
+                    onChange={e => setCategoryForm({ ...categoryForm, slug: e.target.value })}
+                    placeholder="Slug (optional)"
+                    className="flex-1 px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 transition-colors font-mono text-sm"
+                  />
+                  <button
+                    type="submit"
+                    disabled={savingCategory}
+                    className="px-4 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
+                  >
+                    {savingCategory ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-5 h-5" />}
+                  </button>
+                </div>
+              </form>
+
+              <div className="space-y-2 mb-6">
+                {activeCategories.map((category, index) => (
+                  <div
+                    key={category.id}
+                    className="flex items-center gap-3 p-3 bg-black/30 border border-white/10 rounded-xl"
+                  >
+                    <GripVertical className="w-5 h-5 text-white/30" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium">{category.name}</p>
+                      <p className="text-white/40 text-xs font-mono">{category.slug}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => moveCategory(index, -1)}
+                        disabled={index === 0}
+                        className="p-2 text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-lg transition-colors"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => moveCategory(index, 1)}
+                        disabled={index === activeCategories.length - 1}
+                        className="p-2 text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-lg transition-colors"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(category)}
+                        className="p-2 text-white/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={closeCategoryModal}
+                  className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-medium transition-colors"
+                >
+                  Schliessen
+                </button>
+                <button
+                  onClick={saveCategoryOrder}
+                  disabled={savingCategory}
+                  className="flex-1 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  {savingCategory && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Sortierung speichern
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

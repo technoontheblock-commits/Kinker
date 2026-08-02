@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { requireBar } from '@/lib/auth'
 import { createServerSupabase } from '@/lib/supabase'
 import { BarPage } from './components/bar-page'
-import type { BarProduct, BarEvent, EventBar } from '@/lib/database.types'
+import type { BarProduct, BarEvent, EventBar, BarProductCategory } from '@/lib/database.types'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +19,13 @@ export default async function BarRoute() {
 
   const { data: products } = await (supabase as any)
     .from('bar_products')
+    .select('*')
+    .eq('active', true)
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true })
+
+  const { data: categories } = await (supabase as any)
+    .from('bar_product_categories')
     .select('*')
     .eq('active', true)
     .order('sort_order', { ascending: true })
@@ -58,6 +65,7 @@ export default async function BarRoute() {
     <BarPage
       staffName={auth.user.name}
       initialProducts={(products || []) as BarProduct[]}
+      initialCategories={(categories || []) as BarProductCategory[]}
       currentEvent={currentEvent}
       bars={bars}
     />

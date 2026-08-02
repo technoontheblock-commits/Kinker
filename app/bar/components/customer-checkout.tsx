@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Banknote, X, Delete } from 'lucide-react'
+import { ArrowLeft, Banknote, X, Delete, Mail } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatChf } from '@/lib/bar'
 import type { Bracelet } from '@/components/bar/types'
@@ -12,7 +12,7 @@ interface CustomerCheckoutProps {
   bracelet: Bracelet
   items: OrderItem[]
   subtotal: number
-  onPay: (tip: number, receiptType: 'none' | 'app' | 'email') => void
+  onPay: (tip: number, receiptType: 'none' | 'app' | 'email', email?: string) => void
   onCancel: () => void
 }
 
@@ -23,6 +23,9 @@ export function CustomerCheckout({ bracelet, items, subtotal, onPay, onCancel }:
   const [customTipMode, setCustomTipMode] = useState(false)
   const [customTipInput, setCustomTipInput] = useState('')
   const [showReceipt, setShowReceipt] = useState(false)
+  const [receiptType, setReceiptType] = useState<'none' | 'email'>('none')
+  const [email, setEmail] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
 
   const maxTip = useMemo(() => {
     return Math.max(0, bracelet.balance - subtotal)
@@ -69,6 +72,24 @@ export function CustomerCheckout({ bracelet, items, subtotal, onPay, onCancel }:
     setCustomTipInput(prev => prev.slice(0, -1))
   }
 
+  const isValidEmail = (value: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  }
+
+  const handleReceiptConfirm = () => {
+    if (receiptType === 'email') {
+      const trimmed = email.trim()
+      if (!trimmed || !isValidEmail(trimmed)) {
+        setEmailError('Bitte eine gültige E-Mail-Adresse eingeben')
+        return
+      }
+      setEmailError(null)
+      onPay(effectiveTip, 'email', trimmed)
+      return
+    }
+    onPay(effectiveTip, 'none')
+  }
+
   if (showReceipt) {
     return (
       <div className="flex flex-col h-full max-w-3xl mx-auto px-6 pt-8 pb-24">
@@ -78,8 +99,16 @@ export function CustomerCheckout({ bracelet, items, subtotal, onPay, onCancel }:
 
         <div className="grid gap-4 mb-8">
           <button
-            onClick={() => onPay(effectiveTip, 'none')}
-            className="flex items-center gap-4 p-6 bg-neutral-900/60 border border-white/10 hover:border-red-500/50 rounded-2xl transition-colors text-left"
+            onClick={() => {
+              setReceiptType('none')
+              setEmailError(null)
+            }}
+            className={cn(
+              'flex items-center gap-4 p-6 bg-neutral-900/60 border rounded-2xl transition-colors text-left',
+              receiptType === 'none'
+                ? 'border-red-500/50'
+                : 'border-white/10 hover:border-white/30'
+            )}
           >
             <div className="p-3 bg-white/10 rounded-xl">
               <X className="w-7 h-7 text-white/70" />
@@ -89,9 +118,62 @@ export function CustomerCheckout({ bracelet, items, subtotal, onPay, onCancel }:
               <p className="text-white/50 text-sm">Kein digitaler Beleg wird erstellt</p>
             </div>
           </button>
+
+          <button
+            onClick={() => {
+              setReceiptType('email')
+            }}
+            className={cn(
+              'flex items-center gap-4 p-6 bg-neutral-900/60 border rounded-2xl transition-colors text-left',
+              receiptType === 'email'
+                ? 'border-red-500/50'
+                : 'border-white/10 hover:border-white/30'
+            )}
+          >
+            <div className="p-3 bg-white/10 rounded-xl">
+              <Mail className="w-7 h-7 text-white/70" />
+            </div>
+            <div>
+              <p className="text-lg font-semibold">Per E-Mail</p>
+              <p className="text-white/50 text-sm">Beleg als PDF per E-Mail erhalten</p>
+            </div>
+          </button>
+
+          {receiptType === 'email' && (
+            <div className="bg-neutral-900/40 border border-white/10 rounded-2xl p-4 mt-2">
+              <label htmlFor="receipt-email" className="block text-white/50 text-sm mb-2">
+                E-Mail-Adresse
+              </label>
+              <input
+                id="receipt-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={e => {
+                  setEmail(e.target.value)
+                  if (emailError) setEmailError(null)
+                }}
+                placeholder="name@beispiel.ch"
+                className={cn(
+                  'w-full bg-neutral-900/60 border rounded-xl px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-red-500/50 transition-colors',
+                  emailError ? 'border-red-500' : 'border-white/10'
+                )}
+              />
+              {emailError && (
+                <p className="text-red-400 text-sm mt-2">{emailError}</p>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="mt-auto text-center">
+        <div className="mt-auto grid gap-4">
+          <button
+            onClick={handleReceiptConfirm}
+            className="w-full py-5 bg-red-500 hover:bg-red-600 rounded-xl font-display font-bold text-xl transition-colors"
+          >
+            {receiptType === 'email' ? 'Beleg per E-Mail senden' : 'Ohne Beleg bezahlen'}
+          </button>
           <button
             onClick={() => setShowReceipt(false)}
             className="text-white/50 hover:text-white text-sm"

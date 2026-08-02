@@ -120,6 +120,50 @@ export interface Database {
           created_at?: string
         }
       }
+      bar_event_bar_stocks: {
+        Row: {
+          id: string
+          event_id: string
+          bar_id: string
+          product_id: string
+          initial_stock: number | null
+          initial_submitted_at: string | null
+          initial_submitted_by: string | null
+          final_stock: number | null
+          final_submitted_at: string | null
+          final_submitted_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          bar_id: string
+          product_id: string
+          initial_stock?: number | null
+          initial_submitted_at?: string | null
+          initial_submitted_by?: string | null
+          final_stock?: number | null
+          final_submitted_at?: string | null
+          final_submitted_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          bar_id?: string
+          product_id?: string
+          initial_stock?: number | null
+          initial_submitted_at?: string | null
+          initial_submitted_by?: string | null
+          final_stock?: number | null
+          final_submitted_at?: string | null
+          final_submitted_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       newsletter_subscribers: {
         Row: {
           id: string
@@ -529,15 +573,46 @@ export interface Database {
           created_at?: string
         }
       }
+      bar_product_categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
       bar_products: {
         Row: {
           id: string
           name: string
           price: number
-          category: 'drink' | 'shot' | 'snack' | 'other'
+          category: string
           active: boolean
           sort_order: number
           barcode: string | null
+          supplier: string | null
+          manufacturer: string | null
           created_at: string
           updated_at: string
         }
@@ -545,10 +620,12 @@ export interface Database {
           id?: string
           name: string
           price: number
-          category?: 'drink' | 'shot' | 'snack' | 'other'
+          category: string
           active?: boolean
           sort_order?: number
           barcode?: string | null
+          supplier?: string | null
+          manufacturer?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -556,10 +633,12 @@ export interface Database {
           id?: string
           name?: string
           price?: number
-          category?: 'drink' | 'shot' | 'snack' | 'other'
+          category?: string
           active?: boolean
           sort_order?: number
           barcode?: string | null
+          supplier?: string | null
+          manufacturer?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -865,6 +944,7 @@ export type BonusCardScan = Database['public']['Tables']['bonus_card_scans']['Ro
 export type ReferralCode = Database['public']['Tables']['referral_codes']['Row']
 export type ReferralPoint = Database['public']['Tables']['referral_points']['Row']
 export type BarProduct = Database['public']['Tables']['bar_products']['Row']
+export type BarProductCategory = Database['public']['Tables']['bar_product_categories']['Row']
 export type BarInventoryTransaction = Database['public']['Tables']['bar_inventory_transactions']['Row']
 export type BarBracelet = Database['public']['Tables']['bar_bracelets']['Row']
 export type BarOrder = Database['public']['Tables']['bar_orders']['Row']
@@ -872,3 +952,4 @@ export type BarOrderItem = Database['public']['Tables']['bar_order_items']['Row'
 export type BarBraceletTransaction = Database['public']['Tables']['bar_bracelet_transactions']['Row']
 export type BarEvent = Database['public']['Tables']['bar_events']['Row']
 export type EventBar = Database['public']['Tables']['event_bars']['Row']
+export type BarEventBarStock = Database['public']['Tables']['bar_event_bar_stocks']['Row']

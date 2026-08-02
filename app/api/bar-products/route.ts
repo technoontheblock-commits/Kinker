@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, price, category, sort_order, active, barcode } = body
+    const { name, price, category, sort_order, active, barcode, supplier, manufacturer } = body
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Name ist erforderlich' }, { status: 400 })
@@ -54,14 +54,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ungültiger Preis' }, { status: 400 })
     }
 
-    const validCategories = ['drink', 'shot', 'snack', 'other']
-    if (!validCategories.includes(category)) {
-      return NextResponse.json({ error: 'Ungültige Kategorie' }, { status: 400 })
+    if (!category || typeof category !== 'string' || category.trim().length === 0) {
+      return NextResponse.json({ error: 'Kategorie ist erforderlich' }, { status: 400 })
     }
 
     const supabase = createServerSupabase()
     if (!supabase) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
+    }
+
+    const { data: categoryRow, error: categoryError } = await (supabase as any)
+      .from('bar_product_categories')
+      .select('slug')
+      .eq('slug', category)
+      .eq('active', true)
+      .single()
+
+    if (categoryError || !categoryRow) {
+      return NextResponse.json({ error: 'Ungültige Kategorie' }, { status: 400 })
     }
 
     const { data, error } = await (supabase as any)
@@ -73,6 +83,8 @@ export async function POST(request: NextRequest) {
         sort_order: typeof sort_order === 'number' ? sort_order : 0,
         active: typeof active === 'boolean' ? active : true,
         barcode: typeof barcode === 'string' && barcode.trim().length > 0 ? barcode.trim() : null,
+        supplier: typeof supplier === 'string' && supplier.trim().length > 0 ? supplier.trim() : null,
+        manufacturer: typeof manufacturer === 'string' && manufacturer.trim().length > 0 ? manufacturer.trim() : null,
       })
       .select()
       .single()

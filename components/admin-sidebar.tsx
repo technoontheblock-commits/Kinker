@@ -44,7 +44,6 @@ const tabs = [
   { id: 'bracelets', label: 'Armbänder', icon: Watch, href: '/admin/bracelets' },
   { id: 'bar-reports', label: 'Bar Reports & Events', icon: CalendarDays, href: '/admin/bar-reports' },
   { id: 'topup', label: 'Guthaben aufladen', icon: Wallet, href: '/topup' },
-  { id: 'forum', label: 'Forum', icon: MessageSquare, href: '/admin/forum' },
   { id: 'board', label: 'Board', icon: Layout, href: '/admin/board' },
   { id: 'advertising', label: 'Werbung', icon: Printer, href: '/admin/advertising' },
   { id: 'dj-roster', label: 'DJ Roster', icon: Disc, href: '/admin' },

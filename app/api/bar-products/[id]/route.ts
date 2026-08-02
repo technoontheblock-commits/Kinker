@@ -21,8 +21,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'ID fehlt' }, { status: 400 })
     }
 
+    const supabase = createServerSupabase()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
+    }
+
     const body = await request.json()
-    const { name, price, category, sort_order, active, barcode } = body
+    const { name, price, category, sort_order, active, barcode, supplier, manufacturer } = body
 
     const updateData: Record<string, any> = {}
 
@@ -41,10 +46,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     if (category !== undefined) {
-      const validCategories = ['drink', 'shot', 'snack', 'other']
-      if (!validCategories.includes(category)) {
+      if (typeof category !== 'string' || category.trim().length === 0) {
         return NextResponse.json({ error: 'Ungültige Kategorie' }, { status: 400 })
       }
+
+      const { data: categoryRow, error: categoryError } = await (supabase as any)
+        .from('bar_product_categories')
+        .select('slug')
+        .eq('slug', category)
+        .eq('active', true)
+        .single()
+
+      if (categoryError || !categoryRow) {
+        return NextResponse.json({ error: 'Ungültige Kategorie' }, { status: 400 })
+      }
+
       updateData.category = category
     }
 
@@ -66,9 +82,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       updateData.barcode = typeof barcode === 'string' && barcode.trim().length > 0 ? barcode.trim() : null
     }
 
-    const supabase = createServerSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
+    if (supplier !== undefined) {
+      updateData.supplier = typeof supplier === 'string' && supplier.trim().length > 0 ? supplier.trim() : null
+    }
+
+    if (manufacturer !== undefined) {
+      updateData.manufacturer = typeof manufacturer === 'string' && manufacturer.trim().length > 0 ? manufacturer.trim() : null
     }
 
     const { data, error } = await (supabase as any)
