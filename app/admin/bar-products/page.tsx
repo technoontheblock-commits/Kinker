@@ -662,7 +662,7 @@ export default function BarProductsAdminPage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-neutral-900 rounded-2xl p-6 md:p-8 w-full max-w-lg border border-white/10 max-h-[90vh] overflow-y-auto"
+              className="bg-neutral-900 rounded-2xl p-6 md:p-8 w-full max-w-2xl border border-white/10 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-display font-bold text-white">
